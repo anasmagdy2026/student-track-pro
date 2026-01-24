@@ -11,6 +11,8 @@ import {
   Menu,
   X,
   GraduationCap,
+  UsersRound,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -21,6 +23,8 @@ interface LayoutProps {
 const navItems = [
   { path: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
   { path: '/students', label: 'الطلاب', icon: Users },
+  { path: '/groups', label: 'المجموعات', icon: UsersRound },
+  { path: '/lessons', label: 'الحصص', icon: BookOpen },
   { path: '/attendance', label: 'الحضور والغياب', icon: Calendar },
   { path: '/payments', label: 'المدفوعات', icon: CreditCard },
   { path: '/exams', label: 'الامتحانات', icon: FileText },
