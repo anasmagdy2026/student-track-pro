@@ -37,6 +37,12 @@ export function useStudents() {
     return students.find(student => student.id === id);
   };
 
+  const getStudentByCode = (code: string) => {
+    return students.find(student => 
+      student.code.toLowerCase() === code.toLowerCase()
+    );
+  };
+
   const getStudentsByGrade = (grade: string) => {
     return students.filter(student => student.grade === grade);
   };
@@ -55,6 +61,7 @@ export function useStudents() {
     updateStudent,
     deleteStudent,
     getStudentById,
+    getStudentByCode,
     getStudentsByGrade,
     getStudentsByGroup,
     getAllGroups,

@@ -32,11 +32,13 @@ import {
   Trash2,
   MessageCircle,
   Users,
+  Search,
+  QrCode,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Exams() {
-  const { students } = useStudents();
+  const { students, getStudentByCode } = useStudents();
   const {
     exams,
     addExam,
@@ -49,8 +51,9 @@ export default function Exams() {
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [isAddExamOpen, setIsAddExamOpen] = useState(false);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
+  const [studentCode, setStudentCode] = useState('');
+  const [codeScore, setCodeScore] = useState('');
 
-  // Form state
   const [examForm, setExamForm] = useState({
     name: '',
     date: new Date().toISOString().split('T')[0],
@@ -92,6 +95,31 @@ export default function Exams() {
     });
     setScores(scoresMap);
     setIsResultsOpen(true);
+  };
+
+  const handleCodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentCode.trim() || !selectedExam) return;
+
+    const student = getStudentByCode(studentCode.trim());
+    if (student) {
+      if (student.grade !== selectedExam.grade) {
+        toast.error('هذا الطالب ليس في نفس السنة الدراسية للامتحان');
+        return;
+      }
+      const score = Number(codeScore);
+      if (isNaN(score) || score < 0 || score > selectedExam.maxScore) {
+        toast.error(`الدرجة يجب أن تكون بين 0 و ${selectedExam.maxScore}`);
+        return;
+      }
+      addResult(selectedExam.id, student.id, score);
+      setScores({ ...scores, [student.id]: score });
+      toast.success(`تم تسجيل درجة: ${student.name} - ${score}/${selectedExam.maxScore}`);
+      setStudentCode('');
+      setCodeScore('');
+    } else {
+      toast.error('كود الطالب غير موجود');
+    }
   };
 
   const handleSaveScores = () => {
@@ -177,13 +205,14 @@ export default function Exams() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">الدرجة الكبرى</label>
+                  <label className="text-sm font-medium">الدرجة النهائية</label>
                   <Input
                     type="number"
                     value={examForm.maxScore}
                     onChange={(e) =>
                       setExamForm({ ...examForm, maxScore: Number(e.target.value) })
                     }
+                    placeholder="أدخل الدرجة النهائية للامتحان"
                     dir="ltr"
                   />
                 </div>
@@ -236,7 +265,7 @@ export default function Exams() {
                               {new Date(exam.date).toLocaleDateString('ar-EG')}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              الدرجة: {exam.maxScore}
+                              الدرجة النهائية: {exam.maxScore}
                             </span>
                           </div>
                         </div>
@@ -287,10 +316,47 @@ export default function Exams() {
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                إدخال درجات: {selectedExam?.name}
+                إدخال درجات: {selectedExam?.name} (الدرجة النهائية: {selectedExam?.maxScore})
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Quick Code Entry */}
+              <Card className="border-secondary/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <QrCode className="h-4 w-4 text-secondary" />
+                    إدخال سريع بالكود
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCodeSubmit} className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={studentCode}
+                        onChange={(e) => setStudentCode(e.target.value)}
+                        placeholder="كود الطالب"
+                        className="pr-9"
+                        dir="ltr"
+                      />
+                    </div>
+                    <Input
+                      type="number"
+                      value={codeScore}
+                      onChange={(e) => setCodeScore(e.target.value)}
+                      placeholder="الدرجة"
+                      className="w-24"
+                      max={selectedExam?.maxScore}
+                      min={0}
+                      dir="ltr"
+                    />
+                    <Button type="submit" size="sm">
+                      إضافة
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
               {examStudents.length > 0 ? (
                 <>
                   {examStudents.map((student) => {
@@ -310,7 +376,12 @@ export default function Exams() {
                         className="flex items-center gap-4 p-3 bg-muted rounded-xl"
                       >
                         <div className="flex-1">
-                          <p className="font-bold">{student.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold">{student.name}</p>
+                            <span className="text-xs font-mono bg-background px-2 py-0.5 rounded">
+                              {student.code}
+                            </span>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             {student.group}
                           </p>

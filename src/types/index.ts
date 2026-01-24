@@ -9,6 +9,14 @@ export interface Student {
   createdAt: string;
 }
 
+export interface Group {
+  id: string;
+  name: string;
+  grade: '1' | '2' | '3';
+  day: string; // يوم المجموعة
+  time: string; // وقت المجموعة
+}
+
 export interface Attendance {
   id: string;
   studentId: string;
@@ -43,6 +51,30 @@ export interface ExamResult {
   notified: boolean;
 }
 
+export interface Lesson {
+  id: string;
+  name: string;
+  date: string;
+  grade: '1' | '2' | '3';
+  group: string;
+}
+
+export interface LessonSheet {
+  id: string;
+  lessonId: string;
+  studentId: string;
+  score: number;
+  maxScore: number;
+}
+
+export interface LessonRecitation {
+  id: string;
+  lessonId: string;
+  studentId: string;
+  score: number;
+  maxScore: number;
+}
+
 export type GradeLabel = {
   [key in '1' | '2' | '3']: string;
 };
@@ -56,4 +88,8 @@ export const GRADE_LABELS: GradeLabel = {
 export const MONTHS_AR = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+];
+
+export const DAYS_AR = [
+  'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
 ];

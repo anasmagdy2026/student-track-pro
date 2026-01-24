@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -23,12 +24,13 @@ import {
   XCircle,
   MessageCircle,
   Users,
-  TrendingUp,
+  Search,
+  QrCode,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Payments() {
-  const { students, getAllGroups } = useStudents();
+  const { students, getAllGroups, getStudentByCode } = useStudents();
   const { addPayment, isMonthPaid, payments, markAsNotified } = usePayments();
 
   const currentDate = new Date();
@@ -36,6 +38,7 @@ export default function Payments() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [studentCode, setStudentCode] = useState('');
 
   const groups = getAllGroups();
 
@@ -50,6 +53,24 @@ export default function Payments() {
     toast.success('تم تسجيل الدفع بنجاح');
   };
 
+  const handleCodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentCode.trim()) return;
+
+    const student = getStudentByCode(studentCode.trim());
+    if (student) {
+      if (isMonthPaid(student.id, selectedMonth)) {
+        toast.info(`${student.name} دفع بالفعل هذا الشهر`);
+      } else {
+        addPayment(student.id, selectedMonth, student.monthlyFee);
+        toast.success(`تم تسجيل دفع: ${student.name}`);
+      }
+      setStudentCode('');
+    } else {
+      toast.error('كود الطالب غير موجود');
+    }
+  };
+
   const handleSendReminder = (studentId: string) => {
     const student = students.find((s) => s.id === studentId);
     if (!student) return;
@@ -59,7 +80,6 @@ export default function Payments() {
     const message = createPaymentReminderMessage(student.name, monthName, student.monthlyFee);
     sendWhatsAppMessage(student.parentPhone, message);
 
-    // Find payment record to mark as notified
     const payment = payments.find(
       (p) => p.studentId === studentId && p.month === selectedMonth
     );
@@ -74,7 +94,6 @@ export default function Payments() {
   const totalExpected = filteredStudents.reduce((sum, s) => sum + s.monthlyFee, 0);
   const totalReceived = paidStudents.reduce((sum, s) => sum + s.monthlyFee, 0);
 
-  // Generate month options
   const monthOptions = [];
   for (let i = -6; i <= 6; i++) {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
@@ -97,6 +116,34 @@ export default function Payments() {
             متابعة دفع مصاريف الشهر
           </p>
         </div>
+
+        {/* Quick Code Entry */}
+        <Card className="border-secondary/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <QrCode className="h-5 w-5 text-secondary" />
+              تسجيل دفع سريع بالكود
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCodeSubmit} className="flex gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  value={studentCode}
+                  onChange={(e) => setStudentCode(e.target.value)}
+                  placeholder="أدخل كود الطالب..."
+                  className="pr-10"
+                  dir="ltr"
+                />
+              </div>
+              <Button type="submit" className="gap-2">
+                <CreditCard className="h-4 w-4" />
+                تسجيل دفع
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card>
@@ -215,7 +262,12 @@ export default function Payments() {
                           )}
                         </div>
                         <div>
-                          <p className="font-bold">{student.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold">{student.name}</p>
+                            <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
+                              {student.code}
+                            </span>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             {GRADE_LABELS[student.grade]} - {student.group}
                           </p>

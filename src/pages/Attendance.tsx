@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,25 +14,37 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStudents } from '@/hooks/useStudents';
 import { useAttendance } from '@/hooks/useAttendance';
+import { useGroups } from '@/hooks/useGroups';
 import { GRADE_LABELS } from '@/types';
 import {
   sendWhatsAppMessage,
   createAbsenceMessage,
 } from '@/utils/whatsapp';
-import { Calendar, UserCheck, MessageCircle, Users } from 'lucide-react';
+import { Calendar, UserCheck, MessageCircle, Users, Search, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Attendance() {
-  const { students, getAllGroups } = useStudents();
+  const [searchParams] = useSearchParams();
+  const { students, getStudentByCode, getAllGroups } = useStudents();
   const { markAttendance, getAttendanceByDate, markAsNotified } = useAttendance();
+  const { groups, getTodayGroups } = useGroups();
 
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
-  const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get('group') || 'all');
+  const [studentCode, setStudentCode] = useState('');
 
-  const groups = getAllGroups();
+  const todayGroups = getTodayGroups();
+  const allGroups = getAllGroups();
   const todayAttendance = getAttendanceByDate(selectedDate);
+
+  // Auto-select today's group if available
+  useEffect(() => {
+    if (!searchParams.get('group') && todayGroups.length === 1) {
+      setSelectedGroup(todayGroups[0].name);
+    }
+  }, [todayGroups, searchParams]);
 
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
@@ -53,6 +66,20 @@ export default function Attendance() {
       markAttendance(student.id, selectedDate, true);
     });
     toast.success('تم تسجيل حضور جميع الطلاب');
+  };
+
+  const handleCodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentCode.trim()) return;
+
+    const student = getStudentByCode(studentCode.trim());
+    if (student) {
+      markAttendance(student.id, selectedDate, true);
+      toast.success(`تم تسجيل حضور: ${student.name}`);
+      setStudentCode('');
+    } else {
+      toast.error('كود الطالب غير موجود');
+    }
   };
 
   const handleSendAbsenceMessage = (studentId: string) => {
@@ -94,6 +121,60 @@ export default function Attendance() {
           </Button>
         </div>
 
+        {/* Today's Groups Alert */}
+        {todayGroups.length > 0 && (
+          <Card className="bg-primary/10 border-primary/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-6 w-6 text-primary" />
+                <div className="flex-1">
+                  <p className="font-bold text-primary">مجموعات اليوم</p>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {todayGroups.map(g => (
+                      <Button
+                        key={g.id}
+                        variant={selectedGroup === g.name ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedGroup(g.name)}
+                      >
+                        {g.name} ({g.time})
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Code Entry */}
+        <Card className="border-secondary/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <QrCode className="h-5 w-5 text-secondary" />
+              تسجيل سريع بالكود
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCodeSubmit} className="flex gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  value={studentCode}
+                  onChange={(e) => setStudentCode(e.target.value)}
+                  placeholder="أدخل كود الطالب..."
+                  className="pr-10"
+                  dir="ltr"
+                />
+              </div>
+              <Button type="submit" className="gap-2">
+                <UserCheck className="h-4 w-4" />
+                تسجيل حضور
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
@@ -129,7 +210,7 @@ export default function Attendance() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل المجموعات</SelectItem>
-                    {groups.map((group) => (
+                    {allGroups.map((group) => (
                       <SelectItem key={group} value={group}>
                         {group}
                       </SelectItem>
@@ -208,7 +289,12 @@ export default function Attendance() {
                           </label>
                         </div>
                         <div>
-                          <p className="font-bold">{student.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold">{student.name}</p>
+                            <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
+                              {student.code}
+                            </span>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             {GRADE_LABELS[student.grade]} - {student.group}
                           </p>
