@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -26,19 +27,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useStudents } from '@/hooks/useStudents';
+import { useGroups } from '@/hooks/useGroups';
 import { GRADE_LABELS, Student } from '@/types';
 import { Plus, Search, Eye, Pencil, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
 export default function Students() {
-  const {
-    students,
-    addStudent,
-    updateStudent,
-    deleteStudent,
-    getAllGroups,
-  } = useStudents();
+  const { students, addStudent, updateStudent, deleteStudent } = useStudents();
+  const { groups, getGroupsByGrade, getGroupById } = useGroups();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState<string>('all');
@@ -46,70 +43,94 @@ export default function Students() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    grade: '1' as '1' | '2' | '3',
-    group: '',
-    parentPhone: '',
-    monthlyFee: 0,
-  });
+  // Form state - مفصولة لتجنب مشكلة الكتابة
+  const [formName, setFormName] = useState('');
+  const [formGrade, setFormGrade] = useState<'1' | '2' | '3'>('1');
+  const [formGroupId, setFormGroupId] = useState('');
+  const [formParentPhone, setFormParentPhone] = useState('');
+  const [formMonthlyFee, setFormMonthlyFee] = useState(0);
 
-  const groups = getAllGroups();
+  // المجموعات المفلترة حسب السنة الدراسية
+  const availableGroups = getGroupsByGrade(formGrade);
+
+  // إعادة تعيين المجموعة عند تغيير السنة الدراسية
+  useEffect(() => {
+    setFormGroupId('');
+  }, [formGrade]);
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.name.includes(searchTerm) ||
       student.code.includes(searchTerm);
     const matchesGrade = filterGrade === 'all' || student.grade === filterGrade;
-    const matchesGroup = filterGroup === 'all' || student.group === filterGroup;
+    const matchesGroup = filterGroup === 'all' || student.group_id === filterGroup;
     return matchesSearch && matchesGrade && matchesGroup;
   });
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      grade: '1',
-      group: '',
-      parentPhone: '',
-      monthlyFee: 0,
-    });
+    setFormName('');
+    setFormGrade('1');
+    setFormGroupId('');
+    setFormParentPhone('');
+    setFormMonthlyFee(0);
   };
 
-  const handleAddStudent = () => {
-    if (!formData.name || !formData.group || !formData.parentPhone) {
+  const handleAddStudent = async () => {
+    if (!formName || !formGroupId || !formParentPhone) {
       toast.error('برجاء ملء جميع البيانات المطلوبة');
       return;
     }
-    addStudent(formData);
-    toast.success('تم إضافة الطالب بنجاح');
-    resetForm();
-    setIsAddOpen(false);
+    try {
+      await addStudent({
+        name: formName,
+        grade: formGrade,
+        group_id: formGroupId,
+        parent_phone: formParentPhone,
+        monthly_fee: formMonthlyFee,
+      });
+      toast.success('تم إضافة الطالب بنجاح');
+      resetForm();
+      setIsAddOpen(false);
+    } catch (error) {
+      toast.error('حدث خطأ أثناء إضافة الطالب');
+    }
   };
 
-  const handleUpdateStudent = () => {
+  const handleUpdateStudent = async () => {
     if (!editingStudent) return;
-    updateStudent(editingStudent.id, formData);
-    toast.success('تم تحديث بيانات الطالب');
-    setEditingStudent(null);
-    resetForm();
+    try {
+      await updateStudent(editingStudent.id, {
+        name: formName,
+        grade: formGrade,
+        group_id: formGroupId,
+        parent_phone: formParentPhone,
+        monthly_fee: formMonthlyFee,
+      });
+      toast.success('تم تحديث بيانات الطالب');
+      setEditingStudent(null);
+      resetForm();
+    } catch (error) {
+      toast.error('حدث خطأ أثناء تحديث بيانات الطالب');
+    }
   };
 
-  const handleDeleteStudent = (student: Student) => {
+  const handleDeleteStudent = async (student: Student) => {
     if (confirm(`هل أنت متأكد من حذف الطالب ${student.name}؟`)) {
-      deleteStudent(student.id);
-      toast.success('تم حذف الطالب');
+      try {
+        await deleteStudent(student.id);
+        toast.success('تم حذف الطالب');
+      } catch (error) {
+        toast.error('حدث خطأ أثناء حذف الطالب');
+      }
     }
   };
 
   const openEditDialog = (student: Student) => {
-    setFormData({
-      name: student.name,
-      grade: student.grade,
-      group: student.group,
-      parentPhone: student.parentPhone,
-      monthlyFee: student.monthlyFee,
-    });
+    setFormName(student.name);
+    setFormGrade(student.grade);
+    setFormGroupId(student.group_id || '');
+    setFormParentPhone(student.parent_phone);
+    setFormMonthlyFee(student.monthly_fee);
     setEditingStudent(student);
   };
 
@@ -118,8 +139,8 @@ export default function Students() {
       <div className="space-y-2">
         <label className="text-sm font-medium">اسم الطالب</label>
         <Input
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={formName}
+          onChange={(e) => setFormName(e.target.value)}
           placeholder="أدخل اسم الطالب"
         />
       </div>
@@ -127,10 +148,8 @@ export default function Students() {
       <div className="space-y-2">
         <label className="text-sm font-medium">السنة الدراسية</label>
         <Select
-          value={formData.grade}
-          onValueChange={(value: '1' | '2' | '3') =>
-            setFormData({ ...formData, grade: value })
-          }
+          value={formGrade}
+          onValueChange={(value: '1' | '2' | '3') => setFormGrade(value)}
         >
           <SelectTrigger>
             <SelectValue />
@@ -145,20 +164,39 @@ export default function Students() {
 
       <div className="space-y-2">
         <label className="text-sm font-medium">المجموعة</label>
-        <Input
-          value={formData.group}
-          onChange={(e) => setFormData({ ...formData, group: e.target.value })}
-          placeholder="مثال: المجموعة أ"
-        />
+        <Select
+          value={formGroupId}
+          onValueChange={setFormGroupId}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="اختر المجموعة" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableGroups.length > 0 ? (
+              availableGroups.map((group) => (
+                <SelectItem key={group.id} value={group.id}>
+                  {group.name} ({group.time}) - {group.days.join(' / ')}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="" disabled>
+                لا توجد مجموعات لهذه السنة الدراسية
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        {availableGroups.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            قم بإنشاء مجموعة لهذه السنة الدراسية أولاً
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium">رقم واتساب ولي الأمر</label>
         <Input
-          value={formData.parentPhone}
-          onChange={(e) =>
-            setFormData({ ...formData, parentPhone: e.target.value })
-          }
+          value={formParentPhone}
+          onChange={(e) => setFormParentPhone(e.target.value)}
           placeholder="01xxxxxxxxx"
           dir="ltr"
         />
@@ -168,10 +206,8 @@ export default function Students() {
         <label className="text-sm font-medium">قيمة الدرس الشهرية (جنيه)</label>
         <Input
           type="number"
-          value={formData.monthlyFee || ''}
-          onChange={(e) =>
-            setFormData({ ...formData, monthlyFee: Number(e.target.value) })
-          }
+          value={formMonthlyFee || ''}
+          onChange={(e) => setFormMonthlyFee(Number(e.target.value))}
           placeholder="0"
           dir="ltr"
         />
@@ -180,6 +216,7 @@ export default function Students() {
       <Button
         onClick={isEdit ? handleUpdateStudent : handleAddStudent}
         className="w-full"
+        disabled={availableGroups.length === 0 && !isEdit}
       >
         {isEdit ? 'حفظ التعديلات' : 'إضافة الطالب'}
       </Button>
@@ -197,7 +234,10 @@ export default function Students() {
               إجمالي {students.length} طالب
             </p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <Dialog open={isAddOpen} onOpenChange={(open) => {
+            setIsAddOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-5 w-5" />
@@ -207,6 +247,7 @@ export default function Students() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>إضافة طالب جديد</DialogTitle>
+                <DialogDescription>أدخل بيانات الطالب الجديد</DialogDescription>
               </DialogHeader>
               <StudentForm />
             </DialogContent>
@@ -244,8 +285,8 @@ export default function Students() {
                 <SelectContent>
                   <SelectItem value="all">كل المجموعات</SelectItem>
                   {groups.map((group) => (
-                    <SelectItem key={group} value={group}>
-                      {group}
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -271,58 +312,65 @@ export default function Students() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStudents.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-mono font-bold text-primary">
-                          {student.code}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {student.name}
-                        </TableCell>
-                        <TableCell>{GRADE_LABELS[student.grade]}</TableCell>
-                        <TableCell>{student.group}</TableCell>
-                        <TableCell>{student.monthlyFee} ج</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Link to={`/student/${student.id}`}>
-                              <Button size="icon" variant="ghost">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Dialog
-                              open={editingStudent?.id === student.id}
-                              onOpenChange={(open) =>
-                                !open && setEditingStudent(null)
-                              }
-                            >
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openEditDialog(student)}
-                                >
-                                  <Pencil className="h-4 w-4" />
+                    {filteredStudents.map((student) => {
+                      const group = student.group_id ? getGroupById(student.group_id) : null;
+                      return (
+                        <TableRow key={student.id}>
+                          <TableCell className="font-mono font-bold text-primary">
+                            {student.code}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {student.name}
+                          </TableCell>
+                          <TableCell>{GRADE_LABELS[student.grade]}</TableCell>
+                          <TableCell>{group?.name || '-'}</TableCell>
+                          <TableCell>{student.monthly_fee} ج</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Link to={`/student/${student.id}`}>
+                                <Button size="icon" variant="ghost">
+                                  <Eye className="h-4 w-4" />
                                 </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>تعديل بيانات الطالب</DialogTitle>
-                                </DialogHeader>
-                                <StudentForm isEdit />
-                              </DialogContent>
-                            </Dialog>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteStudent(student)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                              </Link>
+                              <Dialog
+                                open={editingStudent?.id === student.id}
+                                onOpenChange={(open) => {
+                                  if (!open) {
+                                    setEditingStudent(null);
+                                    resetForm();
+                                  }
+                                }}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => openEditDialog(student)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>تعديل بيانات الطالب</DialogTitle>
+                                    <DialogDescription>قم بتعديل بيانات الطالب</DialogDescription>
+                                  </DialogHeader>
+                                  <StudentForm isEdit />
+                                </DialogContent>
+                              </Dialog>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteStudent(student)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

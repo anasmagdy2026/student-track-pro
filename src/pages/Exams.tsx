@@ -14,11 +14,13 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useStudents } from '@/hooks/useStudents';
+import { useGroups } from '@/hooks/useGroups';
 import { useExams } from '@/hooks/useExams';
 import { GRADE_LABELS, Exam } from '@/types';
 import {
@@ -39,11 +41,12 @@ import { toast } from 'sonner';
 
 export default function Exams() {
   const { students, getStudentByCode } = useStudents();
+  const { getGroupById } = useGroups();
   const {
     exams,
     addExam,
     deleteExam,
-    addResult,
+    saveAllResults,
     getExamResults,
     markResultAsNotified,
   } = useExams();
@@ -54,35 +57,49 @@ export default function Exams() {
   const [studentCode, setStudentCode] = useState('');
   const [codeScore, setCodeScore] = useState('');
 
-  const [examForm, setExamForm] = useState({
-    name: '',
-    date: new Date().toISOString().split('T')[0],
-    maxScore: 100,
-    grade: '1' as '1' | '2' | '3',
-  });
+  // Form state - مفصولة لتجنب مشكلة الكتابة
+  const [examName, setExamName] = useState('');
+  const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0]);
+  const [examMaxScore, setExamMaxScore] = useState(100);
+  const [examGrade, setExamGrade] = useState<'1' | '2' | '3'>('1');
 
   const [scores, setScores] = useState<Record<string, number>>({});
 
-  const handleAddExam = () => {
-    if (!examForm.name) {
+  const resetExamForm = () => {
+    setExamName('');
+    setExamDate(new Date().toISOString().split('T')[0]);
+    setExamMaxScore(100);
+    setExamGrade('1');
+  };
+
+  const handleAddExam = async () => {
+    if (!examName) {
       toast.error('برجاء إدخال اسم الامتحان');
       return;
     }
-    addExam(examForm);
-    toast.success('تم إضافة الامتحان بنجاح');
-    setExamForm({
-      name: '',
-      date: new Date().toISOString().split('T')[0],
-      maxScore: 100,
-      grade: '1',
-    });
-    setIsAddExamOpen(false);
+    try {
+      await addExam({
+        name: examName,
+        date: examDate,
+        max_score: examMaxScore,
+        grade: examGrade,
+      });
+      toast.success('تم إضافة الامتحان بنجاح');
+      resetExamForm();
+      setIsAddExamOpen(false);
+    } catch (error) {
+      toast.error('حدث خطأ أثناء إضافة الامتحان');
+    }
   };
 
-  const handleDeleteExam = (exam: Exam) => {
+  const handleDeleteExam = async (exam: Exam) => {
     if (confirm(`هل أنت متأكد من حذف امتحان "${exam.name}"؟`)) {
-      deleteExam(exam.id);
-      toast.success('تم حذف الامتحان');
+      try {
+        await deleteExam(exam.id);
+        toast.success('تم حذف الامتحان');
+      } catch (error) {
+        toast.error('حدث خطأ أثناء حذف الامتحان');
+      }
     }
   };
 
@@ -91,13 +108,13 @@ export default function Exams() {
     const results = getExamResults(exam.id);
     const scoresMap: Record<string, number> = {};
     results.forEach((r) => {
-      scoresMap[r.studentId] = r.score;
+      scoresMap[r.student_id] = r.score;
     });
     setScores(scoresMap);
     setIsResultsOpen(true);
   };
 
-  const handleCodeSubmit = (e: React.FormEvent) => {
+  const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentCode.trim() || !selectedExam) return;
 
@@ -108,13 +125,12 @@ export default function Exams() {
         return;
       }
       const score = Number(codeScore);
-      if (isNaN(score) || score < 0 || score > selectedExam.maxScore) {
-        toast.error(`الدرجة يجب أن تكون بين 0 و ${selectedExam.maxScore}`);
+      if (isNaN(score) || score < 0 || score > selectedExam.max_score) {
+        toast.error(`الدرجة يجب أن تكون بين 0 و ${selectedExam.max_score}`);
         return;
       }
-      addResult(selectedExam.id, student.id, score);
       setScores({ ...scores, [student.id]: score });
-      toast.success(`تم تسجيل درجة: ${student.name} - ${score}/${selectedExam.maxScore}`);
+      toast.success(`تم تسجيل درجة: ${student.name} - ${score}/${selectedExam.max_score}`);
       setStudentCode('');
       setCodeScore('');
     } else {
@@ -122,36 +138,36 @@ export default function Exams() {
     }
   };
 
-  const handleSaveScores = () => {
+  const handleSaveScores = async () => {
     if (!selectedExam) return;
-    Object.entries(scores).forEach(([studentId, score]) => {
-      if (score !== undefined && score !== null) {
-        addResult(selectedExam.id, studentId, score);
-      }
-    });
-    toast.success('تم حفظ الدرجات');
-    setIsResultsOpen(false);
+    try {
+      await saveAllResults(selectedExam.id, scores);
+      toast.success('تم حفظ جميع الدرجات');
+      setIsResultsOpen(false);
+    } catch (error) {
+      toast.error('حدث خطأ أثناء حفظ الدرجات');
+    }
   };
 
-  const handleSendResult = (studentId: string) => {
+  const handleSendResult = async (studentId: string) => {
     if (!selectedExam) return;
     const student = students.find((s) => s.id === studentId);
     const score = scores[studentId];
     if (!student || score === undefined) return;
 
     const results = getExamResults(selectedExam.id);
-    const result = results.find((r) => r.studentId === studentId);
+    const result = results.find((r) => r.student_id === studentId);
 
     const message = createExamResultMessage(
       student.name,
       selectedExam.name,
       score,
-      selectedExam.maxScore
+      selectedExam.max_score
     );
-    sendWhatsAppMessage(student.parentPhone, message);
+    sendWhatsAppMessage(student.parent_phone, message);
 
     if (result) {
-      markResultAsNotified(result.id);
+      await markResultAsNotified(result.id);
     }
     toast.success('تم فتح الواتساب');
   };
@@ -171,7 +187,10 @@ export default function Exams() {
               إدارة الامتحانات ودرجات الطلاب
             </p>
           </div>
-          <Dialog open={isAddExamOpen} onOpenChange={setIsAddExamOpen}>
+          <Dialog open={isAddExamOpen} onOpenChange={(open) => {
+            setIsAddExamOpen(open);
+            if (!open) resetExamForm();
+          }}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-5 w-5" />
@@ -181,15 +200,14 @@ export default function Exams() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>إضافة امتحان جديد</DialogTitle>
+                <DialogDescription>أدخل بيانات الامتحان الجديد</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">اسم الامتحان</label>
                   <Input
-                    value={examForm.name}
-                    onChange={(e) =>
-                      setExamForm({ ...examForm, name: e.target.value })
-                    }
+                    value={examName}
+                    onChange={(e) => setExamName(e.target.value)}
                     placeholder="مثال: امتحان الفصل الأول"
                   />
                 </div>
@@ -197,10 +215,8 @@ export default function Exams() {
                   <label className="text-sm font-medium">تاريخ الامتحان</label>
                   <Input
                     type="date"
-                    value={examForm.date}
-                    onChange={(e) =>
-                      setExamForm({ ...examForm, date: e.target.value })
-                    }
+                    value={examDate}
+                    onChange={(e) => setExamDate(e.target.value)}
                     dir="ltr"
                   />
                 </div>
@@ -208,10 +224,8 @@ export default function Exams() {
                   <label className="text-sm font-medium">الدرجة النهائية</label>
                   <Input
                     type="number"
-                    value={examForm.maxScore}
-                    onChange={(e) =>
-                      setExamForm({ ...examForm, maxScore: Number(e.target.value) })
-                    }
+                    value={examMaxScore}
+                    onChange={(e) => setExamMaxScore(Number(e.target.value))}
                     placeholder="أدخل الدرجة النهائية للامتحان"
                     dir="ltr"
                   />
@@ -219,10 +233,8 @@ export default function Exams() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">السنة الدراسية</label>
                   <Select
-                    value={examForm.grade}
-                    onValueChange={(value: '1' | '2' | '3') =>
-                      setExamForm({ ...examForm, grade: value })
-                    }
+                    value={examGrade}
+                    onValueChange={(value: '1' | '2' | '3') => setExamGrade(value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -265,7 +277,7 @@ export default function Exams() {
                               {new Date(exam.date).toLocaleDateString('ar-EG')}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              الدرجة النهائية: {exam.maxScore}
+                              الدرجة النهائية: {exam.max_score}
                             </span>
                           </div>
                         </div>
@@ -316,8 +328,9 @@ export default function Exams() {
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                إدخال درجات: {selectedExam?.name} (الدرجة النهائية: {selectedExam?.maxScore})
+                إدخال درجات: {selectedExam?.name} (الدرجة النهائية: {selectedExam?.max_score})
               </DialogTitle>
+              <DialogDescription>أدخل درجات الطلاب</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               {/* Quick Code Entry */}
@@ -346,7 +359,7 @@ export default function Exams() {
                       onChange={(e) => setCodeScore(e.target.value)}
                       placeholder="الدرجة"
                       className="w-24"
-                      max={selectedExam?.maxScore}
+                      max={selectedExam?.max_score}
                       min={0}
                       dir="ltr"
                     />
@@ -363,12 +376,13 @@ export default function Exams() {
                     const results = selectedExam
                       ? getExamResults(selectedExam.id)
                       : [];
-                    const result = results.find((r) => r.studentId === student.id);
+                    const result = results.find((r) => r.student_id === student.id);
                     const percentage = selectedExam
                       ? Math.round(
-                          ((scores[student.id] || 0) / selectedExam.maxScore) * 100
+                          ((scores[student.id] || 0) / selectedExam.max_score) * 100
                         )
                       : 0;
+                    const group = student.group_id ? getGroupById(student.group_id) : null;
 
                     return (
                       <div
@@ -383,7 +397,7 @@ export default function Exams() {
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {student.group}
+                            {group?.name || '-'}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -398,12 +412,12 @@ export default function Exams() {
                             }
                             className="w-20 text-center"
                             placeholder="0"
-                            max={selectedExam?.maxScore}
+                            max={selectedExam?.max_score}
                             min={0}
                             dir="ltr"
                           />
                           <span className="text-muted-foreground">
-                            / {selectedExam?.maxScore}
+                            / {selectedExam?.max_score}
                           </span>
                           {scores[student.id] !== undefined && (
                             <Badge
@@ -433,7 +447,7 @@ export default function Exams() {
                     );
                   })}
                   <Button onClick={handleSaveScores} className="w-full">
-                    حفظ الدرجات
+                    حفظ جميع الدرجات
                   </Button>
                 </>
               ) : (

@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useStudents } from '@/hooks/useStudents';
+import { useGroups } from '@/hooks/useGroups';
 import { usePayments } from '@/hooks/usePayments';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
 import {
@@ -30,7 +31,8 @@ import {
 import { toast } from 'sonner';
 
 export default function Payments() {
-  const { students, getAllGroups, getStudentByCode } = useStudents();
+  const { students, getStudentByCode } = useStudents();
+  const { groups, getGroupById } = useGroups();
   const { addPayment, isMonthPaid, payments, markAsNotified } = usePayments();
 
   const currentDate = new Date();
@@ -40,20 +42,22 @@ export default function Payments() {
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [studentCode, setStudentCode] = useState('');
 
-  const groups = getAllGroups();
-
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
-    const matchesGroup = selectedGroup === 'all' || student.group === selectedGroup;
+    const matchesGroup = selectedGroup === 'all' || student.group_id === selectedGroup;
     return matchesGrade && matchesGroup;
   });
 
-  const handlePayment = (studentId: string, amount: number) => {
-    addPayment(studentId, selectedMonth, amount);
-    toast.success('تم تسجيل الدفع بنجاح');
+  const handlePayment = async (studentId: string, amount: number) => {
+    try {
+      await addPayment(studentId, selectedMonth, amount);
+      toast.success('✅ تم تسجيل الدفع بنجاح! شكراً لك.');
+    } catch (error) {
+      toast.error('حدث خطأ أثناء تسجيل الدفع');
+    }
   };
 
-  const handleCodeSubmit = (e: React.FormEvent) => {
+  const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentCode.trim()) return;
 
@@ -62,8 +66,12 @@ export default function Payments() {
       if (isMonthPaid(student.id, selectedMonth)) {
         toast.info(`${student.name} دفع بالفعل هذا الشهر`);
       } else {
-        addPayment(student.id, selectedMonth, student.monthlyFee);
-        toast.success(`تم تسجيل دفع: ${student.name}`);
+        try {
+          await addPayment(student.id, selectedMonth, student.monthly_fee);
+          toast.success(`✅ تم تسجيل دفع: ${student.name} - ${student.monthly_fee} ج`);
+        } catch (error) {
+          toast.error('حدث خطأ أثناء تسجيل الدفع');
+        }
       }
       setStudentCode('');
     } else {
@@ -71,28 +79,28 @@ export default function Payments() {
     }
   };
 
-  const handleSendReminder = (studentId: string) => {
+  const handleSendReminder = async (studentId: string) => {
     const student = students.find((s) => s.id === studentId);
     if (!student) return;
 
     const monthIndex = parseInt(selectedMonth.split('-')[1]) - 1;
     const monthName = MONTHS_AR[monthIndex];
-    const message = createPaymentReminderMessage(student.name, monthName, student.monthlyFee);
-    sendWhatsAppMessage(student.parentPhone, message);
+    const message = createPaymentReminderMessage(student.name, monthName, student.monthly_fee);
+    sendWhatsAppMessage(student.parent_phone, message);
 
     const payment = payments.find(
-      (p) => p.studentId === studentId && p.month === selectedMonth
+      (p) => p.student_id === studentId && p.month === selectedMonth
     );
     if (payment) {
-      markAsNotified(payment.id);
+      await markAsNotified(payment.id);
     }
     toast.success('تم فتح الواتساب');
   };
 
   const paidStudents = filteredStudents.filter((s) => isMonthPaid(s.id, selectedMonth));
   const unpaidStudents = filteredStudents.filter((s) => !isMonthPaid(s.id, selectedMonth));
-  const totalExpected = filteredStudents.reduce((sum, s) => sum + s.monthlyFee, 0);
-  const totalReceived = paidStudents.reduce((sum, s) => sum + s.monthlyFee, 0);
+  const totalExpected = filteredStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
+  const totalReceived = paidStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
 
   const monthOptions = [];
   for (let i = -6; i <= 6; i++) {
@@ -187,8 +195,8 @@ export default function Payments() {
                   <SelectContent>
                     <SelectItem value="all">كل المجموعات</SelectItem>
                     {groups.map((group) => (
-                      <SelectItem key={group} value={group}>
-                        {group}
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -239,6 +247,7 @@ export default function Payments() {
               <div className="space-y-3">
                 {filteredStudents.map((student) => {
                   const isPaid = isMonthPaid(student.id, selectedMonth);
+                  const group = student.group_id ? getGroupById(student.group_id) : null;
 
                   return (
                     <div
@@ -269,14 +278,14 @@ export default function Payments() {
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {GRADE_LABELS[student.grade]} - {student.group}
+                            {GRADE_LABELS[student.grade]} - {group?.name || '-'}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
                         <Badge variant="outline" className="text-lg px-3 py-1">
-                          {student.monthlyFee} ج
+                          {student.monthly_fee} ج
                         </Badge>
                         {isPaid ? (
                           <Badge className="bg-success text-success-foreground">
@@ -286,7 +295,7 @@ export default function Payments() {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              onClick={() => handlePayment(student.id, student.monthlyFee)}
+                              onClick={() => handlePayment(student.id, student.monthly_fee)}
                             >
                               تسجيل الدفع
                             </Button>
