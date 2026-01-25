@@ -1,19 +1,57 @@
-import { useLocalStorage } from './useLocalStorage';
-import { Group } from '@/types';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Group, DAYS_AR } from '@/types';
 
 export function useGroups() {
-  const [groups, setGroups] = useLocalStorage<Group[]>('groups', []);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const addGroup = (groupData: Omit<Group, 'id'>) => {
-    const newGroup: Group = {
-      ...groupData,
-      id: crypto.randomUUID(),
-    };
-    setGroups(prev => [...prev, newGroup]);
-    return newGroup;
+  const fetchGroups = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('groups')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching groups:', error);
+    } else {
+      setGroups(data as Group[]);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchGroups();
+  }, [fetchGroups]);
+
+  const addGroup = async (groupData: Omit<Group, 'id' | 'created_at' | 'updated_at'>) => {
+    const { data, error } = await supabase
+      .from('groups')
+      .insert([groupData])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error adding group:', error);
+      throw error;
+    }
+    
+    setGroups(prev => [data as Group, ...prev]);
+    return data as Group;
   };
 
-  const updateGroup = (id: string, updates: Partial<Group>) => {
+  const updateGroup = async (id: string, updates: Partial<Group>) => {
+    const { error } = await supabase
+      .from('groups')
+      .update(updates)
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error updating group:', error);
+      throw error;
+    }
+    
     setGroups(prev =>
       prev.map(group =>
         group.id === id ? { ...group, ...updates } : group
@@ -21,7 +59,17 @@ export function useGroups() {
     );
   };
 
-  const deleteGroup = (id: string) => {
+  const deleteGroup = async (id: string) => {
+    const { error } = await supabase
+      .from('groups')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting group:', error);
+      throw error;
+    }
+    
     setGroups(prev => prev.filter(group => group.id !== id));
   };
 
@@ -34,7 +82,7 @@ export function useGroups() {
   };
 
   const getGroupsByDay = (day: string) => {
-    return groups.filter(group => group.day === day);
+    return groups.filter(group => group.days.includes(day));
   };
 
   const getGroupsByGrade = (grade: string) => {
@@ -43,13 +91,13 @@ export function useGroups() {
 
   const getTodayGroups = () => {
     const today = new Date().getDay();
-    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-    const todayName = days[today];
-    return groups.filter(group => group.day === todayName);
+    const todayName = DAYS_AR[today];
+    return groups.filter(group => group.days.includes(todayName));
   };
 
   return {
     groups,
+    loading,
     addGroup,
     updateGroup,
     deleteGroup,
@@ -58,5 +106,6 @@ export function useGroups() {
     getGroupsByDay,
     getGroupsByGrade,
     getTodayGroups,
+    refetch: fetchGroups,
   };
 }

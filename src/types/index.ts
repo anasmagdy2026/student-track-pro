@@ -3,52 +3,59 @@ export interface Student {
   code: string;
   name: string;
   grade: '1' | '2' | '3'; // أولى، تانية، تالتة ثانوي
-  group: string;
-  parentPhone: string;
-  monthlyFee: number;
-  createdAt: string;
+  group_id: string | null;
+  parent_phone: string;
+  monthly_fee: number;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface Group {
   id: string;
   name: string;
   grade: '1' | '2' | '3';
-  day: string; // يوم المجموعة
+  days: string[]; // مجموعة الأيام مثل ['السبت', 'الإثنين', 'الأربعاء']
   time: string; // وقت المجموعة
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Attendance {
   id: string;
-  studentId: string;
+  student_id: string;
   date: string;
   present: boolean;
   notified: boolean;
+  created_at?: string;
 }
 
 export interface Payment {
   id: string;
-  studentId: string;
+  student_id: string;
   month: string; // YYYY-MM format
   amount: number;
   paid: boolean;
-  paidAt?: string;
+  paid_at?: string;
   notified: boolean;
+  created_at?: string;
 }
 
 export interface Exam {
   id: string;
   name: string;
   date: string;
-  maxScore: number;
+  max_score: number;
   grade: '1' | '2' | '3';
+  created_at?: string;
 }
 
 export interface ExamResult {
   id: string;
-  examId: string;
-  studentId: string;
+  exam_id: string;
+  student_id: string;
   score: number;
   notified: boolean;
+  created_at?: string;
 }
 
 export interface Lesson {
@@ -56,23 +63,26 @@ export interface Lesson {
   name: string;
   date: string;
   grade: '1' | '2' | '3';
-  group: string;
+  group_id: string | null;
+  sheet_max_score: number;
+  recitation_max_score: number;
+  created_at?: string;
 }
 
 export interface LessonSheet {
   id: string;
-  lessonId: string;
-  studentId: string;
+  lesson_id: string;
+  student_id: string;
   score: number;
-  maxScore: number;
+  created_at?: string;
 }
 
 export interface LessonRecitation {
   id: string;
-  lessonId: string;
-  studentId: string;
+  lesson_id: string;
+  student_id: string;
   score: number;
-  maxScore: number;
+  created_at?: string;
 }
 
 export type GradeLabel = {
@@ -92,4 +102,10 @@ export const MONTHS_AR = [
 
 export const DAYS_AR = [
   'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
+];
+
+// أنماط أيام المجموعات
+export const GROUP_DAY_PATTERNS = [
+  { label: 'السبت - الإثنين - الأربعاء', days: ['السبت', 'الإثنين', 'الأربعاء'] },
+  { label: 'الأحد - الثلاثاء - الخميس', days: ['الأحد', 'الثلاثاء', 'الخميس'] },
 ];

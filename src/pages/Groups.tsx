@@ -14,13 +14,14 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
-import { GRADE_LABELS, DAYS_AR, Group } from '@/types';
+import { GRADE_LABELS, DAYS_AR, GROUP_DAY_PATTERNS, Group } from '@/types';
 import { Users, Plus, Pencil, Trash2, Clock, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -33,12 +34,11 @@ export default function Groups() {
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [filterDay, setFilterDay] = useState<string>('all');
 
-  const [formData, setFormData] = useState({
-    name: '',
-    grade: '1' as '1' | '2' | '3',
-    day: 'السبت',
-    time: '10:00',
-  });
+  // Form state - مفصولة لتجنب مشكلة الكتابة
+  const [formName, setFormName] = useState('');
+  const [formGrade, setFormGrade] = useState<'1' | '2' | '3'>('1');
+  const [formDays, setFormDays] = useState<string[]>(['السبت', 'الإثنين', 'الأربعاء']);
+  const [formTime, setFormTime] = useState('10:00');
 
   const todayGroups = getTodayGroups();
   
@@ -46,54 +46,72 @@ export default function Groups() {
     ? groups 
     : filterDay === 'today'
     ? todayGroups
-    : groups.filter(g => g.day === filterDay);
+    : groups.filter(g => g.days.includes(filterDay));
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      grade: '1',
-      day: 'السبت',
-      time: '10:00',
-    });
+    setFormName('');
+    setFormGrade('1');
+    setFormDays(['السبت', 'الإثنين', 'الأربعاء']);
+    setFormTime('10:00');
   };
 
-  const handleAddGroup = () => {
-    if (!formData.name) {
+  const handleAddGroup = async () => {
+    if (!formName) {
       toast.error('برجاء إدخال اسم المجموعة');
       return;
     }
-    addGroup(formData);
-    toast.success('تم إضافة المجموعة بنجاح');
-    resetForm();
-    setIsAddOpen(false);
+    try {
+      await addGroup({
+        name: formName,
+        grade: formGrade,
+        days: formDays,
+        time: formTime,
+      });
+      toast.success('تم إضافة المجموعة بنجاح');
+      resetForm();
+      setIsAddOpen(false);
+    } catch (error) {
+      toast.error('حدث خطأ أثناء إضافة المجموعة');
+    }
   };
 
-  const handleUpdateGroup = () => {
+  const handleUpdateGroup = async () => {
     if (!editingGroup) return;
-    updateGroup(editingGroup.id, formData);
-    toast.success('تم تحديث المجموعة');
-    setEditingGroup(null);
-    resetForm();
+    try {
+      await updateGroup(editingGroup.id, {
+        name: formName,
+        grade: formGrade,
+        days: formDays,
+        time: formTime,
+      });
+      toast.success('تم تحديث المجموعة');
+      setEditingGroup(null);
+      resetForm();
+    } catch (error) {
+      toast.error('حدث خطأ أثناء تحديث المجموعة');
+    }
   };
 
-  const handleDeleteGroup = (group: Group) => {
-    const studentsCount = getStudentsByGroup(group.name).length;
+  const handleDeleteGroup = async (group: Group) => {
+    const studentsCount = getStudentsByGroup(group.id).length;
     if (studentsCount > 0) {
       if (!confirm(`هذه المجموعة تحتوي على ${studentsCount} طالب. هل أنت متأكد من الحذف؟`)) {
         return;
       }
     }
-    deleteGroup(group.id);
-    toast.success('تم حذف المجموعة');
+    try {
+      await deleteGroup(group.id);
+      toast.success('تم حذف المجموعة');
+    } catch (error) {
+      toast.error('حدث خطأ أثناء حذف المجموعة');
+    }
   };
 
   const openEditDialog = (group: Group) => {
-    setFormData({
-      name: group.name,
-      grade: group.grade,
-      day: group.day,
-      time: group.time,
-    });
+    setFormName(group.name);
+    setFormGrade(group.grade);
+    setFormDays(group.days);
+    setFormTime(group.time);
     setEditingGroup(group);
   };
 
@@ -102,8 +120,8 @@ export default function Groups() {
       <div className="space-y-2">
         <label className="text-sm font-medium">اسم المجموعة</label>
         <Input
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={formName}
+          onChange={(e) => setFormName(e.target.value)}
           placeholder="مثال: مجموعة الساعة 10"
         />
       </div>
@@ -111,10 +129,8 @@ export default function Groups() {
       <div className="space-y-2">
         <label className="text-sm font-medium">السنة الدراسية</label>
         <Select
-          value={formData.grade}
-          onValueChange={(value: '1' | '2' | '3') =>
-            setFormData({ ...formData, grade: value })
-          }
+          value={formGrade}
+          onValueChange={(value: '1' | '2' | '3') => setFormGrade(value)}
         >
           <SelectTrigger>
             <SelectValue />
@@ -128,18 +144,18 @@ export default function Groups() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">يوم الحصة</label>
+        <label className="text-sm font-medium">أيام الحصة</label>
         <Select
-          value={formData.day}
-          onValueChange={(value) => setFormData({ ...formData, day: value })}
+          value={formDays.join(',')}
+          onValueChange={(value) => setFormDays(value.split(','))}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {DAYS_AR.map((day) => (
-              <SelectItem key={day} value={day}>
-                {day}
+            {GROUP_DAY_PATTERNS.map((pattern) => (
+              <SelectItem key={pattern.label} value={pattern.days.join(',')}>
+                {pattern.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -150,8 +166,8 @@ export default function Groups() {
         <label className="text-sm font-medium">وقت الحصة</label>
         <Input
           type="time"
-          value={formData.time}
-          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+          value={formTime}
+          onChange={(e) => setFormTime(e.target.value)}
           dir="ltr"
         />
       </div>
@@ -176,7 +192,10 @@ export default function Groups() {
               إدارة المجموعات وجدول الحصص
             </p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <Dialog open={isAddOpen} onOpenChange={(open) => {
+            setIsAddOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-5 w-5" />
@@ -186,6 +205,7 @@ export default function Groups() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>إضافة مجموعة جديدة</DialogTitle>
+                <DialogDescription>أدخل بيانات المجموعة الجديدة</DialogDescription>
               </DialogHeader>
               <GroupForm />
             </DialogContent>
@@ -238,7 +258,7 @@ export default function Groups() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredGroups.length > 0 ? (
             filteredGroups.map((group) => {
-              const studentsCount = getStudentsByGroup(group.name).length;
+              const studentsCount = getStudentsByGroup(group.id).length;
               const isToday = todayGroups.some(g => g.id === group.id);
 
               return (
@@ -265,7 +285,7 @@ export default function Groups() {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        <span>{group.day}</span>
+                        <span>{group.days.join(' - ')}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
@@ -278,14 +298,19 @@ export default function Groups() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Link to={`/attendance?group=${encodeURIComponent(group.name)}`} className="flex-1">
+                      <Link to={`/attendance?group=${encodeURIComponent(group.id)}`} className="flex-1">
                         <Button variant="outline" className="w-full">
                           تسجيل الحضور
                         </Button>
                       </Link>
                       <Dialog
                         open={editingGroup?.id === group.id}
-                        onOpenChange={(open) => !open && setEditingGroup(null)}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setEditingGroup(null);
+                            resetForm();
+                          }
+                        }}
                       >
                         <DialogTrigger asChild>
                           <Button
@@ -299,6 +324,7 @@ export default function Groups() {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>تعديل المجموعة</DialogTitle>
+                            <DialogDescription>قم بتعديل بيانات المجموعة</DialogDescription>
                           </DialogHeader>
                           <GroupForm isEdit />
                         </DialogContent>
