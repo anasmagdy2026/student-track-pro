@@ -179,9 +179,9 @@ export default function Students() {
                 </SelectItem>
               ))
             ) : (
-              <SelectItem value="" disabled>
+              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
                 لا توجد مجموعات لهذه السنة الدراسية
-              </SelectItem>
+              </div>
             )}
           </SelectContent>
         </Select>
