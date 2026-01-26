@@ -15,6 +15,7 @@ import { useStudents } from '@/hooks/useStudents';
 import { useAttendance } from '@/hooks/useAttendance';
 import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
+import { useGroups } from '@/hooks/useGroups';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
 import {
   sendWhatsAppMessage,
@@ -41,12 +42,14 @@ export default function StudentProfile() {
   const { getStudentAttendance, getAttendanceStats, markAsNotified } = useAttendance();
   const { getStudentPayments, markAsNotified: markPaymentNotified } = usePayments();
   const { getStudentResultsWithExams, markResultAsNotified } = useExams();
+  const { getGroupById } = useGroups();
 
   const student = getStudentById(id || '');
   const attendance = getStudentAttendance(id || '');
   const attendanceStats = getAttendanceStats(id || '');
   const payments = getStudentPayments(id || '');
   const examResults = getStudentResultsWithExams(id || '');
+  const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
 
   if (!student) {
     return (
@@ -64,7 +67,7 @@ export default function StudentProfile() {
   const handleSendAbsenceMessage = (date: string, attendanceId: string) => {
     const formattedDate = new Date(date).toLocaleDateString('ar-EG');
     const message = createAbsenceMessage(student.name, formattedDate);
-    sendWhatsAppMessage(student.parentPhone, message);
+    sendWhatsAppMessage(student.parent_phone, message);
     markAsNotified(attendanceId);
     toast.success('تم فتح الواتساب');
   };
@@ -72,15 +75,15 @@ export default function StudentProfile() {
   const handleSendPaymentReminder = (month: string, paymentId: string) => {
     const monthIndex = parseInt(month.split('-')[1]) - 1;
     const monthName = MONTHS_AR[monthIndex];
-    const message = createPaymentReminderMessage(student.name, monthName, student.monthlyFee);
-    sendWhatsAppMessage(student.parentPhone, message);
+    const message = createPaymentReminderMessage(student.name, monthName, student.monthly_fee);
+    sendWhatsAppMessage(student.parent_phone, message);
     markPaymentNotified(paymentId);
     toast.success('تم فتح الواتساب');
   };
 
   const handleSendExamResult = (resultId: string, examName: string, score: number, maxScore: number) => {
     const message = createExamResultMessage(student.name, examName, score, maxScore);
-    sendWhatsAppMessage(student.parentPhone, message);
+    sendWhatsAppMessage(student.parent_phone, message);
     markResultAsNotified(resultId);
     toast.success('تم فتح الواتساب');
   };
@@ -117,15 +120,15 @@ export default function StudentProfile() {
               </div>
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">المجموعة</p>
-                <p className="font-bold text-lg">{student.group}</p>
+                <p className="font-bold text-lg">{studentGroup?.name || '-'}</p>
               </div>
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">رسوم الشهر</p>
-                <p className="font-bold text-lg">{student.monthlyFee} جنيه</p>
+                <p className="font-bold text-lg">{student.monthly_fee} جنيه</p>
               </div>
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">هاتف ولي الأمر</p>
-                <p className="font-bold text-lg font-mono" dir="ltr">{student.parentPhone}</p>
+                <p className="font-bold text-lg font-mono" dir="ltr">{student.parent_phone}</p>
               </div>
             </div>
           </CardContent>
@@ -305,7 +308,7 @@ export default function StudentProfile() {
                   </TableHeader>
                   <TableBody>
                     {examResults.map((result) => {
-                      const percentage = Math.round((result.score / (result.exam?.maxScore || 1)) * 100);
+                      const percentage = Math.round((result.score / (result.exam?.max_score || 1)) * 100);
                       return (
                         <TableRow key={result.id}>
                           <TableCell className="font-medium">
@@ -315,7 +318,7 @@ export default function StudentProfile() {
                             {result.exam && new Date(result.exam.date).toLocaleDateString('ar-EG')}
                           </TableCell>
                           <TableCell>
-                            {result.score} / {result.exam?.maxScore}
+                            {result.score} / {result.exam?.max_score}
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -339,7 +342,7 @@ export default function StudentProfile() {
                                   result.id,
                                   result.exam?.name || '',
                                   result.score,
-                                  result.exam?.maxScore || 100
+                                  result.exam?.max_score || 100
                                 )
                               }
                               disabled={result.notified}

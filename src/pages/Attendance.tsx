@@ -25,9 +25,9 @@ import { toast } from 'sonner';
 
 export default function Attendance() {
   const [searchParams] = useSearchParams();
-  const { students, getStudentByCode, getAllGroups } = useStudents();
+  const { students, getStudentByCode } = useStudents();
   const { markAttendance, getAttendanceByDate, markAsNotified } = useAttendance();
-  const { groups, getTodayGroups } = useGroups();
+  const { groups, getTodayGroups, getGroupById } = useGroups();
 
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
@@ -36,7 +36,7 @@ export default function Attendance() {
   const [studentCode, setStudentCode] = useState('');
 
   const todayGroups = getTodayGroups();
-  const allGroups = getAllGroups();
+  const allGroupNames = groups.map(g => g.name);
   const todayAttendance = getAttendanceByDate(selectedDate);
 
   // Auto-select today's group if available
@@ -48,12 +48,13 @@ export default function Attendance() {
 
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
-    const matchesGroup = selectedGroup === 'all' || student.group === selectedGroup;
+    const studentGroup = student.group_id ? getGroupById(student.group_id) : null;
+    const matchesGroup = selectedGroup === 'all' || studentGroup?.name === selectedGroup;
     return matchesGrade && matchesGroup;
   });
 
   const getStudentAttendance = (studentId: string) => {
-    return todayAttendance.find((a) => a.studentId === studentId);
+    return todayAttendance.find((a) => a.student_id === studentId);
   };
 
   const handleAttendanceChange = (studentId: string, present: boolean) => {
@@ -89,7 +90,7 @@ export default function Attendance() {
 
     const formattedDate = new Date(selectedDate).toLocaleDateString('ar-EG');
     const message = createAbsenceMessage(student.name, formattedDate);
-    sendWhatsAppMessage(student.parentPhone, message);
+    sendWhatsAppMessage(student.parent_phone, message);
     markAsNotified(attendance.id);
     toast.success('تم فتح الواتساب');
   };
@@ -210,9 +211,9 @@ export default function Attendance() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل المجموعات</SelectItem>
-                    {allGroups.map((group) => (
-                      <SelectItem key={group} value={group}>
-                        {group}
+                    {allGroupNames.map((groupName) => (
+                      <SelectItem key={groupName} value={groupName}>
+                        {groupName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -259,6 +260,7 @@ export default function Attendance() {
                   const attendance = getStudentAttendance(student.id);
                   const isPresent = attendance?.present ?? false;
                   const isAbsent = attendance && !attendance.present;
+                  const studentGroup = student.group_id ? getGroupById(student.group_id) : null;
 
                   return (
                     <div
@@ -296,7 +298,7 @@ export default function Attendance() {
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {GRADE_LABELS[student.grade]} - {student.group}
+                            {GRADE_LABELS[student.grade]} - {studentGroup?.name || '-'}
                           </p>
                         </div>
                       </div>

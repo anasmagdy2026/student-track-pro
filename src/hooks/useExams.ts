@@ -24,12 +24,12 @@ export function useExams() {
 
   const deleteExam = (id: string) => {
     setExams(prev => prev.filter(exam => exam.id !== id));
-    setResults(prev => prev.filter(result => result.examId !== id));
+    setResults(prev => prev.filter(result => result.exam_id !== id));
   };
 
   const addResult = (examId: string, studentId: string, score: number) => {
     const existingIndex = results.findIndex(
-      r => r.examId === examId && r.studentId === studentId
+      r => r.exam_id === examId && r.student_id === studentId
     );
 
     if (existingIndex >= 0) {
@@ -41,12 +41,20 @@ export function useExams() {
     } else {
       const newResult: ExamResult = {
         id: crypto.randomUUID(),
-        examId,
-        studentId,
+        exam_id: examId,
+        student_id: studentId,
         score,
         notified: false,
       };
       setResults(prev => [...prev, newResult]);
+    }
+  };
+
+  const saveAllResults = async (examId: string, scoresMap: Record<string, number>) => {
+    for (const [studentId, score] of Object.entries(scoresMap)) {
+      if (score !== undefined && !isNaN(score)) {
+        addResult(examId, studentId, score);
+      }
     }
   };
 
@@ -59,19 +67,19 @@ export function useExams() {
   };
 
   const getExamResults = (examId: string) => {
-    return results.filter(r => r.examId === examId);
+    return results.filter(r => r.exam_id === examId);
   };
 
   const getStudentResults = (studentId: string) => {
-    return results.filter(r => r.studentId === studentId);
+    return results.filter(r => r.student_id === studentId);
   };
 
   const getStudentResultsWithExams = (studentId: string) => {
     return results
-      .filter(r => r.studentId === studentId)
+      .filter(r => r.student_id === studentId)
       .map(r => ({
         ...r,
-        exam: exams.find(e => e.id === r.examId),
+        exam: exams.find(e => e.id === r.exam_id),
       }))
       .filter(r => r.exam);
   };
@@ -87,6 +95,7 @@ export function useExams() {
     updateExam,
     deleteExam,
     addResult,
+    saveAllResults,
     markResultAsNotified,
     getExamResults,
     getStudentResults,
