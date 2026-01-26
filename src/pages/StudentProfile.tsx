@@ -1,8 +1,16 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -16,6 +24,7 @@ import { useAttendance } from '@/hooks/useAttendance';
 import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useGroups } from '@/hooks/useGroups';
+import { useLessons } from '@/hooks/useLessons';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
 import {
   sendWhatsAppMessage,
@@ -32,6 +41,8 @@ import {
   MessageCircle,
   CheckCircle,
   XCircle,
+  BookOpen,
+  Mic,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,6 +54,9 @@ export default function StudentProfile() {
   const { getStudentPayments, markAsNotified: markPaymentNotified } = usePayments();
   const { getStudentResultsWithExams, markResultAsNotified } = useExams();
   const { getGroupById } = useGroups();
+  const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
+
+  const [filterMonth, setFilterMonth] = useState<string>('all');
 
   const student = getStudentById(id || '');
   const attendance = getStudentAttendance(id || '');
@@ -50,6 +64,32 @@ export default function StudentProfile() {
   const payments = getStudentPayments(id || '');
   const examResults = getStudentResultsWithExams(id || '');
   const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
+
+  // Get lesson sheets and recitations for this student
+  const studentSheets = getStudentSheets(id || '');
+  const studentRecitations = getStudentRecitations(id || '');
+
+  // Get available months from lessons
+  const availableMonths = Array.from(
+    new Set(
+      lessons.map((l) => l.date.substring(0, 7))
+    )
+  ).sort().reverse();
+
+  // Filter lesson data by month
+  const filteredSheets = filterMonth === 'all'
+    ? studentSheets
+    : studentSheets.filter((s) => {
+        const lesson = getLessonById(s.lesson_id);
+        return lesson?.date.startsWith(filterMonth);
+      });
+
+  const filteredRecitations = filterMonth === 'all'
+    ? studentRecitations
+    : studentRecitations.filter((r) => {
+        const lesson = getLessonById(r.lesson_id);
+        return lesson?.date.startsWith(filterMonth);
+      });
 
   if (!student) {
     return (
@@ -86,6 +126,11 @@ export default function StudentProfile() {
     sendWhatsAppMessage(student.parent_phone, message);
     markResultAsNotified(resultId);
     toast.success('تم فتح الواتساب');
+  };
+
+  const getMonthLabel = (month: string) => {
+    const [year, monthNum] = month.split('-');
+    return `${MONTHS_AR[parseInt(monthNum) - 1]} ${year}`;
   };
 
   return (
@@ -213,6 +258,134 @@ export default function StudentProfile() {
                 لا يوجد سجل حضور بعد
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Lesson Scores (Sheets & Recitations) */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                درجات الحصص (الشيتات والتسميع)
+              </CardTitle>
+              <Select value={filterMonth} onValueChange={setFilterMonth}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="فلترة بالشهر" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل الشهور</SelectItem>
+                  {availableMonths.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {getMonthLabel(month)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Sheets */}
+              <div>
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  الشيتات
+                </h3>
+                {filteredSheets.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredSheets.map((sheet) => {
+                      const lesson = getLessonById(sheet.lesson_id);
+                      if (!lesson) return null;
+                      const percentage = Math.round((sheet.score / lesson.sheet_max_score) * 100);
+                      return (
+                        <div
+                          key={sheet.id}
+                          className="flex items-center justify-between p-3 bg-muted rounded-xl"
+                        >
+                          <div>
+                            <p className="font-medium">{lesson.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(lesson.date).toLocaleDateString('ar-EG')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">
+                              {sheet.score} / {lesson.sheet_max_score}
+                            </span>
+                            <Badge
+                              className={
+                                percentage >= 75
+                                  ? 'bg-success text-success-foreground'
+                                  : percentage >= 50
+                                  ? 'bg-warning text-warning-foreground'
+                                  : 'bg-destructive text-destructive-foreground'
+                              }
+                            >
+                              {percentage}%
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                    لا توجد درجات شيتات
+                  </p>
+                )}
+              </div>
+
+              {/* Recitations */}
+              <div>
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Mic className="h-5 w-5 text-secondary" />
+                  التسميع
+                </h3>
+                {filteredRecitations.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredRecitations.map((rec) => {
+                      const lesson = getLessonById(rec.lesson_id);
+                      if (!lesson) return null;
+                      const percentage = Math.round((rec.score / lesson.recitation_max_score) * 100);
+                      return (
+                        <div
+                          key={rec.id}
+                          className="flex items-center justify-between p-3 bg-muted rounded-xl"
+                        >
+                          <div>
+                            <p className="font-medium">{lesson.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(lesson.date).toLocaleDateString('ar-EG')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">
+                              {rec.score} / {lesson.recitation_max_score}
+                            </span>
+                            <Badge
+                              className={
+                                percentage >= 75
+                                  ? 'bg-success text-success-foreground'
+                                  : percentage >= 50
+                                  ? 'bg-warning text-warning-foreground'
+                                  : 'bg-destructive text-destructive-foreground'
+                              }
+                            >
+                              {percentage}%
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                    لا توجد درجات تسميع
+                  </p>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 

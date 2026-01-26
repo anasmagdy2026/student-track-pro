@@ -51,11 +51,12 @@ export function useExams() {
   };
 
   const saveAllResults = async (examId: string, scoresMap: Record<string, number>) => {
-    for (const [studentId, score] of Object.entries(scoresMap)) {
+    const promises = Object.entries(scoresMap).map(async ([studentId, score]) => {
       if (score !== undefined && !isNaN(score)) {
-        addResult(examId, studentId, score);
+        await addResult(examId, studentId, score);
       }
-    }
+    });
+    await Promise.all(promises);
   };
 
   const markResultAsNotified = (resultId: string) => {

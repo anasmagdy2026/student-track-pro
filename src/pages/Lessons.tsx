@@ -164,7 +164,7 @@ export default function Lessons() {
 
   const lessonGroup = selectedLesson ? getGroupById(selectedLesson.group_id || '') : null;
   const lessonStudents = selectedLesson && selectedLesson.group_id
-    ? getStudentsByGroup(lessonGroup?.name || '')
+    ? getStudentsByGroup(selectedLesson.group_id)
     : [];
 
   return (
@@ -306,7 +306,7 @@ export default function Lessons() {
               const sheets = getLessonSheets(lesson.id);
               const recs = getLessonRecitations(lesson.id);
               const group = getGroupById(lesson.group_id || '');
-              const students = group ? getStudentsByGroup(group.name) : [];
+              const students = group ? getStudentsByGroup(group.id) : [];
 
               return (
                 <Card key={lesson.id} className="hover:shadow-md transition-shadow">

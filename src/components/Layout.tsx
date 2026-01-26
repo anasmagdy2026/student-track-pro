@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,8 +13,13 @@ import {
   GraduationCap,
   UsersRound,
   BookOpen,
+  ChevronRight,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface LayoutProps {
   children: ReactNode;
@@ -32,6 +37,7 @@ const navItems = [
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useLocalStorage('sidebar_collapsed', false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -40,6 +46,11 @@ export function Layout({ children }: LayoutProps) {
     logout();
     navigate('/');
   };
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,26 +80,47 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-full w-72 bg-sidebar text-sidebar-foreground transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 right-0 z-50 h-full bg-sidebar text-sidebar-foreground transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-        }`}
+        } ${isCollapsed ? 'lg:w-20' : 'lg:w-72'} w-72`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-sidebar-primary rounded-xl flex items-center justify-center">
-                <GraduationCap className="h-7 w-7 text-sidebar-primary-foreground" />
+          <div className="p-4 border-b border-sidebar-border">
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+              <div className={`${isCollapsed ? 'w-10 h-10' : 'w-12 h-12'} bg-sidebar-primary rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <GraduationCap className={`${isCollapsed ? 'h-5 w-5' : 'h-7 w-7'} text-sidebar-primary-foreground`} />
               </div>
-              <div>
-                <h1 className="font-bold text-lg">مستر محمد مجدي</h1>
-                <p className="text-sm text-sidebar-foreground/70">نظام متابعة الطلاب</p>
-              </div>
+              {!isCollapsed && (
+                <div>
+                  <h1 className="font-bold text-lg">مستر محمد مجدي</h1>
+                  <p className="text-sm text-sidebar-foreground/70">نظام متابعة الطلاب</p>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Collapse Button - Desktop Only */}
+          <div className="hidden lg:flex p-2 border-b border-sidebar-border justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-full justify-center gap-2 text-sidebar-foreground hover:bg-sidebar-accent"
+            >
+              {isCollapsed ? (
+                <PanelLeft className="h-5 w-5" />
+              ) : (
+                <>
+                  <PanelLeftClose className="h-5 w-5" />
+                  <span>تقليص القائمة</span>
+                </>
+              )}
+            </Button>
+          </div>
+
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
@@ -97,38 +129,46 @@ export function Layout({ children }: LayoutProps) {
                   key={item.path}
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                       : 'hover:bg-sidebar-accent text-sidebar-foreground'
-                  }`}
+                  } ${isCollapsed ? 'justify-center' : ''}`}
+                  title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {!isCollapsed && <span className="font-medium">{item.label}</span>}
                 </Link>
               );
             })}
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border space-y-4">
+          <div className="p-3 border-t border-sidebar-border space-y-3">
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className={`w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                isCollapsed ? 'justify-center px-0' : 'justify-start'
+              }`}
               onClick={handleLogout}
+              title={isCollapsed ? 'تسجيل الخروج' : undefined}
             >
-              <LogOut className="h-5 w-5" />
-              <span>تسجيل الخروج</span>
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span>تسجيل الخروج</span>}
             </Button>
-            <p className="text-xs text-center text-sidebar-foreground/50">
-              تصميم وبرمجة: أنس أبو المجد
-            </p>
+            {!isCollapsed && (
+              <p className="text-xs text-center text-sidebar-foreground/50">
+                تصميم وبرمجة: أنس أبو المجد
+              </p>
+            )}
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="lg:mr-72 min-h-screen pt-16 lg:pt-0">
+      <main className={`min-h-screen pt-16 lg:pt-0 transition-all duration-300 ${
+        isCollapsed ? 'lg:mr-20' : 'lg:mr-72'
+      }`}>
         <div className="p-4 lg:p-8">{children}</div>
       </main>
     </div>
