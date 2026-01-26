@@ -6,25 +6,25 @@ export function usePayments() {
 
   const addPayment = (studentId: string, month: string, amount: number) => {
     const existingIndex = payments.findIndex(
-      p => p.studentId === studentId && p.month === month
+      p => p.student_id === studentId && p.month === month
     );
 
     if (existingIndex >= 0) {
       setPayments(prev =>
         prev.map((p, i) =>
           i === existingIndex
-            ? { ...p, paid: true, paidAt: new Date().toISOString(), amount }
+            ? { ...p, paid: true, paid_at: new Date().toISOString(), amount }
             : p
         )
       );
     } else {
       const newPayment: Payment = {
         id: crypto.randomUUID(),
-        studentId,
+        student_id: studentId,
         month,
         amount,
         paid: true,
-        paidAt: new Date().toISOString(),
+        paid_at: new Date().toISOString(),
         notified: false,
       };
       setPayments(prev => [...prev, newPayment]);
@@ -48,7 +48,7 @@ export function usePayments() {
   };
 
   const getStudentPayments = (studentId: string) => {
-    return payments.filter(p => p.studentId === studentId);
+    return payments.filter(p => p.student_id === studentId);
   };
 
   const getUnpaidStudents = (month: string) => {
@@ -57,7 +57,7 @@ export function usePayments() {
 
   const isMonthPaid = (studentId: string, month: string) => {
     const payment = payments.find(
-      p => p.studentId === studentId && p.month === month
+      p => p.student_id === studentId && p.month === month
     );
     return payment?.paid ?? false;
   };

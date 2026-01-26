@@ -6,7 +6,7 @@ export function useAttendance() {
 
   const markAttendance = (studentId: string, date: string, present: boolean) => {
     const existingIndex = attendance.findIndex(
-      a => a.studentId === studentId && a.date === date
+      a => a.student_id === studentId && a.date === date
     );
 
     if (existingIndex >= 0) {
@@ -18,7 +18,7 @@ export function useAttendance() {
     } else {
       const newAttendance: Attendance = {
         id: crypto.randomUUID(),
-        studentId,
+        student_id: studentId,
         date,
         present,
         notified: false,
@@ -40,7 +40,7 @@ export function useAttendance() {
   };
 
   const getStudentAttendance = (studentId: string) => {
-    return attendance.filter(a => a.studentId === studentId);
+    return attendance.filter(a => a.student_id === studentId);
   };
 
   const getAbsentStudents = (date: string) => {
@@ -48,7 +48,7 @@ export function useAttendance() {
   };
 
   const getAttendanceStats = (studentId: string) => {
-    const records = attendance.filter(a => a.studentId === studentId);
+    const records = attendance.filter(a => a.student_id === studentId);
     const present = records.filter(a => a.present).length;
     const absent = records.filter(a => !a.present).length;
     return { present, absent, total: records.length };
