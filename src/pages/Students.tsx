@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Layout } from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,8 +28,10 @@ import {
 } from '@/components/ui/table';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
+import { StudentForm } from '@/components/forms/StudentForm';
+import { StudentCard } from '@/components/StudentCard';
 import { GRADE_LABELS, Student } from '@/types';
-import { Plus, Search, Eye, Pencil, Trash2, Users } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
@@ -42,21 +44,7 @@ export default function Students() {
   const [filterGroup, setFilterGroup] = useState<string>('all');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-
-  // Form state - مفصولة لتجنب مشكلة الكتابة
-  const [formName, setFormName] = useState('');
-  const [formGrade, setFormGrade] = useState<'1' | '2' | '3'>('1');
-  const [formGroupId, setFormGroupId] = useState('');
-  const [formParentPhone, setFormParentPhone] = useState('');
-  const [formMonthlyFee, setFormMonthlyFee] = useState(0);
-
-  // المجموعات المفلترة حسب السنة الدراسية
-  const availableGroups = getGroupsByGrade(formGrade);
-
-  // إعادة تعيين المجموعة عند تغيير السنة الدراسية
-  useEffect(() => {
-    setFormGroupId('');
-  }, [formGrade]);
+  const [cardStudent, setCardStudent] = useState<Student | null>(null);
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -67,48 +55,38 @@ export default function Students() {
     return matchesSearch && matchesGrade && matchesGroup;
   });
 
-  const resetForm = () => {
-    setFormName('');
-    setFormGrade('1');
-    setFormGroupId('');
-    setFormParentPhone('');
-    setFormMonthlyFee(0);
-  };
-
-  const handleAddStudent = async () => {
-    if (!formName || !formGroupId || !formParentPhone) {
+  const handleAddStudent = async (data: {
+    name: string;
+    grade: '1' | '2' | '3';
+    group_id: string;
+    parent_phone: string;
+    monthly_fee: number;
+  }) => {
+    if (!data.name || !data.group_id || !data.parent_phone) {
       toast.error('برجاء ملء جميع البيانات المطلوبة');
       return;
     }
     try {
-      await addStudent({
-        name: formName,
-        grade: formGrade,
-        group_id: formGroupId,
-        parent_phone: formParentPhone,
-        monthly_fee: formMonthlyFee,
-      });
+      await addStudent(data);
       toast.success('تم إضافة الطالب بنجاح');
-      resetForm();
       setIsAddOpen(false);
     } catch (error) {
       toast.error('حدث خطأ أثناء إضافة الطالب');
     }
   };
 
-  const handleUpdateStudent = async () => {
+  const handleUpdateStudent = async (data: {
+    name: string;
+    grade: '1' | '2' | '3';
+    group_id: string;
+    parent_phone: string;
+    monthly_fee: number;
+  }) => {
     if (!editingStudent) return;
     try {
-      await updateStudent(editingStudent.id, {
-        name: formName,
-        grade: formGrade,
-        group_id: formGroupId,
-        parent_phone: formParentPhone,
-        monthly_fee: formMonthlyFee,
-      });
+      await updateStudent(editingStudent.id, data);
       toast.success('تم تحديث بيانات الطالب');
       setEditingStudent(null);
-      resetForm();
     } catch (error) {
       toast.error('حدث خطأ أثناء تحديث بيانات الطالب');
     }
@@ -125,104 +103,6 @@ export default function Students() {
     }
   };
 
-  const openEditDialog = (student: Student) => {
-    setFormName(student.name);
-    setFormGrade(student.grade);
-    setFormGroupId(student.group_id || '');
-    setFormParentPhone(student.parent_phone);
-    setFormMonthlyFee(student.monthly_fee);
-    setEditingStudent(student);
-  };
-
-  const StudentForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">اسم الطالب</label>
-        <Input
-          value={formName}
-          onChange={(e) => setFormName(e.target.value)}
-          placeholder="أدخل اسم الطالب"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">السنة الدراسية</label>
-        <Select
-          value={formGrade}
-          onValueChange={(value: '1' | '2' | '3') => setFormGrade(value)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">أولى ثانوي</SelectItem>
-            <SelectItem value="2">تانية ثانوي</SelectItem>
-            <SelectItem value="3">تالتة ثانوي</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">المجموعة</label>
-        <Select
-          value={formGroupId}
-          onValueChange={setFormGroupId}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="اختر المجموعة" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableGroups.length > 0 ? (
-              availableGroups.map((group) => (
-                <SelectItem key={group.id} value={group.id}>
-                  {group.name} ({group.time}) - {group.days.join(' / ')}
-                </SelectItem>
-              ))
-            ) : (
-              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                لا توجد مجموعات لهذه السنة الدراسية
-              </div>
-            )}
-          </SelectContent>
-        </Select>
-        {availableGroups.length === 0 && (
-          <p className="text-xs text-muted-foreground">
-            قم بإنشاء مجموعة لهذه السنة الدراسية أولاً
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">رقم واتساب ولي الأمر</label>
-        <Input
-          value={formParentPhone}
-          onChange={(e) => setFormParentPhone(e.target.value)}
-          placeholder="01xxxxxxxxx"
-          dir="ltr"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">قيمة الدرس الشهرية (جنيه)</label>
-        <Input
-          type="number"
-          value={formMonthlyFee || ''}
-          onChange={(e) => setFormMonthlyFee(Number(e.target.value))}
-          placeholder="0"
-          dir="ltr"
-        />
-      </div>
-
-      <Button
-        onClick={isEdit ? handleUpdateStudent : handleAddStudent}
-        className="w-full"
-        disabled={availableGroups.length === 0 && !isEdit}
-      >
-        {isEdit ? 'حفظ التعديلات' : 'إضافة الطالب'}
-      </Button>
-    </div>
-  );
-
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
@@ -234,10 +114,7 @@ export default function Students() {
               إجمالي {students.length} طالب
             </p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={(open) => {
-            setIsAddOpen(open);
-            if (!open) resetForm();
-          }}>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-5 w-5" />
@@ -249,7 +126,11 @@ export default function Students() {
                 <DialogTitle>إضافة طالب جديد</DialogTitle>
                 <DialogDescription>أدخل بيانات الطالب الجديد</DialogDescription>
               </DialogHeader>
-              <StudentForm />
+              <StudentForm
+                groups={groups}
+                getGroupsByGrade={getGroupsByGrade}
+                onSubmit={handleAddStudent}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -332,20 +213,36 @@ export default function Students() {
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </Link>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => setCardStudent(student)}
+                                  >
+                                    <QrCode className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                  <DialogHeader>
+                                    <DialogTitle>بطاقة الطالب</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="flex justify-center">
+                                    <StudentCard student={student} group={group} />
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
                               <Dialog
                                 open={editingStudent?.id === student.id}
                                 onOpenChange={(open) => {
-                                  if (!open) {
-                                    setEditingStudent(null);
-                                    resetForm();
-                                  }
+                                  if (!open) setEditingStudent(null);
                                 }}
                               >
                                 <DialogTrigger asChild>
                                   <Button
                                     size="icon"
                                     variant="ghost"
-                                    onClick={() => openEditDialog(student)}
+                                    onClick={() => setEditingStudent(student)}
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </Button>
@@ -355,7 +252,21 @@ export default function Students() {
                                     <DialogTitle>تعديل بيانات الطالب</DialogTitle>
                                     <DialogDescription>قم بتعديل بيانات الطالب</DialogDescription>
                                   </DialogHeader>
-                                  <StudentForm isEdit />
+                                  {editingStudent && (
+                                    <StudentForm
+                                      initialData={{
+                                        name: editingStudent.name,
+                                        grade: editingStudent.grade,
+                                        group_id: editingStudent.group_id || '',
+                                        parent_phone: editingStudent.parent_phone,
+                                        monthly_fee: editingStudent.monthly_fee,
+                                      }}
+                                      groups={groups}
+                                      getGroupsByGrade={getGroupsByGrade}
+                                      onSubmit={handleUpdateStudent}
+                                      isEdit
+                                    />
+                                  )}
                                 </DialogContent>
                               </Dialog>
                               <Button

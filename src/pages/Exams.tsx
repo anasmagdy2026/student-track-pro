@@ -30,12 +30,11 @@ import {
 import {
   FileText,
   Plus,
-  Pencil,
   Trash2,
   MessageCircle,
-  Users,
   Search,
   QrCode,
+  Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,6 +45,7 @@ export default function Exams() {
     exams,
     addExam,
     deleteExam,
+    addResult,
     saveAllResults,
     getExamResults,
     markResultAsNotified,
@@ -56,8 +56,9 @@ export default function Exams() {
   const [isResultsOpen, setIsResultsOpen] = useState(false);
   const [studentCode, setStudentCode] = useState('');
   const [codeScore, setCodeScore] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Form state - مفصولة لتجنب مشكلة الكتابة
+  // Form state
   const [examName, setExamName] = useState('');
   const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0]);
   const [examMaxScore, setExamMaxScore] = useState(100);
@@ -111,9 +112,11 @@ export default function Exams() {
       scoresMap[r.student_id] = r.score;
     });
     setScores(scoresMap);
+    setSearchTerm('');
     setIsResultsOpen(true);
   };
 
+  // إضافة درجة فردية فوراً عند الضغط على "إضافة"
   const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentCode.trim() || !selectedExam) return;
@@ -129,10 +132,17 @@ export default function Exams() {
         toast.error(`الدرجة يجب أن تكون بين 0 و ${selectedExam.max_score}`);
         return;
       }
-      setScores({ ...scores, [student.id]: score });
-      toast.success(`تم تسجيل درجة: ${student.name} - ${score}/${selectedExam.max_score}`);
-      setStudentCode('');
-      setCodeScore('');
+      
+      // حفظ الدرجة فوراً في قاعدة البيانات
+      try {
+        await addResult(selectedExam.id, student.id, score);
+        setScores({ ...scores, [student.id]: score });
+        toast.success(`✅ تم حفظ درجة: ${student.name} - ${score}/${selectedExam.max_score}`);
+        setStudentCode('');
+        setCodeScore('');
+      } catch (error) {
+        toast.error('حدث خطأ أثناء حفظ الدرجة');
+      }
     } else {
       toast.error('كود الطالب غير موجود');
     }
@@ -142,8 +152,7 @@ export default function Exams() {
     if (!selectedExam) return;
     try {
       await saveAllResults(selectedExam.id, scores);
-      toast.success('تم حفظ جميع الدرجات');
-      setIsResultsOpen(false);
+      toast.success('✅ تم حفظ جميع الدرجات بنجاح');
     } catch (error) {
       toast.error('حدث خطأ أثناء حفظ الدرجات');
     }
@@ -175,6 +184,13 @@ export default function Exams() {
   const examStudents = selectedExam
     ? students.filter((s) => s.grade === selectedExam.grade)
     : [];
+
+  // فلترة الطلاب حسب البحث
+  const filteredExamStudents = examStudents.filter(
+    (s) =>
+      s.name.includes(searchTerm) ||
+      s.code.includes(searchTerm)
+  );
 
   return (
     <Layout>
@@ -291,7 +307,6 @@ export default function Exams() {
                           variant="outline"
                           onClick={() => openResults(exam)}
                         >
-                          <Pencil className="h-4 w-4 ml-2" />
                           إدخال الدرجات
                         </Button>
                         <Button
@@ -325,12 +340,12 @@ export default function Exams() {
 
         {/* Results Dialog */}
         <Dialog open={isResultsOpen} onOpenChange={setIsResultsOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 إدخال درجات: {selectedExam?.name} (الدرجة النهائية: {selectedExam?.max_score})
               </DialogTitle>
-              <DialogDescription>أدخل درجات الطلاب</DialogDescription>
+              <DialogDescription>أدخل درجات الطلاب - يتم الحفظ تلقائياً عند إضافة درجة بالكود</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               {/* Quick Code Entry */}
@@ -338,7 +353,7 @@ export default function Exams() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <QrCode className="h-4 w-4 text-secondary" />
-                    إدخال سريع بالكود
+                    إدخال سريع بالكود (يحفظ تلقائياً)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -364,15 +379,26 @@ export default function Exams() {
                       dir="ltr"
                     />
                     <Button type="submit" size="sm">
-                      إضافة
+                      إضافة الدرجة
                     </Button>
                   </form>
                 </CardContent>
               </Card>
 
-              {examStudents.length > 0 ? (
+              {/* Search Students */}
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="بحث باسم الطالب أو الكود..."
+                  className="pr-9"
+                />
+              </div>
+
+              {filteredExamStudents.length > 0 ? (
                 <>
-                  {examStudents.map((student) => {
+                  {filteredExamStudents.map((student) => {
                     const results = selectedExam
                       ? getExamResults(selectedExam.id)
                       : [];
@@ -446,16 +472,14 @@ export default function Exams() {
                       </div>
                     );
                   })}
-                  <Button onClick={handleSaveScores} className="w-full">
+                  <Button onClick={handleSaveScores} className="w-full gap-2">
+                    <Save className="h-4 w-4" />
                     حفظ جميع الدرجات
                   </Button>
                 </>
               ) : (
-                <div className="text-center py-8">
-                  <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    لا يوجد طلاب في هذه السنة الدراسية
-                  </p>
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchTerm ? 'لا يوجد طلاب بهذا الاسم أو الكود' : 'لا يوجد طلاب في هذه السنة الدراسية'}
                 </div>
               )}
             </div>

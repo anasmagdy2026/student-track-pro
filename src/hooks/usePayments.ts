@@ -1,45 +1,96 @@
-import { useLocalStorage } from './useLocalStorage';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Payment } from '@/types';
 
 export function usePayments() {
-  const [payments, setPayments] = useLocalStorage<Payment[]>('payments', []);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const addPayment = (studentId: string, month: string, amount: number) => {
-    const existingIndex = payments.findIndex(
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) console.error('Error fetching payments:', error);
+    
+    setPayments(data as Payment[] || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const addPayment = async (studentId: string, month: string, amount: number) => {
+    const existingPayment = payments.find(
       p => p.student_id === studentId && p.month === month
     );
 
-    if (existingIndex >= 0) {
+    if (existingPayment) {
+      const { error } = await supabase
+        .from('payments')
+        .update({ 
+          paid: true, 
+          paid_at: new Date().toISOString(), 
+          amount 
+        })
+        .eq('id', existingPayment.id);
+      
+      if (error) throw error;
+      
       setPayments(prev =>
-        prev.map((p, i) =>
-          i === existingIndex
+        prev.map(p =>
+          p.id === existingPayment.id
             ? { ...p, paid: true, paid_at: new Date().toISOString(), amount }
             : p
         )
       );
     } else {
-      const newPayment: Payment = {
-        id: crypto.randomUUID(),
-        student_id: studentId,
-        month,
-        amount,
-        paid: true,
-        paid_at: new Date().toISOString(),
-        notified: false,
-      };
-      setPayments(prev => [...prev, newPayment]);
+      const { data, error } = await supabase
+        .from('payments')
+        .insert([{
+          student_id: studentId,
+          month,
+          amount,
+          paid: true,
+          paid_at: new Date().toISOString(),
+          notified: false,
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setPayments(prev => [data as Payment, ...prev]);
     }
   };
 
-  const markAsUnpaid = (paymentId: string) => {
+  const markAsUnpaid = async (paymentId: string) => {
+    const { error } = await supabase
+      .from('payments')
+      .update({ paid: false, paid_at: null })
+      .eq('id', paymentId);
+    
+    if (error) throw error;
+    
     setPayments(prev =>
       prev.map(p =>
-        p.id === paymentId ? { ...p, paid: false, paidAt: undefined } : p
+        p.id === paymentId ? { ...p, paid: false, paid_at: undefined } : p
       )
     );
   };
 
-  const markAsNotified = (paymentId: string) => {
+  const markAsNotified = async (paymentId: string) => {
+    const { error } = await supabase
+      .from('payments')
+      .update({ notified: true })
+      .eq('id', paymentId);
+    
+    if (error) throw error;
+    
     setPayments(prev =>
       prev.map(p =>
         p.id === paymentId ? { ...p, notified: true } : p
@@ -62,6 +113,12 @@ export function usePayments() {
     return payment?.paid ?? false;
   };
 
+  const getPaymentByMonth = (studentId: string, month: string) => {
+    return payments.find(
+      p => p.student_id === studentId && p.month === month
+    );
+  };
+
   const getPaymentStats = () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthPayments = payments.filter(p => p.month === currentMonth);
@@ -75,12 +132,15 @@ export function usePayments() {
 
   return {
     payments,
+    loading,
     addPayment,
     markAsUnpaid,
     markAsNotified,
     getStudentPayments,
     getUnpaidStudents,
     isMonthPaid,
+    getPaymentByMonth,
     getPaymentStats,
+    refetch: fetchData,
   };
 }

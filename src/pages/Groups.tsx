@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Layout } from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -21,7 +20,8 @@ import {
 } from '@/components/ui/dialog';
 import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
-import { GRADE_LABELS, DAYS_AR, GROUP_DAY_PATTERNS, Group } from '@/types';
+import { GroupForm } from '@/components/forms/GroupForm';
+import { GRADE_LABELS, DAYS_AR, Group } from '@/types';
 import { Users, Plus, Pencil, Trash2, Clock, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -34,12 +34,6 @@ export default function Groups() {
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [filterDay, setFilterDay] = useState<string>('all');
 
-  // Form state - مفصولة لتجنب مشكلة الكتابة
-  const [formName, setFormName] = useState('');
-  const [formGrade, setFormGrade] = useState<'1' | '2' | '3'>('1');
-  const [formDays, setFormDays] = useState<string[]>(['السبت', 'الإثنين', 'الأربعاء']);
-  const [formTime, setFormTime] = useState('10:00');
-
   const todayGroups = getTodayGroups();
   
   const filteredGroups = filterDay === 'all' 
@@ -48,45 +42,36 @@ export default function Groups() {
     ? todayGroups
     : groups.filter(g => g.days.includes(filterDay));
 
-  const resetForm = () => {
-    setFormName('');
-    setFormGrade('1');
-    setFormDays(['السبت', 'الإثنين', 'الأربعاء']);
-    setFormTime('10:00');
-  };
-
-  const handleAddGroup = async () => {
-    if (!formName) {
+  const handleAddGroup = async (data: {
+    name: string;
+    grade: '1' | '2' | '3';
+    days: string[];
+    time: string;
+  }) => {
+    if (!data.name) {
       toast.error('برجاء إدخال اسم المجموعة');
       return;
     }
     try {
-      await addGroup({
-        name: formName,
-        grade: formGrade,
-        days: formDays,
-        time: formTime,
-      });
+      await addGroup(data);
       toast.success('تم إضافة المجموعة بنجاح');
-      resetForm();
       setIsAddOpen(false);
     } catch (error) {
       toast.error('حدث خطأ أثناء إضافة المجموعة');
     }
   };
 
-  const handleUpdateGroup = async () => {
+  const handleUpdateGroup = async (data: {
+    name: string;
+    grade: '1' | '2' | '3';
+    days: string[];
+    time: string;
+  }) => {
     if (!editingGroup) return;
     try {
-      await updateGroup(editingGroup.id, {
-        name: formName,
-        grade: formGrade,
-        days: formDays,
-        time: formTime,
-      });
+      await updateGroup(editingGroup.id, data);
       toast.success('تم تحديث المجموعة');
       setEditingGroup(null);
-      resetForm();
     } catch (error) {
       toast.error('حدث خطأ أثناء تحديث المجموعة');
     }
@@ -107,80 +92,6 @@ export default function Groups() {
     }
   };
 
-  const openEditDialog = (group: Group) => {
-    setFormName(group.name);
-    setFormGrade(group.grade);
-    setFormDays(group.days);
-    setFormTime(group.time);
-    setEditingGroup(group);
-  };
-
-  const GroupForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">اسم المجموعة</label>
-        <Input
-          value={formName}
-          onChange={(e) => setFormName(e.target.value)}
-          placeholder="مثال: مجموعة الساعة 10"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">السنة الدراسية</label>
-        <Select
-          value={formGrade}
-          onValueChange={(value: '1' | '2' | '3') => setFormGrade(value)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">أولى ثانوي</SelectItem>
-            <SelectItem value="2">تانية ثانوي</SelectItem>
-            <SelectItem value="3">تالتة ثانوي</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">أيام الحصة</label>
-        <Select
-          value={formDays.join(',')}
-          onValueChange={(value) => setFormDays(value.split(','))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {GROUP_DAY_PATTERNS.map((pattern) => (
-              <SelectItem key={pattern.label} value={pattern.days.join(',')}>
-                {pattern.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">وقت الحصة</label>
-        <Input
-          type="time"
-          value={formTime}
-          onChange={(e) => setFormTime(e.target.value)}
-          dir="ltr"
-        />
-      </div>
-
-      <Button
-        onClick={isEdit ? handleUpdateGroup : handleAddGroup}
-        className="w-full"
-      >
-        {isEdit ? 'حفظ التعديلات' : 'إضافة المجموعة'}
-      </Button>
-    </div>
-  );
-
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
@@ -192,10 +103,7 @@ export default function Groups() {
               إدارة المجموعات وجدول الحصص
             </p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={(open) => {
-            setIsAddOpen(open);
-            if (!open) resetForm();
-          }}>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-5 w-5" />
@@ -207,7 +115,7 @@ export default function Groups() {
                 <DialogTitle>إضافة مجموعة جديدة</DialogTitle>
                 <DialogDescription>أدخل بيانات المجموعة الجديدة</DialogDescription>
               </DialogHeader>
-              <GroupForm />
+              <GroupForm onSubmit={handleAddGroup} />
             </DialogContent>
           </Dialog>
         </div>
@@ -306,17 +214,14 @@ export default function Groups() {
                       <Dialog
                         open={editingGroup?.id === group.id}
                         onOpenChange={(open) => {
-                          if (!open) {
-                            setEditingGroup(null);
-                            resetForm();
-                          }
+                          if (!open) setEditingGroup(null);
                         }}
                       >
                         <DialogTrigger asChild>
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => openEditDialog(group)}
+                            onClick={() => setEditingGroup(group)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -326,7 +231,18 @@ export default function Groups() {
                             <DialogTitle>تعديل المجموعة</DialogTitle>
                             <DialogDescription>قم بتعديل بيانات المجموعة</DialogDescription>
                           </DialogHeader>
-                          <GroupForm isEdit />
+                          {editingGroup && (
+                            <GroupForm
+                              initialData={{
+                                name: editingGroup.name,
+                                grade: editingGroup.grade,
+                                days: editingGroup.days,
+                                time: editingGroup.time,
+                              }}
+                              onSubmit={handleUpdateGroup}
+                              isEdit
+                            />
+                          )}
                         </DialogContent>
                       </Dialog>
                       <Button

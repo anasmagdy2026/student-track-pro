@@ -12,6 +12,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -25,6 +32,8 @@ import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useGroups } from '@/hooks/useGroups';
 import { useLessons } from '@/hooks/useLessons';
+import { StudentCard } from '@/components/StudentCard';
+import { MonthlyReport } from '@/components/MonthlyReport';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
 import {
   sendWhatsAppMessage,
@@ -43,6 +52,8 @@ import {
   XCircle,
   BookOpen,
   Mic,
+  QrCode,
+  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,13 +61,14 @@ export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getStudentById } = useStudents();
-  const { getStudentAttendance, getAttendanceStats, markAsNotified } = useAttendance();
-  const { getStudentPayments, markAsNotified: markPaymentNotified } = usePayments();
-  const { getStudentResultsWithExams, markResultAsNotified } = useExams();
+  const { getStudentAttendance, getAttendanceStats, markAsNotified, getAttendanceByMonth } = useAttendance();
+  const { getStudentPayments, markAsNotified: markPaymentNotified, isMonthPaid, getPaymentByMonth } = usePayments();
+  const { exams, getStudentResultsWithExams, markResultAsNotified } = useExams();
   const { getGroupById } = useGroups();
   const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [reportMonth, setReportMonth] = useState<string>(new Date().toISOString().slice(0, 7));
 
   const student = getStudentById(id || '');
   const attendance = getStudentAttendance(id || '');
@@ -90,6 +102,53 @@ export default function StudentProfile() {
         const lesson = getLessonById(r.lesson_id);
         return lesson?.date.startsWith(filterMonth);
       });
+
+  // Prepare monthly report data
+  const getReportData = () => {
+    if (!student) return null;
+
+    const monthAttendance = getAttendanceByMonth(student.id, reportMonth);
+    const attendanceRecords = monthAttendance.map(a => ({
+      date: a.date,
+      present: a.present,
+    }));
+
+    const payment = getPaymentByMonth(student.id, reportMonth);
+    const paymentStatus = {
+      paid: payment?.paid ?? false,
+      amount: payment?.amount ?? student.monthly_fee,
+    };
+
+    const monthLessons = lessons.filter(l => l.date.startsWith(reportMonth));
+    const lessonScores = monthLessons.map(lesson => {
+      const sheet = studentSheets.find(s => s.lesson_id === lesson.id);
+      const recitation = studentRecitations.find(r => r.lesson_id === lesson.id);
+      return {
+        lessonName: lesson.name,
+        sheetScore: sheet?.score ?? null,
+        recitationScore: recitation?.score ?? null,
+        sheetMax: lesson.sheet_max_score,
+        recitationMax: lesson.recitation_max_score,
+      };
+    });
+
+    const monthExams = exams.filter(e => e.date.startsWith(reportMonth) && e.grade === student.grade);
+    const examResultsData = monthExams.map(exam => {
+      const result = examResults.find(r => r.exam?.id === exam.id);
+      return {
+        examName: exam.name,
+        score: result?.score ?? 0,
+        maxScore: exam.max_score,
+      };
+    }).filter(r => r.score > 0);
+
+    return {
+      attendanceRecords,
+      paymentStatus,
+      lessonScores,
+      examResults: examResultsData,
+    };
+  };
 
   if (!student) {
     return (
@@ -133,19 +192,95 @@ export default function StudentProfile() {
     return `${MONTHS_AR[parseInt(monthNum) - 1]} ${year}`;
   };
 
+  const reportData = getReportData();
+
+  // Generate month options for report
+  const currentDate = new Date();
+  const reportMonthOptions = [];
+  for (let i = -6; i <= 1; i++) {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
+    const value = date.toISOString().slice(0, 7);
+    reportMonthOptions.push({
+      value,
+      label: getMonthLabel(value),
+    });
+  }
+
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/students')}>
-            <ArrowRight className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{student.name}</h1>
-            <p className="text-muted-foreground mt-1">
-              كود الطالب: <span className="font-mono font-bold text-primary">{student.code}</span>
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/students')}>
+              <ArrowRight className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{student.name}</h1>
+              <p className="text-muted-foreground mt-1">
+                كود الطالب: <span className="font-mono font-bold text-primary">{student.code}</span>
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {/* Student Card Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <QrCode className="h-4 w-4" />
+                  بطاقة الطالب
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>بطاقة الطالب</DialogTitle>
+                </DialogHeader>
+                <div className="flex justify-center">
+                  <StudentCard student={student} group={studentGroup} />
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Monthly Report Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Download className="h-4 w-4" />
+                  التقرير الشهري
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>التقرير الشهري</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Select value={reportMonth} onValueChange={setReportMonth}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر الشهر" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reportMonthOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {reportData && (
+                    <MonthlyReport
+                      student={student}
+                      group={studentGroup}
+                      month={reportMonth}
+                      attendanceRecords={reportData.attendanceRecords}
+                      paymentStatus={reportData.paymentStatus}
+                      lessonScores={reportData.lessonScores}
+                      examResults={reportData.examResults}
+                    />
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -452,7 +587,7 @@ export default function StudentProfile() {
               </div>
             ) : (
               <p className="text-center text-muted-foreground py-4">
-                لا يوجد سجل مدفوعات بعد
+                لا يوجد سجل مدفوعات
               </p>
             )}
           </CardContent>
@@ -463,7 +598,7 @@ export default function StudentProfile() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
-              درجات الامتحانات
+              نتائج الامتحانات
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -481,14 +616,18 @@ export default function StudentProfile() {
                   </TableHeader>
                   <TableBody>
                     {examResults.map((result) => {
-                      const percentage = Math.round((result.score / (result.exam?.max_score || 1)) * 100);
+                      const percentage = Math.round(
+                        (result.score / (result.exam?.max_score || 1)) * 100
+                      );
                       return (
                         <TableRow key={result.id}>
                           <TableCell className="font-medium">
                             {result.exam?.name}
                           </TableCell>
                           <TableCell>
-                            {result.exam && new Date(result.exam.date).toLocaleDateString('ar-EG')}
+                            {result.exam?.date
+                              ? new Date(result.exam.date).toLocaleDateString('ar-EG')
+                              : '-'}
                           </TableCell>
                           <TableCell>
                             {result.score} / {result.exam?.max_score}
@@ -521,7 +660,7 @@ export default function StudentProfile() {
                               disabled={result.notified}
                             >
                               <MessageCircle className="h-4 w-4 ml-1" />
-                              {result.notified ? 'تم الإرسال' : 'إرسال للولي'}
+                              {result.notified ? 'تم الإرسال' : 'إرسال'}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -532,7 +671,7 @@ export default function StudentProfile() {
               </div>
             ) : (
               <p className="text-center text-muted-foreground py-4">
-                لا يوجد نتائج امتحانات بعد
+                لا توجد نتائج امتحانات
               </p>
             )}
           </CardContent>
