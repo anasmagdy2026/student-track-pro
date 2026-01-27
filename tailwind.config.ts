@@ -19,7 +19,7 @@ export default {
   				'sans-serif'
   			],
   			sans: [
-  				'Montserrat',
+  				'Work Sans',
   				'ui-sans-serif',
   				'system-ui',
   				'sans-serif',
