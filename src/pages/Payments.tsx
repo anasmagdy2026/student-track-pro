@@ -14,6 +14,7 @@ import {
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { usePayments } from '@/hooks/usePayments';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
 import {
   sendWhatsAppMessage,
@@ -27,13 +28,14 @@ import {
   Users,
   Search,
   QrCode,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Payments() {
   const { students, getStudentByCode } = useStudents();
   const { groups, getGroupById } = useGroups();
-  const { addPayment, isMonthPaid, payments, markAsNotified } = usePayments();
+  const { addPayment, isMonthPaid, payments, markAsNotified, markAsUnpaid } = usePayments();
 
   const currentDate = new Date();
   const currentMonth = currentDate.toISOString().slice(0, 7);
@@ -41,6 +43,21 @@ export default function Payments() {
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [studentCode, setStudentCode] = useState('');
+  
+  // تأكيد الدفع
+  const [confirmPayment, setConfirmPayment] = useState<{
+    open: boolean;
+    studentId: string;
+    studentName: string;
+    amount: number;
+  }>({ open: false, studentId: '', studentName: '', amount: 0 });
+
+  // تأكيد الاسترداد
+  const [confirmRefund, setConfirmRefund] = useState<{
+    open: boolean;
+    paymentId: string;
+    studentName: string;
+  }>({ open: false, paymentId: '', studentName: '' });
 
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
@@ -52,9 +69,28 @@ export default function Payments() {
     try {
       await addPayment(studentId, selectedMonth, amount);
       toast.success('✅ تم تسجيل الدفع بنجاح! شكراً لك.');
+      setConfirmPayment({ open: false, studentId: '', studentName: '', amount: 0 });
     } catch (error) {
       toast.error('حدث خطأ أثناء تسجيل الدفع');
     }
+  };
+
+  const handleRefund = async (paymentId: string) => {
+    try {
+      await markAsUnpaid(paymentId);
+      toast.success('✅ تم استرداد المبلغ بنجاح');
+      setConfirmRefund({ open: false, paymentId: '', studentName: '' });
+    } catch (error) {
+      toast.error('حدث خطأ أثناء استرداد المبلغ');
+    }
+  };
+
+  const openPaymentConfirm = (studentId: string, studentName: string, amount: number) => {
+    setConfirmPayment({ open: true, studentId, studentName, amount });
+  };
+
+  const openRefundConfirm = (paymentId: string, studentName: string) => {
+    setConfirmRefund({ open: true, paymentId, studentName });
   };
 
   const handleCodeSubmit = async (e: React.FormEvent) => {
@@ -66,12 +102,7 @@ export default function Payments() {
       if (isMonthPaid(student.id, selectedMonth)) {
         toast.info(`${student.name} دفع بالفعل هذا الشهر`);
       } else {
-        try {
-          await addPayment(student.id, selectedMonth, student.monthly_fee);
-          toast.success(`✅ تم تسجيل دفع: ${student.name} - ${student.monthly_fee} ج`);
-        } catch (error) {
-          toast.error('حدث خطأ أثناء تسجيل الدفع');
-        }
+        openPaymentConfirm(student.id, student.name, student.monthly_fee);
       }
       setStudentCode('');
     } else {
@@ -248,6 +279,9 @@ export default function Payments() {
                 {filteredStudents.map((student) => {
                   const isPaid = isMonthPaid(student.id, selectedMonth);
                   const group = student.group_id ? getGroupById(student.group_id) : null;
+                  const payment = payments.find(
+                    (p) => p.student_id === student.id && p.month === selectedMonth && p.paid
+                  );
 
                   return (
                     <div
@@ -288,14 +322,27 @@ export default function Payments() {
                           {student.monthly_fee} ج
                         </Badge>
                         {isPaid ? (
-                          <Badge className="bg-success text-success-foreground">
-                            مدفوع
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-success text-success-foreground">
+                              مدفوع
+                            </Badge>
+                            {payment && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => openRefundConfirm(payment.id, student.name)}
+                              >
+                                <RotateCcw className="h-4 w-4 ml-1" />
+                                استرداد
+                              </Button>
+                            )}
+                          </div>
                         ) : (
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              onClick={() => handlePayment(student.id, student.monthly_fee)}
+                              onClick={() => openPaymentConfirm(student.id, student.name, student.monthly_fee)}
                             >
                               تسجيل الدفع
                             </Button>
@@ -326,6 +373,29 @@ export default function Payments() {
             )}
           </CardContent>
         </Card>
+
+        {/* تأكيد الدفع */}
+        <ConfirmDialog
+          open={confirmPayment.open}
+          onOpenChange={(open) => setConfirmPayment({ ...confirmPayment, open })}
+          title="تأكيد الدفع"
+          description={`هل أنت متأكد من تسجيل دفع ${confirmPayment.amount} جنيه للطالب ${confirmPayment.studentName}؟`}
+          confirmText="نعم، سجل الدفع"
+          cancelText="إلغاء"
+          onConfirm={() => handlePayment(confirmPayment.studentId, confirmPayment.amount)}
+        />
+
+        {/* تأكيد الاسترداد */}
+        <ConfirmDialog
+          open={confirmRefund.open}
+          onOpenChange={(open) => setConfirmRefund({ ...confirmRefund, open })}
+          title="تأكيد الاسترداد"
+          description={`هل أنت متأكد من استرداد المبلغ للطالب ${confirmRefund.studentName}؟`}
+          confirmText="نعم، استرداد"
+          cancelText="إلغاء"
+          onConfirm={() => handleRefund(confirmRefund.paymentId)}
+          variant="destructive"
+        />
       </div>
     </Layout>
   );
