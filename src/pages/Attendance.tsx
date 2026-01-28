@@ -15,12 +15,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useStudents } from '@/hooks/useStudents';
 import { useAttendance } from '@/hooks/useAttendance';
 import { useGroups } from '@/hooks/useGroups';
+import { QRScanner } from '@/components/QRScanner';
 import { GRADE_LABELS } from '@/types';
 import {
   sendWhatsAppMessage,
   createAbsenceMessage,
 } from '@/utils/whatsapp';
-import { Calendar, UserCheck, MessageCircle, Users, Search, QrCode } from 'lucide-react';
+import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Attendance() {
@@ -34,6 +35,7 @@ export default function Attendance() {
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get('group') || 'all');
   const [studentCode, setStudentCode] = useState('');
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const todayGroups = getTodayGroups();
   const allGroupNames = groups.map(g => g.name);
@@ -72,8 +74,11 @@ export default function Attendance() {
   const handleCodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentCode.trim()) return;
+    processStudentCode(studentCode.trim());
+  };
 
-    const student = getStudentByCode(studentCode.trim());
+  const processStudentCode = (code: string) => {
+    const student = getStudentByCode(code);
     if (student) {
       markAttendance(student.id, selectedDate, true);
       toast.success(`تم تسجيل حضور: ${student.name}`);
@@ -81,6 +86,11 @@ export default function Attendance() {
     } else {
       toast.error('كود الطالب غير موجود');
     }
+  };
+
+  const handleQRScan = (code: string) => {
+    setShowQRScanner(false);
+    processStudentCode(code);
   };
 
   const handleSendAbsenceMessage = (studentId: string) => {
@@ -152,27 +162,37 @@ export default function Attendance() {
         <Card className="border-secondary/30">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <QrCode className="h-5 w-5 text-secondary" />
-              تسجيل سريع بالكود
+              <ScanLine className="h-5 w-5 text-secondary" />
+              تسجيل سريع بالكود أو QR
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCodeSubmit} className="flex gap-3">
-              <div className="flex-1 relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  value={studentCode}
-                  onChange={(e) => setStudentCode(e.target.value)}
-                  placeholder="أدخل كود الطالب..."
-                  className="pr-10"
-                  dir="ltr"
-                />
-              </div>
-              <Button type="submit" className="gap-2">
-                <UserCheck className="h-4 w-4" />
-                تسجيل حضور
+            <div className="flex flex-col sm:flex-row gap-3">
+              <form onSubmit={handleCodeSubmit} className="flex-1 flex gap-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    value={studentCode}
+                    onChange={(e) => setStudentCode(e.target.value)}
+                    placeholder="أدخل كود الطالب..."
+                    className="pr-10"
+                    dir="ltr"
+                  />
+                </div>
+                <Button type="submit" className="gap-2">
+                  <UserCheck className="h-4 w-4" />
+                  تسجيل حضور
+                </Button>
+              </form>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowQRScanner(true)}
+                className="gap-2"
+              >
+                <ScanLine className="h-4 w-4" />
+                مسح QR
               </Button>
-            </form>
+            </div>
           </CardContent>
         </Card>
 
@@ -343,6 +363,15 @@ export default function Attendance() {
             )}
           </CardContent>
         </Card>
+
+        {/* QR Scanner Modal */}
+        {showQRScanner && (
+          <QRScanner
+            onScan={handleQRScan}
+            onClose={() => setShowQRScanner(false)}
+            title="مسح QR لتسجيل الحضور"
+          />
+        )}
       </div>
     </Layout>
   );

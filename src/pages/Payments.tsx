@@ -15,6 +15,7 @@ import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { usePayments } from '@/hooks/usePayments';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { QRScanner } from '@/components/QRScanner';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
 import {
   sendWhatsAppMessage,
@@ -27,7 +28,7 @@ import {
   MessageCircle,
   Users,
   Search,
-  QrCode,
+  ScanLine,
   RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -43,6 +44,7 @@ export default function Payments() {
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [studentCode, setStudentCode] = useState('');
+  const [showQRScanner, setShowQRScanner] = useState(false);
   
   // تأكيد الدفع
   const [confirmPayment, setConfirmPayment] = useState<{
@@ -93,11 +95,8 @@ export default function Payments() {
     setConfirmRefund({ open: true, paymentId, studentName });
   };
 
-  const handleCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!studentCode.trim()) return;
-
-    const student = getStudentByCode(studentCode.trim());
+  const processStudentCode = (code: string) => {
+    const student = getStudentByCode(code);
     if (student) {
       if (isMonthPaid(student.id, selectedMonth)) {
         toast.info(`${student.name} دفع بالفعل هذا الشهر`);
@@ -108,6 +107,17 @@ export default function Payments() {
     } else {
       toast.error('كود الطالب غير موجود');
     }
+  };
+
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentCode.trim()) return;
+    processStudentCode(studentCode.trim());
+  };
+
+  const handleQRScan = (code: string) => {
+    setShowQRScanner(false);
+    processStudentCode(code);
   };
 
   const handleSendReminder = async (studentId: string) => {
@@ -160,27 +170,37 @@ export default function Payments() {
         <Card className="border-secondary/30">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <QrCode className="h-5 w-5 text-secondary" />
-              تسجيل دفع سريع بالكود
+              <ScanLine className="h-5 w-5 text-secondary" />
+              تسجيل دفع سريع بالكود أو QR
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCodeSubmit} className="flex gap-3">
-              <div className="flex-1 relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  value={studentCode}
-                  onChange={(e) => setStudentCode(e.target.value)}
-                  placeholder="أدخل كود الطالب..."
-                  className="pr-10"
-                  dir="ltr"
-                />
-              </div>
-              <Button type="submit" className="gap-2">
-                <CreditCard className="h-4 w-4" />
-                تسجيل دفع
+            <div className="flex flex-col sm:flex-row gap-3">
+              <form onSubmit={handleCodeSubmit} className="flex-1 flex gap-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    value={studentCode}
+                    onChange={(e) => setStudentCode(e.target.value)}
+                    placeholder="أدخل كود الطالب..."
+                    className="pr-10"
+                    dir="ltr"
+                  />
+                </div>
+                <Button type="submit" className="gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  تسجيل دفع
+                </Button>
+              </form>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowQRScanner(true)}
+                className="gap-2"
+              >
+                <ScanLine className="h-4 w-4" />
+                مسح QR
               </Button>
-            </form>
+            </div>
           </CardContent>
         </Card>
 
@@ -396,6 +416,15 @@ export default function Payments() {
           onConfirm={() => handleRefund(confirmRefund.paymentId)}
           variant="destructive"
         />
+
+        {/* QR Scanner Modal */}
+        {showQRScanner && (
+          <QRScanner
+            onScan={handleQRScan}
+            onClose={() => setShowQRScanner(false)}
+            title="مسح QR لتسجيل الدفع"
+          />
+        )}
       </div>
     </Layout>
   );
