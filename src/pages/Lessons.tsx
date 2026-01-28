@@ -58,6 +58,7 @@ export default function Lessons() {
   const [lessonDate, setLessonDate] = useState(new Date().toISOString().split('T')[0]);
   const [lessonGrade, setLessonGrade] = useState<'1' | '2' | '3'>('1');
   const [lessonGroupId, setLessonGroupId] = useState('');
+  const [selectAllGroups, setSelectAllGroups] = useState(false);
   const [sheetMaxScore, setSheetMaxScore] = useState(10);
   const [recitationMaxScore, setRecitationMaxScore] = useState(10);
 
@@ -75,25 +76,53 @@ export default function Lessons() {
     setLessonDate(new Date().toISOString().split('T')[0]);
     setLessonGrade('1');
     setLessonGroupId('');
+    setSelectAllGroups(false);
     setSheetMaxScore(10);
     setRecitationMaxScore(10);
   };
 
   const handleAddLesson = async () => {
-    if (!lessonName || !lessonGroupId) {
-      toast.error('برجاء ملء جميع البيانات');
+    if (!lessonName) {
+      toast.error('برجاء إدخال عنوان الحصة');
       return;
     }
+
+    if (!selectAllGroups && !lessonGroupId) {
+      toast.error('برجاء اختيار المجموعة أو تحديد جميع المجموعات');
+      return;
+    }
+
     try {
-      await addLesson({
-        name: lessonName,
-        date: lessonDate,
-        grade: lessonGrade,
-        group_id: lessonGroupId,
-        sheet_max_score: sheetMaxScore,
-        recitation_max_score: recitationMaxScore,
-      });
-      toast.success('تم إضافة الحصة بنجاح');
+      if (selectAllGroups) {
+        // Create lesson for all groups in the selected grade
+        const gradeGroups = filteredGroupsByGrade;
+        if (gradeGroups.length === 0) {
+          toast.error('لا توجد مجموعات لهذه السنة الدراسية');
+          return;
+        }
+        
+        for (const group of gradeGroups) {
+          await addLesson({
+            name: lessonName,
+            date: lessonDate,
+            grade: lessonGrade,
+            group_id: group.id,
+            sheet_max_score: sheetMaxScore,
+            recitation_max_score: recitationMaxScore,
+          });
+        }
+        toast.success(`تم إضافة الحصة لـ ${gradeGroups.length} مجموعة`);
+      } else {
+        await addLesson({
+          name: lessonName,
+          date: lessonDate,
+          grade: lessonGrade,
+          group_id: lessonGroupId,
+          sheet_max_score: sheetMaxScore,
+          recitation_max_score: recitationMaxScore,
+        });
+        toast.success('تم إضافة الحصة بنجاح');
+      }
       resetForm();
       setIsAddOpen(false);
     } catch (error) {
@@ -249,23 +278,45 @@ export default function Lessons() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">المجموعة</label>
-                  <Select
-                    value={lessonGroupId}
-                    onValueChange={(value) => setLessonGroupId(value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر المجموعة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredGroupsByGrade.map((group) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.name} ({group.days.join(' - ')}) - {group.time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="selectAllGroups"
+                      checked={selectAllGroups}
+                      onChange={(e) => {
+                        setSelectAllGroups(e.target.checked);
+                        if (e.target.checked) {
+                          setLessonGroupId('');
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <label htmlFor="selectAllGroups" className="text-sm font-medium cursor-pointer">
+                      جميع مجموعات {GRADE_LABELS[lessonGrade]} ({filteredGroupsByGrade.length} مجموعة)
+                    </label>
+                  </div>
+                  
+                  {!selectAllGroups && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">المجموعة</label>
+                      <Select
+                        value={lessonGroupId}
+                        onValueChange={(value) => setLessonGroupId(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر المجموعة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredGroupsByGrade.map((group) => (
+                            <SelectItem key={group.id} value={group.id}>
+                              {group.name} ({group.days.join(' - ')}) - {group.time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <Button onClick={handleAddLesson} className="w-full">
                   إضافة الحصة

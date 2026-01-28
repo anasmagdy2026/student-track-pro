@@ -1,11 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* نظام مستر محمد مجدي - تصميم احترافي */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Work+Sans&display=swap");
 
 @layer base {
   :root {
@@ -113,12 +112,17 @@
   }
 
   body {
-    @apply bg-background text-foreground font-cairo;
+    @apply bg-background text-foreground;
+    font-family: 'Cairo', sans-serif !important;
+  }
+
+  * {
+    font-family: 'Cairo', sans-serif;
   }
 }
 
 @layer utilities {
   .font-cairo {
-    font-family: 'Cairo', sans-serif;
+    font-family: 'Cairo', sans-serif !important;
   }
 }

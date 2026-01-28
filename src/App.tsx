@@ -13,6 +13,8 @@ import Payments from "./pages/Payments";
 import Exams from "./pages/Exams";
 import Groups from "./pages/Groups";
 import Lessons from "./pages/Lessons";
+import Settings from "./pages/Settings";
+import AcademicYears from "./pages/AcademicYears";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ const App = () => (
           <Route path="/student/:id" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
           <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
           <Route path="/lessons" element={<ProtectedRoute><Lessons /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/academic-years" element={<ProtectedRoute><AcademicYears /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
           <Route path="/exams" element={<ProtectedRoute><Exams /></ProtectedRoute>} />

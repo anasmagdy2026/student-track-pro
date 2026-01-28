@@ -13,10 +13,9 @@ import {
   GraduationCap,
   UsersRound,
   BookOpen,
-  ChevronRight,
-  ChevronLeft,
   PanelLeftClose,
   PanelLeft,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -29,6 +28,7 @@ const navItems = [
   { path: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
   { path: '/students', label: 'الطلاب', icon: Users },
   { path: '/groups', label: 'المجموعات', icon: UsersRound },
+  { path: '/academic-years', label: 'السنوات الدراسية', icon: GraduationCap },
   { path: '/lessons', label: 'الحصص', icon: BookOpen },
   { path: '/attendance', label: 'الحضور والغياب', icon: Calendar },
   { path: '/payments', label: 'المدفوعات', icon: CreditCard },
@@ -144,7 +144,20 @@ export function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* Footer */}
-          <div className="p-3 border-t border-sidebar-border space-y-3">
+          <div className="p-3 border-t border-sidebar-border space-y-2">
+            <Link
+              to="/settings"
+              className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
+                location.pathname === '/settings'
+                  ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                  : 'hover:bg-sidebar-accent text-sidebar-foreground'
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title={isCollapsed ? 'الإعدادات' : undefined}
+            >
+              <Settings className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span className="font-medium">الإعدادات</span>}
+            </Link>
+            
             <Button
               variant="ghost"
               className={`w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
