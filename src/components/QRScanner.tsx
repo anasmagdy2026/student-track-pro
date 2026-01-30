@@ -26,6 +26,7 @@ export function QRScanner({ onScan, onClose, title = 'مسح رمز QR' }: QRSca
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationIdRef = useRef<number | null>(null);
+  const hasScannedRef = useRef(false);
   
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export function QRScanner({ onScan, onClose, title = 'مسح رمز QR' }: QRSca
   const startCamera = useCallback(async () => {
     stopCamera();
     setError(null);
+    hasScannedRef.current = false;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -94,6 +96,9 @@ export function QRScanner({ onScan, onClose, title = 'مسح رمز QR' }: QRSca
     });
 
     if (code) {
+      if (hasScannedRef.current) return;
+      hasScannedRef.current = true;
+
       // Extract student code from QR data
       const data = code.data;
       let studentCode = data;
