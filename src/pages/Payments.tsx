@@ -14,6 +14,7 @@ import {
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { usePayments } from '@/hooks/usePayments';
+import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { QRScanner } from '@/components/QRScanner';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
@@ -37,6 +38,7 @@ export default function Payments() {
   const { students, getStudentByCode } = useStudents();
   const { groups, getGroupById } = useGroups();
   const { addPayment, isMonthPaid, payments, markAsNotified, markAsUnpaid } = usePayments();
+  const { isBlocked, getActiveBlock } = useStudentBlocks();
 
   const currentDate = new Date();
   const currentMonth = currentDate.toISOString().slice(0, 7);
@@ -69,6 +71,11 @@ export default function Payments() {
 
   const handlePayment = async (studentId: string, amount: number) => {
     try {
+      if (isBlocked(studentId)) {
+        const b = getActiveBlock(studentId);
+        toast.error(`لا يمكن تسجيل الدفع: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+        return;
+      }
       await addPayment(studentId, selectedMonth, amount);
       toast.success('✅ تم تسجيل الدفع بنجاح! شكراً لك.');
       setConfirmPayment({ open: false, studentId: '', studentName: '', amount: 0 });
@@ -79,6 +86,12 @@ export default function Payments() {
 
   const handleRefund = async (paymentId: string) => {
     try {
+      // no refund when student is expelled/frozen
+      const payment = payments.find((p) => p.id === paymentId);
+      if (payment && isBlocked(payment.student_id)) {
+        toast.error('غير مسموح بالاسترداد في حالة الطرد/التجميد');
+        return;
+      }
       await markAsUnpaid(paymentId);
       toast.success('✅ تم استرداد المبلغ بنجاح');
       setConfirmRefund({ open: false, paymentId: '', studentName: '' });
@@ -98,6 +111,11 @@ export default function Payments() {
   const processStudentCode = (code: string) => {
     const student = getStudentByCode(code);
     if (student) {
+      if (isBlocked(student.id)) {
+        const b = getActiveBlock(student.id);
+        toast.error(`الطالب مُجمّد: ${b?.reason || 'غير مسموح بالدفع/الإجراءات'}`);
+        return;
+      }
       if (isMonthPaid(student.id, selectedMonth)) {
         toast.info(`${student.name} دفع بالفعل هذا الشهر`);
       } else {
@@ -362,6 +380,7 @@ export default function Payments() {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
+                              disabled={isBlocked(student.id)}
                               onClick={() => openPaymentConfirm(student.id, student.name, student.monthly_fee)}
                             >
                               تسجيل الدفع

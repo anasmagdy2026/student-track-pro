@@ -18,6 +18,12 @@ import { useAttendance } from '@/hooks/useAttendance';
 import { useGroups } from '@/hooks/useGroups';
 import { QRScanner } from '@/components/QRScanner';
 import { DAYS_AR, GRADE_LABELS } from '@/types';
+import { usePayments } from '@/hooks/usePayments';
+import { useExams } from '@/hooks/useExams';
+import { useStudentBlocks } from '@/hooks/useStudentBlocks';
+import { useAlertEvents } from '@/hooks/useAlertEvents';
+import { buildAttendanceAlerts } from '@/lib/alertRules';
+import { AlertDecisionDialog } from '@/components/AlertDecisionDialog';
 import {
   sendWhatsAppMessage,
   createAbsenceMessage,
@@ -26,6 +32,8 @@ import {
 } from '@/utils/whatsapp';
 import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useLessons } from '@/hooks/useLessons';
 
 type PendingAttendanceAction = {
   studentId: string;
@@ -38,6 +46,11 @@ export default function Attendance() {
   const { students, getStudentByCode } = useStudents();
   const { markAttendance, getAttendanceByDate, markAsNotified } = useAttendance();
   const { groups, getTodayGroups, getGroupById } = useGroups();
+  const { isMonthPaid } = usePayments();
+  const { exams, results } = useExams();
+  const { lessons, sheets, recitations } = useLessons();
+  const { isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
+  const { createEvent } = useAlertEvents();
 
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
@@ -77,6 +90,14 @@ export default function Attendance() {
 
   const todayGroups = getTodayGroups();
   const todayAttendance = getAttendanceByDate(selectedDate);
+
+  const [alertDecisionOpen, setAlertDecisionOpen] = useState(false);
+  const [pendingAlert, setPendingAlert] = useState<{
+    studentId: string;
+    title: string;
+    description: string;
+    ruleCodes: string[];
+  } | null>(null);
 
   // Auto-select today's group if available
   useEffect(() => {
@@ -146,6 +167,16 @@ export default function Attendance() {
   };
 
   const performAttendance = async (studentId: string, present: boolean) => {
+    const student = students.find((s) => s.id === studentId);
+    if (!student) return;
+
+    // Full freeze: prevent any attendance registration
+    if (isBlocked(studentId)) {
+      const block = getActiveBlock(studentId);
+      toast.error(`الطالب مُجمّد: ${block?.reason || 'غير مسموح بالتحضير'}`);
+      return;
+    }
+
     // prevent duplicate present
     const existing = getStudentAttendance(studentId);
     if (present && existing?.present) {
@@ -154,8 +185,111 @@ export default function Attendance() {
     }
 
     if (present) {
-      const student = students.find((s) => s.id === studentId);
-      const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
+      const studentGroup = student.group_id ? getGroupById(student.group_id) : null;
+
+      // Alert rules before group/late checks (as requested: during check-in)
+      // Fetch last 60 days attendance for accurate rule checks.
+      const since = new Date(selectedDate);
+      since.setDate(since.getDate() - 60);
+      const sinceIso = since.toISOString().slice(0, 10);
+      const { data: attRows, error: attErr } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', studentId)
+        .gte('date', sinceIso)
+        .lte('date', selectedDate);
+      if (attErr) {
+        console.error(attErr);
+      }
+
+      // Homework rule: determine today's lesson for this student/group, then check homework status.
+      const todayLesson = lessons
+        .filter((l) => l.date === selectedDate)
+        .filter((l) => l.grade === student.grade)
+        .find((l) => {
+          if (!l.group_id) return false;
+          if (student.group_id) return l.group_id === student.group_id;
+          return selectedGroup !== 'all' ? l.group_id === selectedGroup : false;
+        });
+
+      let homeworkStatus: 'done' | 'not_done' | null = null;
+      if (todayLesson) {
+        const { data: hwRow } = await supabase
+          .from('lesson_homework')
+          .select('status')
+          .eq('lesson_id', todayLesson.id)
+          .eq('student_id', studentId)
+          .maybeSingle();
+        homeworkStatus = (hwRow?.status as 'done' | 'not_done' | undefined) ?? 'not_done';
+      }
+
+      // Performance <50% rule: compute simple monthly average across (sheets+recitations+exams)
+      const month = selectedDate.slice(0, 7);
+      const monthLessons = lessons
+        .filter((l) => l.date.startsWith(month))
+        .filter((l) => l.grade === student.grade)
+        .filter((l) => {
+          if (!student.group_id) return true;
+          if (!l.group_id) return true;
+          return l.group_id === student.group_id;
+        });
+      const lessonScoreItems: number[] = [];
+      for (const l of monthLessons) {
+        const sheet = sheets.find((s) => s.lesson_id === l.id && s.student_id === studentId);
+        const rec = recitations.find((r) => r.lesson_id === l.id && r.student_id === studentId);
+        if (l.sheet_max_score > 0) lessonScoreItems.push(((sheet?.score ?? 0) as number) / l.sheet_max_score);
+        if (l.recitation_max_score > 0) lessonScoreItems.push(((rec?.score ?? 0) as number) / l.recitation_max_score);
+      }
+
+      const monthExams = exams.filter((e) => e.date.startsWith(month) && e.grade === student.grade);
+      const examScoreItems: number[] = [];
+      for (const e of monthExams) {
+        const res = results.find((r) => r.exam_id === e.id && r.student_id === studentId);
+        if (e.max_score > 0) examScoreItems.push(((res?.score ?? 0) as number) / e.max_score);
+      }
+
+      const allItems = [...lessonScoreItems, ...examScoreItems].filter((n) => typeof n === 'number' && !Number.isNaN(n));
+      const avg = allItems.length ? allItems.reduce((a, b) => a + b, 0) / allItems.length : null;
+      const performanceBelow50 = avg !== null && avg < 0.5;
+
+      const alerts = buildAttendanceAlerts({
+        student,
+        selectedDate,
+        now: new Date(),
+        studentAttendance: (attRows as any) || [],
+        isMonthPaid: isMonthPaid(studentId, selectedDate.slice(0, 7)),
+        exams,
+        homeworkStatus,
+        performanceBelow50,
+      });
+
+      if (alerts.length > 0) {
+        // Create events in DB (best-effort)
+        for (const a of alerts) {
+          // eslint-disable-next-line no-await-in-loop
+          try {
+            await createEvent({
+              studentId,
+              ruleCode: a.ruleCode,
+              title: a.title,
+              message: a.message,
+              severity: a.severity,
+              context: { selectedDate, ...a.context },
+            });
+          } catch {
+            // ignore
+          }
+        }
+
+        setPendingAlert({
+          studentId,
+          title: 'تنبيه أثناء التحضير',
+          description: alerts.map((a) => `• ${a.title}: ${a.message}`).join('\n'),
+          ruleCodes: alerts.map((a) => a.ruleCode),
+        });
+        setAlertDecisionOpen(true);
+        return;
+      }
 
       // Rule 1: student can only attend in their own group.
       if (selectedGroup !== 'all') {
@@ -209,6 +343,33 @@ export default function Attendance() {
       return;
     }
     toast.success(present ? 'تم تسجيل الحضور' : 'تم تسجيل الغياب');
+  };
+
+  const handleAlertAllow = async () => {
+    setAlertDecisionOpen(false);
+    const ctx = pendingAlert;
+    setPendingAlert(null);
+    if (!ctx) return;
+    await performAttendance(ctx.studentId, true);
+  };
+
+  const handleAlertFreeze = async () => {
+    setAlertDecisionOpen(false);
+    const ctx = pendingAlert;
+    setPendingAlert(null);
+    if (!ctx) return;
+
+    try {
+      await freezeStudent({
+        studentId: ctx.studentId,
+        reason: 'قرار: تجميد كامل بعد تنبيه أثناء التحضير',
+        triggeredByRuleCode: ctx.ruleCodes[0],
+      });
+      await markAttendance(ctx.studentId, selectedDate, false);
+      toast.error('تم تجميد الطالب واعتباره غائباً');
+    } catch {
+      toast.error('تعذر تجميد الطالب');
+    }
   };
 
   const requestAttendance = (action: PendingAttendanceAction) => {
@@ -760,6 +921,15 @@ export default function Attendance() {
           onConfirm={handleGroupAllow}
           onCancel={handleGroupDeny}
           variant="destructive"
+        />
+
+        <AlertDecisionDialog
+          open={alertDecisionOpen}
+          onOpenChange={setAlertDecisionOpen}
+          title={pendingAlert?.title || ''}
+          description={pendingAlert?.description || ''}
+          onAllow={handleAlertAllow}
+          onFreeze={handleAlertFreeze}
         />
       </div>
     </Layout>
