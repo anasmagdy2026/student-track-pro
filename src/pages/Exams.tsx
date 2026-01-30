@@ -37,6 +37,7 @@ import {
   Search,
   QrCode,
   Save,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -302,8 +303,15 @@ export default function Exams() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleAddExam} className="w-full">
-                  {isSubmitting ? 'جاري الإضافة...' : 'إضافة الامتحان'}
+                <Button onClick={handleAddExam} className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      جاري الإضافة...
+                    </>
+                  ) : (
+                    'إضافة الامتحان'
+                  )}
                 </Button>
               </div>
             </DialogContent>

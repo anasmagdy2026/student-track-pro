@@ -34,6 +34,7 @@ import {
   Mic,
   Users,
   Search,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -393,7 +394,14 @@ export default function Lessons() {
                   )}
                 </div>
                 <Button onClick={handleAddLesson} className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'جاري الإضافة...' : 'إضافة الحصة'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      جاري الإضافة...
+                    </>
+                  ) : (
+                    'إضافة الحصة'
+                  )}
                 </Button>
               </div>
             </DialogContent>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -249,7 +250,16 @@ export function StudentForm({
         className="w-full"
         disabled={(availableGroups.length === 0 && !isEdit) || isSubmitting}
       >
-        {isSubmitting ? 'جاري الحفظ...' : isEdit ? 'حفظ التعديلات' : 'إضافة الطالب'}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            جاري الحفظ...
+          </>
+        ) : isEdit ? (
+          'حفظ التعديلات'
+        ) : (
+          'إضافة الطالب'
+        )}
       </Button>
     </div>
   );

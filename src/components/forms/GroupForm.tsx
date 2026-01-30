@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -176,7 +177,16 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
       </div>
 
       <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'جاري الحفظ...' : isEdit ? 'حفظ التعديلات' : 'إضافة المجموعة'}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            جاري الحفظ...
+          </>
+        ) : isEdit ? (
+          'حفظ التعديلات'
+        ) : (
+          'إضافة المجموعة'
+        )}
       </Button>
     </div>
   );
