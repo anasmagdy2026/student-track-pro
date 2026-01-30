@@ -16,19 +16,31 @@ export const sendWhatsAppMessage = (phone: string, message: string) => {
   window.open(whatsappUrl, '_blank');
 };
 
+const formatArabicDateWithDay = (input: string) => {
+  // input may be ISO date (YYYY-MM-DD) or already formatted.
+  const isIso = /^\d{4}-\d{2}-\d{2}$/.test(input);
+  if (!isIso) return input;
+
+  const d = new Date(`${input}T00:00:00`);
+  const dayName = d.toLocaleDateString('ar-EG', { weekday: 'long' });
+  const dateStr = d.toLocaleDateString('ar-EG');
+  return `${dayName} - ${dateStr}`;
+};
+
 export const createAbsenceMessage = (studentName: string, date: string) => {
-  return `السلام عليكم ورحمة الله وبركاته 🌹
+  const dateWithDay = formatArabicDateWithDay(date);
+  return `السلام عليكم ورحمة الله وبركاته
 
 نحيط علم سيادتكم أن الطالب/ة: ${studentName}
-غاب/ت عن حصة يوم: ${date}
+غاب/ت عن حصة يوم: ${dateWithDay}
 
 برجاء الاهتمام بالحضور المنتظم.
 
-مع تحيات مستر/ محمد مجدي 📚`;
+مع تحيات مستر/ محمد مجدي`;
 };
 
 export const createPaymentReminderMessage = (studentName: string, month: string, amount: number) => {
-  return `السلام عليكم ورحمة الله وبركاته 🌹
+  return `السلام عليكم ورحمة الله وبركاته
 
 تذكير بسداد مصاريف شهر: ${month}
 للطالب/ة: ${studentName}
@@ -36,23 +48,23 @@ export const createPaymentReminderMessage = (studentName: string, month: string,
 
 برجاء السداد في أقرب وقت.
 
-مع تحيات مستر/ محمد مجدي 📚`;
+مع تحيات مستر/ محمد مجدي`;
 };
 
 export const createExamResultMessage = (studentName: string, examName: string, score: number, maxScore: number) => {
   const percentage = Math.round((score / maxScore) * 100);
-  let emoji = '📝';
-  if (percentage >= 90) emoji = '🏆';
-  else if (percentage >= 75) emoji = '⭐';
-  else if (percentage >= 60) emoji = '👍';
-  else if (percentage < 50) emoji = '📚';
+  let label = '';
+  if (percentage >= 90) label = 'ممتاز';
+  else if (percentage >= 75) label = 'جيد جداً';
+  else if (percentage >= 60) label = 'جيد';
+  else if (percentage < 50) label = 'يحتاج متابعة';
 
-  return `السلام عليكم ورحمة الله وبركاته 🌹
+  return `السلام عليكم ورحمة الله وبركاته
 
 نتيجة امتحان: ${examName}
 الطالب/ة: ${studentName}
-الدرجة: ${score} من ${maxScore} ${emoji}
+الدرجة: ${score} من ${maxScore}${label ? ` (${label})` : ''}
 النسبة المئوية: ${percentage}%
 
-مع تحيات مستر/ محمد مجدي 📚`;
+مع تحيات مستر/ محمد مجدي`;
 };

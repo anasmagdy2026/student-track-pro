@@ -5,7 +5,9 @@ export interface Student {
   grade: '1' | '2' | '3'; // أولى، تانية، تالتة ثانوي
   group_id: string | null;
   parent_phone: string;
+  student_phone?: string | null;
   monthly_fee: number;
+  registered_at?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -26,6 +28,7 @@ export interface Attendance {
   date: string;
   present: boolean;
   notified: boolean;
+  checked_in_at?: string | null;
   created_at?: string;
 }
 

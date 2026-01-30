@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       attendance: {
         Row: {
+          checked_in_at: string | null
           created_at: string
           date: string
           id: string
@@ -24,6 +25,7 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          checked_in_at?: string | null
           created_at?: string
           date: string
           id?: string
@@ -32,6 +34,7 @@ export type Database = {
           student_id: string
         }
         Update: {
+          checked_in_at?: string | null
           created_at?: string
           date?: string
           id?: string
@@ -318,6 +321,8 @@ export type Database = {
           monthly_fee: number
           name: string
           parent_phone: string
+          registered_at: string
+          student_phone: string | null
           updated_at: string
         }
         Insert: {
@@ -329,6 +334,8 @@ export type Database = {
           monthly_fee?: number
           name: string
           parent_phone: string
+          registered_at?: string
+          student_phone?: string | null
           updated_at?: string
         }
         Update: {
@@ -340,6 +347,8 @@ export type Database = {
           monthly_fee?: number
           name?: string
           parent_phone?: string
+          registered_at?: string
+          student_phone?: string | null
           updated_at?: string
         }
         Relationships: [

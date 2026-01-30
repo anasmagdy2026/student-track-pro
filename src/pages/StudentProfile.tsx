@@ -164,8 +164,7 @@ export default function StudentProfile() {
   }
 
   const handleSendAbsenceMessage = (date: string, attendanceId: string) => {
-    const formattedDate = new Date(date).toLocaleDateString('ar-EG');
-    const message = createAbsenceMessage(student.name, formattedDate);
+    const message = createAbsenceMessage(student.name, date);
     sendWhatsAppMessage(student.parent_phone, message);
     markAsNotified(attendanceId);
     toast.success('تم فتح الواتساب');
@@ -301,6 +300,11 @@ export default function StudentProfile() {
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">المجموعة</p>
                 <p className="font-bold text-lg">{studentGroup?.name || '-'}</p>
+                {studentGroup?.time && (
+                  <p className="text-xs text-muted-foreground mt-1" dir="ltr">
+                    {studentGroup.time}
+                  </p>
+                )}
               </div>
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">رسوم الشهر</p>
@@ -308,7 +312,41 @@ export default function StudentProfile() {
               </div>
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">هاتف ولي الأمر</p>
-                <p className="font-bold text-lg font-mono" dir="ltr">{student.parent_phone}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-bold text-lg font-mono" dir="ltr">{student.parent_phone}</p>
+                  <a
+                    href={`tel:${student.parent_phone}`}
+                    className="text-sm underline text-primary"
+                  >
+                    اتصال
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-muted rounded-xl">
+                <p className="text-sm text-muted-foreground">هاتف الطالب</p>
+                {student.student_phone ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold text-lg font-mono" dir="ltr">{student.student_phone}</p>
+                    <a
+                      href={`tel:${student.student_phone}`}
+                      className="text-sm underline text-primary"
+                    >
+                      اتصال
+                    </a>
+                  </div>
+                ) : (
+                  <p className="font-bold text-lg">-</p>
+                )}
+              </div>
+
+              <div className="p-4 bg-muted rounded-xl">
+                <p className="text-sm text-muted-foreground">تاريخ التسجيل</p>
+                <p className="font-bold text-lg">
+                  {student.registered_at
+                    ? new Date(student.registered_at).toLocaleDateString('ar-EG')
+                    : '-'}
+                </p>
               </div>
             </div>
           </CardContent>

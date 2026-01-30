@@ -33,25 +33,23 @@ export default function Attendance() {
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
-  const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get('group') || 'all');
+  const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get('group') || 'all'); // group_id
   const [studentCode, setStudentCode] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
 
   const todayGroups = getTodayGroups();
-  const allGroupNames = groups.map(g => g.name);
   const todayAttendance = getAttendanceByDate(selectedDate);
 
   // Auto-select today's group if available
   useEffect(() => {
     if (!searchParams.get('group') && todayGroups.length === 1) {
-      setSelectedGroup(todayGroups[0].name);
+      setSelectedGroup(todayGroups[0].id);
     }
   }, [todayGroups, searchParams]);
 
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
-    const studentGroup = student.group_id ? getGroupById(student.group_id) : null;
-    const matchesGroup = selectedGroup === 'all' || studentGroup?.name === selectedGroup;
+    const matchesGroup = selectedGroup === 'all' || student.group_id === selectedGroup;
     return matchesGrade && matchesGroup;
   });
 
@@ -98,8 +96,7 @@ export default function Attendance() {
     const attendance = getStudentAttendance(studentId);
     if (!student || !attendance) return;
 
-    const formattedDate = new Date(selectedDate).toLocaleDateString('ar-EG');
-    const message = createAbsenceMessage(student.name, formattedDate);
+    const message = createAbsenceMessage(student.name, selectedDate);
     sendWhatsAppMessage(student.parent_phone, message);
     markAsNotified(attendance.id);
     toast.success('تم فتح الواتساب');
@@ -144,9 +141,9 @@ export default function Attendance() {
                     {todayGroups.map(g => (
                       <Button
                         key={g.id}
-                        variant={selectedGroup === g.name ? 'default' : 'outline'}
+                        variant={selectedGroup === g.id ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setSelectedGroup(g.name)}
+                        onClick={() => setSelectedGroup(g.id)}
                       >
                         {g.name} ({g.time})
                       </Button>
@@ -231,9 +228,9 @@ export default function Attendance() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل المجموعات</SelectItem>
-                    {allGroupNames.map((groupName) => (
-                      <SelectItem key={groupName} value={groupName}>
-                        {groupName}
+                    {groups.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.name} ({g.time})
                       </SelectItem>
                     ))}
                   </SelectContent>

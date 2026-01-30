@@ -32,14 +32,25 @@ export function useAttendance() {
     if (existingRecord) {
       const { error } = await supabase
         .from('attendance')
-        .update({ present, notified: false })
+        .update({
+          present,
+          notified: false,
+          checked_in_at: present ? new Date().toISOString() : existingRecord.checked_in_at ?? null,
+        })
         .eq('id', existingRecord.id);
       
       if (error) throw error;
       
       setAttendance(prev =>
         prev.map(a =>
-          a.id === existingRecord.id ? { ...a, present, notified: false } : a
+          a.id === existingRecord.id
+            ? {
+                ...a,
+                present,
+                notified: false,
+                checked_in_at: present ? new Date().toISOString() : a.checked_in_at,
+              }
+            : a
         )
       );
     } else {
@@ -50,11 +61,20 @@ export function useAttendance() {
           date,
           present,
           notified: false,
+          checked_in_at: present ? new Date().toISOString() : null,
         }])
         .select()
         .single();
-      
-      if (error) throw error;
+
+      if (error) {
+        // Unique constraint: already exists (double scan)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const code = (error as any)?.code;
+        if (code === '23505') {
+          return;
+        }
+        throw error;
+      }
       
       setAttendance(prev => [data as Attendance, ...prev]);
     }

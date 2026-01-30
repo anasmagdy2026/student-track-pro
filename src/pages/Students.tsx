@@ -42,9 +42,14 @@ export default function Students() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState<string>('all');
   const [filterGroup, setFilterGroup] = useState<string>('all');
+  const [filterGroupTime, setFilterGroupTime] = useState<string>('all');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [cardStudent, setCardStudent] = useState<Student | null>(null);
+
+  const availableTimes = Array.from(
+    new Set(groups.map((g) => g.time).filter(Boolean))
+  ).sort();
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -52,7 +57,9 @@ export default function Students() {
       student.code.includes(searchTerm);
     const matchesGrade = filterGrade === 'all' || student.grade === filterGrade;
     const matchesGroup = filterGroup === 'all' || student.group_id === filterGroup;
-    return matchesSearch && matchesGrade && matchesGroup;
+    const group = student.group_id ? getGroupById(student.group_id) : null;
+    const matchesTime = filterGroupTime === 'all' || group?.time === filterGroupTime;
+    return matchesSearch && matchesGrade && matchesGroup && matchesTime;
   });
 
   const handleAddStudent = async (data: {
@@ -60,6 +67,7 @@ export default function Students() {
     grade: '1' | '2' | '3';
     group_id: string;
     parent_phone: string;
+    student_phone?: string;
     monthly_fee: number;
   }) => {
     if (!data.name || !data.group_id || !data.parent_phone) {
@@ -80,6 +88,7 @@ export default function Students() {
     grade: '1' | '2' | '3';
     group_id: string;
     parent_phone: string;
+    student_phone?: string;
     monthly_fee: number;
   }) => {
     if (!editingStudent) return;
@@ -172,6 +181,20 @@ export default function Students() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select value={filterGroupTime} onValueChange={setFilterGroupTime}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="ميعاد المجموعة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل المواعيد</SelectItem>
+                  {availableTimes.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -188,6 +211,7 @@ export default function Students() {
                       <TableHead>الاسم</TableHead>
                       <TableHead>السنة</TableHead>
                       <TableHead>المجموعة</TableHead>
+                      <TableHead>ميعاد المجموعة</TableHead>
                       <TableHead>الرسوم</TableHead>
                       <TableHead>الإجراءات</TableHead>
                     </TableRow>
@@ -205,6 +229,7 @@ export default function Students() {
                           </TableCell>
                           <TableCell>{GRADE_LABELS[student.grade]}</TableCell>
                           <TableCell>{group?.name || '-'}</TableCell>
+                          <TableCell dir="ltr">{group?.time || '-'}</TableCell>
                           <TableCell>{student.monthly_fee} ج</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -259,6 +284,7 @@ export default function Students() {
                                         grade: editingStudent.grade,
                                         group_id: editingStudent.group_id || '',
                                         parent_phone: editingStudent.parent_phone,
+                                        student_phone: editingStudent.student_phone || '',
                                         monthly_fee: editingStudent.monthly_fee,
                                       }}
                                       groups={groups}
