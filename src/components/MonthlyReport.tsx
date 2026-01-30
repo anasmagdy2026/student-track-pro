@@ -102,24 +102,86 @@ export function MonthlyReport({
     <style>
       @page { size: A4; margin: 12mm; }
       html, body { direction: rtl; }
-      body { font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; margin: 0; }
-      .bg-white { background: #fff !important; }
-      .p-6 { padding: 16px !important; }
-      .space-y-6 > * + * { margin-top: 16px !important; }
-      .space-y-2 > * + * { margin-top: 8px !important; }
+      :root {
+        /* Match app theme tokens (HSL) */
+        --background: 220 20% 97%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --muted: 220 14% 96%;
+        --muted-foreground: 220 9% 46%;
+        --border: 220 13% 91%;
+        --primary: 217 91% 40%;
+        --secondary: 38 92% 50%;
+        --success: 142 76% 36%;
+        --destructive: 0 84% 60%;
+      }
+
+      body {
+        font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: hsl(var(--background));
+        color: hsl(var(--foreground));
+        margin: 0;
+      }
+
+      /* Layout helpers used by the report */
+      .border { border: 1px solid hsl(var(--border)) !important; }
       .rounded-lg { border-radius: 10px !important; }
-      .border { border: 1px solid #e5e7eb !important; }
-      .text-center { text-align: center !important; }
+      .rounded-xl { border-radius: 14px !important; }
+      .p-3 { padding: 12px !important; }
+      .p-4 { padding: 14px !important; }
+      .p-5 { padding: 16px !important; }
+      .p-6 { padding: 18px !important; }
+      .mb-3 { margin-bottom: 12px !important; }
+      .mt-1 { margin-top: 4px !important; }
+      .mt-3 { margin-top: 12px !important; }
+      .mt-4 { margin-top: 16px !important; }
+      .space-y-6 > * + * { margin-top: 16px !important; }
+      .space-y-4 > * + * { margin-top: 12px !important; }
+      .space-y-3 > * + * { margin-top: 10px !important; }
+      .space-y-2 > * + * { margin-top: 8px !important; }
       .grid { display: grid !important; }
       .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
       .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+      .gap-3 { gap: 10px !important; }
+      .gap-2 { gap: 8px !important; }
       .gap-4 { gap: 12px !important; }
+      .text-center { text-align: center !important; }
+
+      /* Typography */
+      .tracking-tight { letter-spacing: -0.01em !important; }
       .text-2xl { font-size: 22px !important; }
-      .text-lg { font-size: 18px !important; }
-      .font-bold { font-weight: 700 !important; }
+      .text-lg { font-size: 17px !important; }
       .text-sm { font-size: 13px !important; }
       .text-xs { font-size: 12px !important; }
-      .text-muted-foreground { color: #6b7280 !important; }
+      .font-bold { font-weight: 700 !important; }
+      .font-extrabold { font-weight: 800 !important; }
+      .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; }
+      .text-foreground { color: hsl(var(--foreground)) !important; }
+      .text-muted-foreground { color: hsl(var(--muted-foreground)) !important; }
+      .text-primary { color: hsl(var(--primary)) !important; }
+      .text-secondary { color: hsl(var(--secondary)) !important; }
+      .text-success { color: hsl(var(--success)) !important; }
+      .text-destructive { color: hsl(var(--destructive)) !important; }
+
+      /* Background helpers */
+      .bg-card { background: hsl(var(--card)) !important; }
+      .bg-background { background: hsl(var(--background)) !important; }
+      .bg-muted { background: hsl(var(--muted)) !important; }
+      .bg-muted\/20 { background: hsl(var(--muted) / 0.20) !important; }
+      .bg-muted\/60 { background: hsl(var(--muted) / 0.60) !important; }
+      .bg-background\/60 { background: hsl(var(--background) / 0.60) !important; }
+      .bg-primary\/5 { background: hsl(var(--primary) / 0.05) !important; }
+      .bg-primary\/10 { background: hsl(var(--primary) / 0.10) !important; }
+      .bg-secondary\/10 { background: hsl(var(--secondary) / 0.10) !important; }
+      .bg-success\/10 { background: hsl(var(--success) / 0.10) !important; }
+      .bg-destructive\/10 { background: hsl(var(--destructive) / 0.10) !important; }
+
+      /* Badge (minimal) */
+      .inline-flex { display: inline-flex !important; }
+      .items-center { align-items: center !important; }
+      .justify-center { justify-content: center !important; }
+
+      /* Hide interactive buttons in print */
       button { display: none !important; }
     </style>
   </head>
