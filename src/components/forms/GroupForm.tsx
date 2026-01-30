@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -8,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { GROUP_DAY_PATTERNS } from '@/types';
+import { DAYS_AR, GROUP_DAY_PATTERNS } from '@/types';
 
 interface GroupFormProps {
   initialData?: {
@@ -33,6 +34,28 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
     initialData?.days || ['السبت', 'الإثنين', 'الأربعاء']
   );
   const [time, setTime] = useState(initialData?.time || '10:00');
+
+  const getPatternLabel = (valueDays: string[]) => {
+    const match = GROUP_DAY_PATTERNS.find((p) =>
+      p.days.length === valueDays.length && p.days.every((d, idx) => d === valueDays[idx])
+    );
+    return match?.label;
+  };
+
+  const initialMode: 'pattern' | 'custom' = getPatternLabel(days) ? 'pattern' : 'custom';
+  const [daysMode, setDaysMode] = useState<'pattern' | 'custom'>(initialMode);
+
+  const handleToggleDay = (day: string, checked: boolean) => {
+    setDays((prev) => {
+      const next = checked
+        ? (prev.includes(day) ? prev : [...prev, day])
+        : prev.filter((d) => d !== day);
+
+      // Keep a consistent order in UI (based on DAYS_AR)
+      const order = new Map(DAYS_AR.map((d, i) => [d, i] as const));
+      return [...next].sort((a, b) => (order.get(a) ?? 999) - (order.get(b) ?? 999));
+    });
+  };
 
   const handleSubmit = () => {
     onSubmit({ name, grade, days, time });
@@ -68,21 +91,66 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
 
       <div className="space-y-2">
         <label className="text-sm font-medium">أيام الحصة</label>
-        <Select
-          value={days.join(',')}
-          onValueChange={(value) => setDays(value.split(','))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {GROUP_DAY_PATTERNS.map((pattern) => (
-              <SelectItem key={pattern.label} value={pattern.days.join(',')}>
-                {pattern.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            type="button"
+            variant={daysMode === 'pattern' ? 'default' : 'outline'}
+            onClick={() => {
+              setDaysMode('pattern');
+              if (!getPatternLabel(days)) {
+                setDays(GROUP_DAY_PATTERNS[0]?.days || []);
+              }
+            }}
+          >
+            أنماط جاهزة
+          </Button>
+          <Button
+            type="button"
+            variant={daysMode === 'custom' ? 'default' : 'outline'}
+            onClick={() => {
+              setDaysMode('custom');
+              if (days.length === 0) setDays(['السبت']);
+            }}
+          >
+            أيام مخصصة
+          </Button>
+          <div className="flex items-center justify-end text-sm text-muted-foreground">
+            {days.length ? days.join(' - ') : '—'}
+          </div>
+        </div>
+
+        {daysMode === 'pattern' ? (
+          <Select
+            value={getPatternLabel(days) ? days.join(',') : GROUP_DAY_PATTERNS[0]?.days.join(',')}
+            onValueChange={(value) => setDays(value.split(','))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر النمط" />
+            </SelectTrigger>
+            <SelectContent>
+              {GROUP_DAY_PATTERNS.map((pattern) => (
+                <SelectItem key={pattern.label} value={pattern.days.join(',')}>
+                  {pattern.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-lg border bg-muted/30 p-3">
+            {DAYS_AR.map((day) => {
+              const checked = days.includes(day);
+              return (
+                <label key={day} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) => handleToggleDay(day, v === true)}
+                  />
+                  <span>{day}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

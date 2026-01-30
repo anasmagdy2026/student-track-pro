@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react';
+import { parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -71,77 +72,64 @@ export function MonthlyReport({
     return buckets.length ? Math.round(buckets.reduce((a, b) => a + b, 0) / buckets.length) : 0;
   }, [attendancePercentage, lessonsAverage, examsStats.averagePercentage]);
 
-  const generatePdfBlob = async () => {
+  const handleDownloadPDF = () => {
     if (!reportRef.current) return;
-    
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const jsPDF = (await import('jspdf')).default;
-      
-      const canvas = await html2canvas(reportRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    // Browser print-to-PDF preserves Arabic shaping/RTL much better than canvas-based PDFs.
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!printWindow) return;
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
+    const title = `تقرير-${student.name}-${monthName}-${year}`;
+    const html = reportRef.current.outerHTML;
 
-      // return as Blob for share/download
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const blob = (pdf as any).output('blob') as Blob;
-      return blob;
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    const blob = await generatePdfBlob();
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `تقرير-${student.name}-${monthName}-${year}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+    <style>
+      @page { size: A4; margin: 12mm; }
+      html, body { direction: rtl; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; }
+      /* Try to keep the report close to the app styles */
+      .bg-white { background: #fff !important; }
+      .p-6 { padding: 16px !important; }
+      .space-y-6 > * + * { margin-top: 16px !important; }
+      .space-y-2 > * + * { margin-top: 8px !important; }
+      .rounded-lg { border-radius: 10px !important; }
+      .border { border: 1px solid #e5e7eb !important; }
+      .text-center { text-align: center !important; }
+      .grid { display: grid !important; }
+      .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+      .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+      .gap-4 { gap: 12px !important; }
+      .text-2xl { font-size: 22px !important; }
+      .text-lg { font-size: 18px !important; }
+      .font-bold { font-weight: 700 !important; }
+      .text-sm { font-size: 13px !important; }
+      .text-xs { font-size: 12px !important; }
+      .text-muted-foreground { color: #6b7280 !important; }
+      /* Hide action buttons inside the report if any */
+      button { display: none !important; }
+    </style>
+  </head>
+  <body>
+    ${html}
+    <script>
+      window.onload = () => {
+        window.focus();
+        window.print();
+      };
+    </script>
+  </body>
+</html>`);
+    printWindow.document.close();
   };
 
   const handleShare = async () => {
-    const blob = await generatePdfBlob();
-    if (!blob) return;
-
-    const file = new File([blob], `تقرير-${student.name}-${monthName}-${year}.pdf`, {
-      type: 'application/pdf',
-    });
-
-    // Use OS share sheet (WhatsApp supported on many phones)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const nav: any = navigator;
-    if (nav?.canShare?.({ files: [file] }) && nav?.share) {
-      await nav.share({
-        title: `تقرير ${student.name}`,
-        text: `التقرير الشهري - ${monthName} ${year}`,
-        files: [file],
-      });
-      return;
-    }
-
-    // Fallback: open WhatsApp with summary text
+    // Open WhatsApp with summary text
     const monthLabel = `${monthName} ${year}`;
     const text = createMonthlyReportMessageForParent({
       studentName: student.name,
@@ -160,6 +148,22 @@ export function MonthlyReport({
     });
     sendWhatsAppMessage(student.parent_phone, text);
   };
+
+  const absentDetails = useMemo(() => {
+    const absentDates = attendanceRecords
+      .filter((a) => !a.present)
+      .map((a) => {
+        const d = parseISO(a.date);
+        // Use ISO date parsing to avoid timezone shift
+        return d.toLocaleDateString('ar-EG', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+      });
+    return absentDates;
+  }, [attendanceRecords]);
 
   return (
     <div className="space-y-4">
@@ -241,6 +245,19 @@ export function MonthlyReport({
                 <p className="text-sm text-muted-foreground">نسبة الحضور</p>
               </div>
             </div>
+
+            {absentDetails.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium">أيام الغياب:</p>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <ul className="list-disc pr-5 space-y-1 text-sm">
+                    {absentDetails.map((label, idx) => (
+                      <li key={idx}>{label}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -340,7 +357,7 @@ export function MonthlyReport({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Button onClick={handleDownloadPDF} className="w-full gap-2">
           <Download className="h-4 w-4" />
-          تحميل PDF
+          طباعة / حفظ PDF
         </Button>
         <Button onClick={handleShare} variant="outline" className="w-full gap-2">
           <Share2 className="h-4 w-4" />
