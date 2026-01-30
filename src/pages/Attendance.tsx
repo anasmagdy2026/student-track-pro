@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -263,10 +263,17 @@ export default function Attendance() {
               تسجيل حضور وغياب الطلاب
             </p>
           </div>
-          <Button onClick={handleMarkAllPresent} className="gap-2">
-            <UserCheck className="h-5 w-5" />
-            تسجيل حضور الكل
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Link to={`/attendance/daily-absence?group=${selectedGroup}`}>
+              <Button variant="outline" className="gap-2">
+                عرض غياب اليوم
+              </Button>
+            </Link>
+            <Button onClick={handleMarkAllPresent} className="gap-2">
+              <UserCheck className="h-5 w-5" />
+              تسجيل حضور الكل
+            </Button>
+          </div>
         </div>
 
         {/* Today's Groups Alert */}
