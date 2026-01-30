@@ -194,7 +194,15 @@ export type Database = {
           max_score?: number
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exams_grade_fkey_grade_levels"
+            columns: ["grade"]
+            isOneToOne: false
+            referencedRelation: "grade_levels"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       grade_levels: {
         Row: {
@@ -251,7 +259,15 @@ export type Database = {
           time?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "groups_grade_fkey_grade_levels"
+            columns: ["grade"]
+            isOneToOne: false
+            referencedRelation: "grade_levels"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       lesson_homework: {
         Row: {
@@ -393,6 +409,13 @@ export type Database = {
           sheet_max_score?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_grade_fkey_grade_levels"
+            columns: ["grade"]
+            isOneToOne: false
+            referencedRelation: "grade_levels"
+            referencedColumns: ["code"]
+          },
           {
             foreignKeyName: "lessons_group_id_fkey"
             columns: ["group_id"]
@@ -547,6 +570,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "students_grade_fkey_grade_levels"
+            columns: ["grade"]
+            isOneToOne: false
+            referencedRelation: "grade_levels"
+            referencedColumns: ["code"]
+          },
           {
             foreignKeyName: "students_group_id_fkey"
             columns: ["group_id"]
