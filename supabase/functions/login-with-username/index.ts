@@ -55,8 +55,19 @@ serve(async (req) => {
     // Sign in with email+password using Supabase Auth
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
+      // Use anon key for end-user auth operations inside the function
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     )
+
+    if (!Deno.env.get('SUPABASE_URL') || !Deno.env.get('SUPABASE_ANON_KEY')) {
+      return new Response(
+        JSON.stringify({ error: 'Server misconfigured: missing auth client keys' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
 
     const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
       email: internalEmail,
