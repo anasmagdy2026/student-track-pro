@@ -76,6 +76,9 @@ export default function Lessons() {
   const [recitationScores, setRecitationScores] = useState<Record<string, number>>({});
   const [gradesSearch, setGradesSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ active: boolean; done: number; total: number }>(
+    { active: false, done: 0, total: 0 }
+  );
 
   const availableTimes = Array.from(new Set(groups.map(g => g.time).filter(Boolean))).sort();
   const availableDays = Array.from(new Set(groups.flatMap(g => g.days || []))).sort();
@@ -122,6 +125,8 @@ export default function Lessons() {
           toast.error('لا توجد مجموعات لهذه السنة الدراسية');
           return;
         }
+
+        setBulkProgress({ active: true, done: 0, total: gradeGroups.length });
         
         for (const group of gradeGroups) {
           await addLesson({
@@ -132,6 +137,12 @@ export default function Lessons() {
             sheet_max_score: sheetMaxScore,
             recitation_max_score: recitationMaxScore,
           });
+
+          setBulkProgress((prev) => ({
+            active: true,
+            total: prev.total,
+            done: Math.min(prev.total, prev.done + 1),
+          }));
         }
         toast.success(`تم إضافة الحصة لـ ${gradeGroups.length} مجموعة`);
       } else {
@@ -151,6 +162,8 @@ export default function Lessons() {
       toast.error('حدث خطأ أثناء إضافة الحصة');
     } finally {
       setIsSubmitting(false);
+      // keep it visible briefly to avoid a flash on fast operations
+      setTimeout(() => setBulkProgress({ active: false, done: 0, total: 0 }), 450);
     }
   };
 
@@ -271,6 +284,16 @@ export default function Lessons() {
 
   return (
     <Layout>
+      {bulkProgress.active && bulkProgress.total > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-[60] h-1 bg-primary/15">
+          <div
+            className="h-full bg-primary transition-[width] duration-200 ease-out"
+            style={{
+              width: `${Math.round((bulkProgress.done / bulkProgress.total) * 100)}%`,
+            }}
+          />
+        </div>
+      )}
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
