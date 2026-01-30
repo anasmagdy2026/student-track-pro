@@ -17,6 +17,7 @@ import {
   PanelLeft,
   Settings,
   UserX,
+  Printer,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -28,6 +29,7 @@ interface LayoutProps {
 const navItems = [
   { path: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
   { path: '/students', label: 'الطلاب', icon: Users },
+  { path: '/print-cards', label: 'طباعة الكروت', icon: Printer },
   { path: '/groups', label: 'المجموعات', icon: UsersRound },
   { path: '/academic-years', label: 'السنوات الدراسية', icon: GraduationCap },
   { path: '/lessons', label: 'الحصص', icon: BookOpen },
