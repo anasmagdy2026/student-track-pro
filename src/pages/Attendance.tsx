@@ -57,6 +57,15 @@ export default function Attendance() {
     groupTime: string;
   } | null>(null);
 
+  const [quickScanMismatch, setQuickScanMismatch] = useState<{
+    studentName: string;
+    studentCode: string;
+    studentGroupName: string;
+    studentGroupTime: string;
+    selectedGroupName: string;
+    selectedGroupTime: string;
+  } | null>(null);
+
   const [groupDecisionContext, setGroupDecisionContext] = useState<{
     studentId: string;
     studentGroupName: string;
@@ -118,6 +127,20 @@ export default function Attendance() {
     selectedGroupTime: string;
     reason: 'different_group' | 'different_day';
   }) => {
+    // Helpful banner for quick scan flows to reduce repeated allow/deny prompts
+    if (pending?.source === 'code' || pending?.source === 'qr') {
+      const student = students.find((s) => s.id === ctx.studentId);
+      if (student) {
+        setQuickScanMismatch({
+          studentName: student.name,
+          studentCode: student.code,
+          studentGroupName: ctx.studentGroupName,
+          studentGroupTime: ctx.studentGroupTime,
+          selectedGroupName: ctx.selectedGroupName,
+          selectedGroupTime: ctx.selectedGroupTime,
+        });
+      }
+    }
     setGroupDecisionContext(ctx);
     setGroupDecisionOpen(true);
   };
@@ -333,6 +356,34 @@ export default function Attendance() {
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
+        {/* Quick scan mismatch banner */}
+        {quickScanMismatch && (
+          <Card className="bg-muted/40">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="font-semibold text-foreground">
+                    تنبيه: مجموعة مختلفة أثناء المسح السريع
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    الطالب: {quickScanMismatch.studentName} ({quickScanMismatch.studentCode})
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    مجموعة الطالب: {quickScanMismatch.studentGroupName} ({quickScanMismatch.studentGroupTime}) — المجموعة المختارة: {quickScanMismatch.selectedGroupName} ({quickScanMismatch.selectedGroupTime})
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setQuickScanMismatch(null)}
+                  className="shrink-0"
+                >
+                  إخفاء التنبيه
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
