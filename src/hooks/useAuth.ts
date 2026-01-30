@@ -1,36 +1,92 @@
-import { useState, useEffect } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useEffect, useMemo, useState } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-const DEFAULT_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123'
+type AuthState = {
+  loading: boolean;
+  session: Session | null;
+  user: User | null;
 };
 
 export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useLocalStorage('auth_status', false);
-  const [credentials, setCredentials] = useLocalStorage('auth_credentials', DEFAULT_CREDENTIALS);
+  const [state, setState] = useState<AuthState>({
+    loading: true,
+    session: null,
+    user: null,
+  });
 
-  const login = (username: string, password: string): boolean => {
-    if (username === credentials.username && password === credentials.password) {
-      setIsAuthenticated(true);
-      return true;
-    }
-    return false;
+  useEffect(() => {
+    // 1) Subscribe first
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setState({
+        loading: false,
+        session,
+        user: session?.user ?? null,
+      });
+    });
+
+    // 2) Then hydrate existing session
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setState({
+          loading: false,
+          session: data.session,
+          user: data.session?.user ?? null,
+        });
+      })
+      .catch(() => {
+        setState({ loading: false, session: null, user: null });
+      });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const isAuthenticated = !!state.user;
+
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { data, error };
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: redirectUrl },
+    });
+    return { data, error };
   };
 
-  const updateCredentials = (username: string, password: string) => {
-    setCredentials({ username, password });
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    return { error };
   };
 
-  return {
-    isAuthenticated,
-    login,
-    logout,
-    updateCredentials,
-    currentUsername: credentials.username
+  const updatePassword = async (newPassword: string) => {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    return { data, error };
   };
+
+  return useMemo(
+    () => ({
+      loading: state.loading,
+      session: state.session,
+      user: state.user,
+      isAuthenticated,
+      signIn,
+      signUp,
+      signOut,
+      updatePassword,
+    }),
+    [state.loading, state.session, state.user, isAuthenticated]
+  );
 }

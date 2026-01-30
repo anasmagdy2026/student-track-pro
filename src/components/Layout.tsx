@@ -42,10 +42,10 @@ export function Layout({ children }: LayoutProps) {
   const [isCollapsed, setIsCollapsed] = useLocalStorage('sidebar_collapsed', false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
