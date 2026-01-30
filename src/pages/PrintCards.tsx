@@ -13,6 +13,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { PrintableStudentCard } from '@/components/PrintableStudentCard';
 import { toast } from 'sonner';
 import { Printer, Search, Users } from 'lucide-react';
@@ -20,6 +21,7 @@ import { Printer, Search, Users } from 'lucide-react';
 export default function PrintCards() {
   const { students } = useStudents();
   const { groups, getGroupById, getGroupsByGrade } = useGroups();
+  const { activeGradeLevels, loading: gradeLevelsLoading } = useGradeLevels();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState<string>('all');
@@ -195,9 +197,11 @@ export default function PrintCards() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">كل السنوات</SelectItem>
-                  <SelectItem value="1">أولى ثانوي</SelectItem>
-                  <SelectItem value="2">تانية ثانوي</SelectItem>
-                  <SelectItem value="3">تالتة ثانوي</SelectItem>
+                  {activeGradeLevels.map((g) => (
+                    <SelectItem key={g.code} value={g.code} disabled={gradeLevelsLoading}>
+                      {g.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
