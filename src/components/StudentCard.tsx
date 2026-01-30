@@ -44,20 +44,30 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
         scale: 2,
       });
       
-      const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-      if (printWindow) {
-        const dataUrl = canvas.toDataURL('image/png');
-        printWindow.document.open();
-        printWindow.document.write(`<!doctype html>
+      const dataUrl = canvas.toDataURL('image/png');
+
+      // Use iframe printing to avoid popup blockers and blank pages
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.setAttribute('aria-hidden', 'true');
+
+      const srcdoc = `<!doctype html>
 <html dir="rtl" lang="ar">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>طباعة بطاقة الطالب - ${student.name}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
       body {
-        font-family: 'Cairo', sans-serif;
+        font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -78,11 +88,11 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
       (function () {
         const img = document.getElementById('cardImg');
         const doPrint = () => {
-          window.focus();
-          window.print();
-          window.onafterprint = () => window.close();
+          setTimeout(() => {
+            window.focus();
+            window.print();
+          }, 50);
         };
-        // Important: wait for image decoding to avoid blank prints
         if (img && img.complete) {
           doPrint();
         } else if (img) {
@@ -94,9 +104,15 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
       })();
     </script>
   </body>
-</html>`);
-        printWindow.document.close();
-      }
+</html>`;
+
+      iframe.onload = () => {
+        // Remove after print dialog is triggered
+        setTimeout(() => iframe.remove(), 2000);
+      };
+
+      iframe.srcdoc = srcdoc;
+      document.body.appendChild(iframe);
     } catch (error) {
       console.error('Error printing card:', error);
     }
