@@ -28,6 +28,13 @@ export default function SetupAdmin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Common mistake: user pastes the secret NAME instead of its VALUE.
+    if (bootstrapToken.trim() === 'ADMIN_BOOTSTRAP_TOKEN') {
+      toast.error('اكتب قيمة كود التفعيل نفسها (مش اسمها). انسخه من Backend/Secrets ثم الصقه هنا');
+      return;
+    }
+
     const parsed = schema.safeParse({ bootstrapToken, username, password, email });
     if (!parsed.success) {
       toast.error(parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة');
@@ -87,12 +94,15 @@ export default function SetupAdmin() {
                   <Input
                     value={bootstrapToken}
                     onChange={(e) => setBootstrapToken(e.target.value)}
-                    placeholder="أدخل كود التفعيل"
+                    placeholder="الصق قيمة كود التفعيل (وليس اسم المتغير)"
                     className="pr-10 h-12"
                     autoComplete="off"
                     required
                   />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  ملاحظة: لا تكتب <span className="font-mono">ADMIN_BOOTSTRAP_TOKEN</span> نفسها — لازم تلصق القيمة الطويلة.
+                </p>
               </div>
 
               <div className="space-y-2">
