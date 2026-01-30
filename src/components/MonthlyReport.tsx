@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Student, Group, GRADE_LABELS, MONTHS_AR } from '@/types';
 import { sendWhatsAppMessage, createMonthlyReportMessageForParent } from '@/utils/whatsapp';
+import { toast } from 'sonner';
 import { 
   FileText, 
   Download, 
@@ -77,7 +78,76 @@ export function MonthlyReport({
 
     // Browser print-to-PDF preserves Arabic shaping/RTL much better than canvas-based PDFs.
     const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-    if (!printWindow) return;
+    if (!printWindow) {
+      // Popup blocked: fallback to a hidden iframe and trigger print from it.
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        iframe.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(iframe);
+
+        const title = `تقرير-${student.name}-${monthName}-${year}`;
+        const html = reportRef.current.outerHTML;
+
+        const doc = iframe.contentDocument;
+        if (!doc) throw new Error('no_iframe_document');
+        doc.open();
+        doc.write(`<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+    <style>
+      @page { size: A4; margin: 12mm; }
+      html, body { direction: rtl; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; }
+      .bg-white { background: #fff !important; }
+      .p-6 { padding: 16px !important; }
+      .space-y-6 > * + * { margin-top: 16px !important; }
+      .space-y-2 > * + * { margin-top: 8px !important; }
+      .rounded-lg { border-radius: 10px !important; }
+      .border { border: 1px solid #e5e7eb !important; }
+      .text-center { text-align: center !important; }
+      .grid { display: grid !important; }
+      .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+      .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+      .gap-4 { gap: 12px !important; }
+      .text-2xl { font-size: 22px !important; }
+      .text-lg { font-size: 18px !important; }
+      .font-bold { font-weight: 700 !important; }
+      .text-sm { font-size: 13px !important; }
+      .text-xs { font-size: 12px !important; }
+      .text-muted-foreground { color: #6b7280 !important; }
+      button { display: none !important; }
+    </style>
+  </head>
+  <body>
+    ${html}
+  </body>
+</html>`);
+        doc.close();
+
+        const w = iframe.contentWindow;
+        if (!w) throw new Error('no_iframe_window');
+        w.focus();
+        w.print();
+
+        // Cleanup after a short delay (print dialog is async)
+        setTimeout(() => {
+          iframe.remove();
+        }, 1500);
+      } catch (e) {
+        console.error('Print fallback failed:', e);
+        toast.error('المتصفح منع الطباعة. جرّب السماح بالنوافذ المنبثقة (Popups)');
+      }
+      return;
+    }
 
     const title = `تقرير-${student.name}-${monthName}-${year}`;
     const html = reportRef.current.outerHTML;
