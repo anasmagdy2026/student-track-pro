@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import StudentProfile from "./pages/StudentProfile";
 import Attendance from "./pages/Attendance";
+import DailyAbsence from "./pages/DailyAbsence";
 import Payments from "./pages/Payments";
 import Exams from "./pages/Exams";
 import Groups from "./pages/Groups";
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/academic-years" element={<ProtectedRoute><AcademicYears /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+          <Route path="/attendance/daily-absence" element={<ProtectedRoute><DailyAbsence /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
           <Route path="/exams" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

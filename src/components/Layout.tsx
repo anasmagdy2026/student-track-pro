@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Settings,
+  UserX,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -31,6 +32,7 @@ const navItems = [
   { path: '/academic-years', label: 'السنوات الدراسية', icon: GraduationCap },
   { path: '/lessons', label: 'الحصص', icon: BookOpen },
   { path: '/attendance', label: 'الحضور والغياب', icon: Calendar },
+  { path: '/attendance/daily-absence', label: 'غياب اليوم', icon: UserX },
   { path: '/payments', label: 'المدفوعات', icon: CreditCard },
   { path: '/exams', label: 'الامتحانات', icon: FileText },
 ];
