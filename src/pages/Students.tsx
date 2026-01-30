@@ -30,7 +30,8 @@ import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { StudentForm } from '@/components/forms/StudentForm';
 import { StudentCard } from '@/components/StudentCard';
-import { GRADE_LABELS, Student } from '@/types';
+import { Student } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -38,6 +39,7 @@ import { Link } from 'react-router-dom';
 export default function Students() {
   const { students, addStudent, updateStudent, deleteStudent } = useStudents();
   const { groups, getGroupsByGrade, getGroupById } = useGroups();
+  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState<string>('all');
@@ -64,7 +66,7 @@ export default function Students() {
 
   const handleAddStudent = async (data: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     group_id: string;
     parent_phone: string;
     student_phone?: string;
@@ -85,7 +87,7 @@ export default function Students() {
 
   const handleUpdateStudent = async (data: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     group_id: string;
     parent_phone: string;
     student_phone?: string;
@@ -163,9 +165,11 @@ export default function Students() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">كل السنوات</SelectItem>
-                  <SelectItem value="1">أولى ثانوي</SelectItem>
-                  <SelectItem value="2">تانية ثانوي</SelectItem>
-                  <SelectItem value="3">تالتة ثانوي</SelectItem>
+                  {activeGradeLevels.map((g) => (
+                    <SelectItem key={g.code} value={g.code}>
+                      {g.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select value={filterGroup} onValueChange={setFilterGroup}>
@@ -227,7 +231,7 @@ export default function Students() {
                           <TableCell className="font-medium">
                             {student.name}
                           </TableCell>
-                          <TableCell>{GRADE_LABELS[student.grade]}</TableCell>
+                          <TableCell>{getGradeLabel(student.grade)}</TableCell>
                           <TableCell>{group?.name || '-'}</TableCell>
                           <TableCell dir="ltr">{group?.time || '-'}</TableCell>
                           <TableCell>{student.monthly_fee} ج</TableCell>

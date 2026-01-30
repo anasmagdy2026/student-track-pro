@@ -2,7 +2,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GRADE_LABELS, Student, Group } from '@/types';
+import { Student, Group } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Download, User, Printer } from 'lucide-react';
 import { useRef } from 'react';
 
@@ -14,6 +15,7 @@ interface StudentCardProps {
 
 export function StudentCard({ student, group, showDownload = true }: StudentCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const { getGradeLabel } = useGradeLevels();
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -150,7 +152,7 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
                 </Badge>
               </div>
               <Badge className="bg-primary/20 text-primary">
-                {GRADE_LABELS[student.grade]}
+                {getGradeLabel(student.grade)}
               </Badge>
               {group && (
                 <p className="text-sm text-muted-foreground">

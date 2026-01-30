@@ -15,9 +15,10 @@ import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { usePayments } from '@/hooks/usePayments';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { QRScanner } from '@/components/QRScanner';
-import { GRADE_LABELS, MONTHS_AR } from '@/types';
+import { MONTHS_AR } from '@/types';
 import {
   sendWhatsAppMessage,
   createPaymentReminderMessage,
@@ -39,6 +40,7 @@ export default function Payments() {
   const { groups, getGroupById } = useGroups();
   const { addPayment, isMonthPaid, payments, markAsNotified, markAsUnpaid } = usePayments();
   const { isBlocked, getActiveBlock } = useStudentBlocks();
+  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
 
   const currentDate = new Date();
   const currentMonth = currentDate.toISOString().slice(0, 7);
@@ -249,9 +251,11 @@ export default function Payments() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل السنوات</SelectItem>
-                    <SelectItem value="1">أولى ثانوي</SelectItem>
-                    <SelectItem value="2">تانية ثانوي</SelectItem>
-                    <SelectItem value="3">تالتة ثانوي</SelectItem>
+                    {activeGradeLevels.map((g) => (
+                      <SelectItem key={g.code} value={g.code}>
+                        {g.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -350,7 +354,7 @@ export default function Payments() {
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {GRADE_LABELS[student.grade]} - {group?.name || '-'}
+                            {getGradeLabel(student.grade)} - {group?.name || '-'}
                           </p>
                         </div>
                       </div>

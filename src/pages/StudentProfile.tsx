@@ -36,7 +36,8 @@ import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
 import { StudentCard } from '@/components/StudentCard';
 import { MonthlyReport } from '@/components/MonthlyReport';
-import { GRADE_LABELS, MONTHS_AR } from '@/types';
+import { MONTHS_AR } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
   sendWhatsAppMessage,
   createAbsenceMessage,
@@ -71,6 +72,7 @@ export default function StudentProfile() {
   const { exams, getStudentResultsWithExams, markResultAsNotified } = useExams();
   const { getGroupById } = useGroups();
   const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
+  const { getGradeLabel } = useGradeLevels();
   const { isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
   const { events, createEvent } = useAlertEvents();
 
@@ -426,7 +428,7 @@ export default function StudentProfile() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">السنة الدراسية</p>
-                <p className="font-bold text-lg">{GRADE_LABELS[student.grade]}</p>
+                <p className="font-bold text-lg">{getGradeLabel(student.grade)}</p>
               </div>
               <div className="p-4 bg-muted rounded-xl">
                 <p className="text-sm text-muted-foreground">المجموعة</p>

@@ -24,7 +24,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { useAttendance } from '@/hooks/useAttendance';
-import { GRADE_LABELS } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Printer, UserX, ArrowRight, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,6 +33,7 @@ export default function DailyAbsence() {
   const { students } = useStudents();
   const { groups, getTodayGroups, getGroupById } = useGroups();
   const { getAttendanceByDate, markAttendance } = useAttendance();
+  const { getGradeLabel } = useGradeLevels();
 
   const today = new Date().toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -216,7 +217,7 @@ export default function DailyAbsence() {
             <p className="text-sm">{new Date(selectedDate).toLocaleDateString('ar-EG')}</p>
             {selectedGroupObj && (
               <p className="text-sm text-muted-foreground">
-                {selectedGroupObj.name} — {GRADE_LABELS[selectedGroupObj.grade as '1' | '2' | '3']} — <span dir="ltr">{selectedGroupObj.time}</span>
+                  {selectedGroupObj.name} — {getGradeLabel(selectedGroupObj.grade)} — <span dir="ltr">{selectedGroupObj.time}</span>
               </p>
             )}
           </div>

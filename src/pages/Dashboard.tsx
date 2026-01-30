@@ -4,7 +4,7 @@ import { useStudents } from '@/hooks/useStudents';
 import { useAttendance } from '@/hooks/useAttendance';
 import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
-import { GRADE_LABELS } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
   Users,
   UserCheck,
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { attendance, getAbsentStudents } = useAttendance();
   const { getPaymentStats } = usePayments();
   const { exams } = useExams();
+  const { activeGradeLevels } = useGradeLevels();
 
   const today = new Date().toISOString().split('T')[0];
   const todayAbsent = getAbsentStudents(today);
@@ -62,10 +63,10 @@ export default function Dashboard() {
     },
   ];
 
-  const gradeStats = (['1', '2', '3'] as const).map(grade => ({
-    grade,
-    label: GRADE_LABELS[grade],
-    count: students.filter(s => s.grade === grade).length,
+  const gradeStats = activeGradeLevels.map((g) => ({
+    grade: g.code,
+    label: g.label,
+    count: students.filter((s) => s.grade === g.code).length,
   }));
 
   return (

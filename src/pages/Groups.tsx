@@ -21,7 +21,8 @@ import {
 import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
 import { GroupForm } from '@/components/forms/GroupForm';
-import { GRADE_LABELS, DAYS_AR, Group } from '@/types';
+import { DAYS_AR, Group } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Users, Plus, Pencil, Trash2, Clock, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -29,6 +30,7 @@ import { Link } from 'react-router-dom';
 export default function Groups() {
   const { groups, addGroup, updateGroup, deleteGroup, getTodayGroups } = useGroups();
   const { getStudentsByGroup } = useStudents();
+  const { getGradeLabel } = useGradeLevels();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
@@ -44,7 +46,7 @@ export default function Groups() {
 
   const handleAddGroup = async (data: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     days: string[];
     time: string;
   }) => {
@@ -63,7 +65,7 @@ export default function Groups() {
 
   const handleUpdateGroup = async (data: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     days: string[];
     time: string;
   }) => {
@@ -182,7 +184,7 @@ export default function Groups() {
                         </div>
                         <div>
                           <h3 className="font-bold text-lg">{group.name}</h3>
-                          <Badge variant="outline">{GRADE_LABELS[group.grade]}</Badge>
+                          <Badge variant="outline">{getGradeLabel(group.grade)}</Badge>
                         </div>
                       </div>
                       {isToday && (

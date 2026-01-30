@@ -23,7 +23,8 @@ import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
 import { useLessons } from '@/hooks/useLessons';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
-import { GRADE_LABELS, Lesson } from '@/types';
+import { Lesson } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { 
   BookOpen, 
   Plus, 
@@ -50,6 +51,7 @@ export default function Lessons() {
   } = useLessons();
 
   const { isBlocked, getActiveBlock } = useStudentBlocks();
+  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -63,7 +65,7 @@ export default function Lessons() {
   // Form state - مفصولة لتجنب مشكلة الكتابة
   const [lessonName, setLessonName] = useState('');
   const [lessonDate, setLessonDate] = useState(new Date().toISOString().split('T')[0]);
-  const [lessonGrade, setLessonGrade] = useState<'1' | '2' | '3'>('1');
+  const [lessonGrade, setLessonGrade] = useState<string>(activeGradeLevels[0]?.code ?? 'sec1');
   const [lessonGroupId, setLessonGroupId] = useState('');
   const [selectAllGroups, setSelectAllGroups] = useState(false);
   const [sheetMaxScore, setSheetMaxScore] = useState(10);
@@ -90,7 +92,7 @@ export default function Lessons() {
   const resetForm = () => {
     setLessonName('');
     setLessonDate(new Date().toISOString().split('T')[0]);
-    setLessonGrade('1');
+    setLessonGrade(activeGradeLevels[0]?.code ?? 'sec1');
     setLessonGroupId('');
     setSelectAllGroups(false);
     setSheetMaxScore(10);
@@ -328,7 +330,7 @@ export default function Lessons() {
                   <label className="text-sm font-medium">السنة الدراسية</label>
                   <Select
                     value={lessonGrade}
-                    onValueChange={(value: '1' | '2' | '3') => {
+                    onValueChange={(value) => {
                       setLessonGrade(value);
                       setLessonGroupId('');
                     }}
@@ -337,9 +339,11 @@ export default function Lessons() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">أولى ثانوي</SelectItem>
-                      <SelectItem value="2">تانية ثانوي</SelectItem>
-                      <SelectItem value="3">تالتة ثانوي</SelectItem>
+                      {activeGradeLevels.map((g) => (
+                        <SelectItem key={g.code} value={g.code}>
+                          {g.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -358,7 +362,7 @@ export default function Lessons() {
                       className="h-4 w-4 rounded border-gray-300"
                     />
                     <label htmlFor="selectAllGroups" className="text-sm font-medium cursor-pointer">
-                      جميع مجموعات {GRADE_LABELS[lessonGrade]} ({filteredGroupsByGrade.length} مجموعة)
+                      جميع مجموعات {getGradeLabel(lessonGrade)} ({filteredGroupsByGrade.length} مجموعة)
                     </label>
                   </div>
                   
@@ -406,9 +410,11 @@ export default function Lessons() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل السنوات</SelectItem>
-                    <SelectItem value="1">أولى ثانوي</SelectItem>
-                    <SelectItem value="2">تانية ثانوي</SelectItem>
-                    <SelectItem value="3">تالتة ثانوي</SelectItem>
+                    {activeGradeLevels.map((g) => (
+                      <SelectItem key={g.code} value={g.code}>
+                        {g.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -489,7 +495,7 @@ export default function Lessons() {
                         <div>
                           <h3 className="text-xl font-bold">{lesson.name}</h3>
                           <div className="flex items-center gap-3 mt-1 flex-wrap">
-                            <Badge variant="outline">{GRADE_LABELS[lesson.grade]}</Badge>
+                            <Badge variant="outline">{getGradeLabel(lesson.grade)}</Badge>
                             <Badge variant="secondary">{group?.name || '-'}</Badge>
                             <span className="text-sm text-muted-foreground">
                               {new Date(lesson.date).toLocaleDateString('ar-EG')}

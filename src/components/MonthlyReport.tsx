@@ -3,7 +3,8 @@ import { parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Student, Group, GRADE_LABELS, MONTHS_AR } from '@/types';
+import { Student, Group, MONTHS_AR } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { sendWhatsAppMessage, createMonthlyReportMessageForParent } from '@/utils/whatsapp';
 import { toast } from 'sonner';
 import { 
@@ -36,6 +37,7 @@ export function MonthlyReport({
   examResults,
 }: MonthlyReportProps) {
   const reportRef = useRef<HTMLDivElement>(null);
+  const { getGradeLabel } = useGradeLevels();
 
   const monthIndex = parseInt(month.split('-')[1]) - 1;
   const year = month.split('-')[0];
@@ -333,7 +335,7 @@ export function MonthlyReport({
             </div>
             <div className="rounded-lg border bg-background/60 p-3">
               <p className="text-xs text-muted-foreground">السنة</p>
-              <p className="font-bold text-foreground">{GRADE_LABELS[student.grade]}</p>
+              <p className="font-bold text-foreground">{getGradeLabel(student.grade)}</p>
             </div>
             <div className="rounded-lg border bg-background/60 p-3">
               <p className="text-xs text-muted-foreground">المجموعة</p>
@@ -414,7 +416,7 @@ export function MonthlyReport({
             </div>
             <div className="rounded-lg border bg-card p-3">
               <p className="text-xs text-muted-foreground">السنة</p>
-              <p className="font-bold text-foreground">{GRADE_LABELS[student.grade]}</p>
+              <p className="font-bold text-foreground">{getGradeLabel(student.grade)}</p>
             </div>
             <div className="rounded-lg border bg-card p-3">
               <p className="text-xs text-muted-foreground">المجموعة</p>

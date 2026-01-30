@@ -23,7 +23,8 @@ import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { useExams } from '@/hooks/useExams';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
-import { GRADE_LABELS, Exam } from '@/types';
+import { Exam } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
   sendWhatsAppMessage,
   createExamResultMessage,
@@ -53,6 +54,7 @@ export default function Exams() {
   } = useExams();
 
   const { isBlocked, getActiveBlock } = useStudentBlocks();
+  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
 
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [isAddExamOpen, setIsAddExamOpen] = useState(false);
@@ -65,7 +67,7 @@ export default function Exams() {
   const [examName, setExamName] = useState('');
   const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0]);
   const [examMaxScore, setExamMaxScore] = useState(100);
-  const [examGrade, setExamGrade] = useState<'1' | '2' | '3'>('1');
+  const [examGrade, setExamGrade] = useState<string>(activeGradeLevels[0]?.code ?? 'sec1');
 
   const [scores, setScores] = useState<Record<string, number>>({});
 
@@ -90,7 +92,7 @@ export default function Exams() {
     setExamName('');
     setExamDate(new Date().toISOString().split('T')[0]);
     setExamMaxScore(100);
-    setExamGrade('1');
+    setExamGrade(activeGradeLevels[0]?.code ?? 'sec1');
   };
 
   const handleAddExam = async () => {
@@ -281,15 +283,17 @@ export default function Exams() {
                   <label className="text-sm font-medium">السنة الدراسية</label>
                   <Select
                     value={examGrade}
-                    onValueChange={(value: '1' | '2' | '3') => setExamGrade(value)}
+                    onValueChange={(value) => setExamGrade(value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">أولى ثانوي</SelectItem>
-                      <SelectItem value="2">تانية ثانوي</SelectItem>
-                      <SelectItem value="3">تالتة ثانوي</SelectItem>
+                      {activeGradeLevels.map((g) => (
+                        <SelectItem key={g.code} value={g.code}>
+                          {g.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -319,7 +323,7 @@ export default function Exams() {
                         <div>
                           <h3 className="text-xl font-bold">{exam.name}</h3>
                           <div className="flex items-center gap-3 mt-1">
-                            <Badge variant="outline">{GRADE_LABELS[exam.grade]}</Badge>
+                            <Badge variant="outline">{getGradeLabel(exam.grade)}</Badge>
                             <span className="text-sm text-muted-foreground">
                               {new Date(exam.date).toLocaleDateString('ar-EG')}
                             </span>

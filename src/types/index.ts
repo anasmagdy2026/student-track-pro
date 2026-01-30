@@ -2,7 +2,7 @@ export interface Student {
   id: string;
   code: string;
   name: string;
-  grade: '1' | '2' | '3'; // أولى، تانية، تالتة ثانوي
+  grade: string; // dynamic grade code (e.g. sec1, prep3)
   group_id: string | null;
   parent_phone: string;
   student_phone?: string | null;
@@ -15,7 +15,7 @@ export interface Student {
 export interface Group {
   id: string;
   name: string;
-  grade: '1' | '2' | '3';
+  grade: string;
   days: string[]; // مجموعة الأيام مثل ['السبت', 'الإثنين', 'الأربعاء']
   time: string; // وقت المجموعة
   created_at?: string;
@@ -48,7 +48,7 @@ export interface Exam {
   name: string;
   date: string;
   max_score: number;
-  grade: '1' | '2' | '3';
+  grade: string;
   created_at?: string;
 }
 
@@ -65,7 +65,7 @@ export interface Lesson {
   id: string;
   name: string;
   date: string;
-  grade: '1' | '2' | '3';
+  grade: string;
   group_id: string | null;
   sheet_max_score: number;
   recitation_max_score: number;
@@ -88,15 +88,6 @@ export interface LessonRecitation {
   created_at?: string;
 }
 
-export type GradeLabel = {
-  [key in '1' | '2' | '3']: string;
-};
-
-export const GRADE_LABELS: GradeLabel = {
-  '1': 'أولى ثانوي',
-  '2': 'تانية ثانوي',
-  '3': 'تالتة ثانوي',
-};
 
 export const MONTHS_AR = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
