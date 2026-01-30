@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useStudents } from '@/hooks/useStudents';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
+import { useAlertRules } from '@/hooks/useAlertRules';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, Snowflake, Undo2, Search } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 const severityVariant = (severity: string): 'default' | 'secondary' | 'destructive' => {
   if (severity === 'critical') return 'destructive';
@@ -20,10 +22,28 @@ const severityVariant = (severity: string): 'default' | 'secondary' | 'destructi
 export default function Alerts() {
   const { students } = useStudents();
   const { events, resolveEvent, createEvent } = useAlertEvents();
+  const { rules, loading: rulesLoading, setRuleActive } = useAlertRules();
   const { isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
 
   const [query, setQuery] = useState('');
   const [showResolved, setShowResolved] = useState(false);
+  const [togglingRuleIds, setTogglingRuleIds] = useState<Set<string>>(new Set());
+
+  const handleToggleRule = async (ruleId: string, nextActive: boolean) => {
+    setTogglingRuleIds((prev) => new Set(prev).add(ruleId));
+    try {
+      await setRuleActive(ruleId, nextActive);
+      toast.success(nextActive ? 'تم تفعيل التنبيه' : 'تم تعطيل التنبيه');
+    } catch {
+      toast.error('تعذر تحديث حالة التنبيه');
+    } finally {
+      setTogglingRuleIds((prev) => {
+        const copy = new Set(prev);
+        copy.delete(ruleId);
+        return copy;
+      });
+    }
+  };
 
   const studentById = useMemo(() => {
     const map = new Map<string, (typeof students)[number]>();
@@ -143,6 +163,58 @@ export default function Alerts() {
                 className="pr-10"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>قواعد التنبيهات (تفعيل / تعطيل)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {rulesLoading ? (
+              <div className="text-sm text-muted-foreground">جاري تحميل القواعد...</div>
+            ) : rules.length === 0 ? (
+              <div className="text-sm text-muted-foreground">لا توجد قواعد تنبيهات حالياً.</div>
+            ) : (
+              <div className="space-y-2">
+                {rules.map((r) => {
+                  const busy = togglingRuleIds.has(r.id);
+                  return (
+                    <div
+                      key={r.id}
+                      className="flex items-start justify-between gap-4 rounded-xl border border-border bg-card p-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-medium text-foreground truncate">{r.title}</div>
+                          <Badge variant={severityVariant(r.severity)}>
+                            {r.severity === 'critical' ? 'حرج' : r.severity === 'warning' ? 'تحذير' : 'معلومة'}
+                          </Badge>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {r.code}
+                          </Badge>
+                        </div>
+                        {r.description && (
+                          <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
+                            {r.description}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-sm text-muted-foreground">{r.is_active ? 'مفعل' : 'معطل'}</span>
+                        <Switch
+                          dir="ltr"
+                          checked={r.is_active}
+                          disabled={busy}
+                          onCheckedChange={(checked) => handleToggleRule(r.id, checked)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
