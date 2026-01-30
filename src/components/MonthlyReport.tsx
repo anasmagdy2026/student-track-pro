@@ -1,15 +1,17 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Student, Group, GRADE_LABELS, MONTHS_AR } from '@/types';
+import { sendWhatsAppMessage, createMonthlyReportMessageForParent } from '@/utils/whatsapp';
 import { 
   FileText, 
   Download, 
   CheckCircle, 
   XCircle,
   BookOpen,
-  CreditCard
+  CreditCard,
+  Share2
 } from 'lucide-react';
 
 interface MonthlyReportProps {
@@ -19,7 +21,7 @@ interface MonthlyReportProps {
   attendanceRecords: { date: string; present: boolean }[];
   paymentStatus: { paid: boolean; amount: number };
   lessonScores: { lessonName: string; sheetScore: number | null; recitationScore: number | null; sheetMax: number; recitationMax: number }[];
-  examResults: { examName: string; score: number; maxScore: number }[];
+  examResults: { examName: string; score: number | null; maxScore: number; absent: boolean }[];
 }
 
 export function MonthlyReport({
@@ -43,7 +45,33 @@ export function MonthlyReport({
     ? Math.round((presentCount / attendanceRecords.length) * 100) 
     : 0;
 
-  const handleDownloadPDF = async () => {
+  const lessonsAverage = useMemo(() => {
+    const parts: number[] = [];
+    for (const l of lessonScores) {
+      if (l.sheetScore !== null && l.sheetMax > 0) parts.push((l.sheetScore / l.sheetMax) * 100);
+      if (l.recitationScore !== null && l.recitationMax > 0) parts.push((l.recitationScore / l.recitationMax) * 100);
+    }
+    return parts.length ? Math.round(parts.reduce((a, b) => a + b, 0) / parts.length) : 0;
+  }, [lessonScores]);
+
+  const examsStats = useMemo(() => {
+    const total = examResults.length;
+    const absent = examResults.filter(e => e.absent).length;
+    const scored = examResults
+      .filter(e => !e.absent && e.score !== null)
+      .map(e => Math.round(((e.score || 0) / e.maxScore) * 100));
+    const averagePercentage = scored.length
+      ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length)
+      : 0;
+    return { total, absent, averagePercentage };
+  }, [examResults]);
+
+  const overallPercentage = useMemo(() => {
+    const buckets = [attendancePercentage, lessonsAverage, examsStats.averagePercentage].filter(v => typeof v === 'number');
+    return buckets.length ? Math.round(buckets.reduce((a, b) => a + b, 0) / buckets.length) : 0;
+  }, [attendancePercentage, lessonsAverage, examsStats.averagePercentage]);
+
+  const generatePdfBlob = async () => {
     if (!reportRef.current) return;
     
     try {
@@ -73,15 +101,99 @@ export function MonthlyReport({
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`تقرير-${student.name}-${monthName}-${year}.pdf`);
+      // return as Blob for share/download
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const blob = (pdf as any).output('blob') as Blob;
+      return blob;
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
   };
 
+  const handleDownloadPDF = async () => {
+    const blob = await generatePdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `تقرير-${student.name}-${monthName}-${year}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleShare = async () => {
+    const blob = await generatePdfBlob();
+    if (!blob) return;
+
+    const file = new File([blob], `تقرير-${student.name}-${monthName}-${year}.pdf`, {
+      type: 'application/pdf',
+    });
+
+    // Use OS share sheet (WhatsApp supported on many phones)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nav: any = navigator;
+    if (nav?.canShare?.({ files: [file] }) && nav?.share) {
+      await nav.share({
+        title: `تقرير ${student.name}`,
+        text: `التقرير الشهري - ${monthName} ${year}`,
+        files: [file],
+      });
+      return;
+    }
+
+    // Fallback: open WhatsApp with summary text
+    const monthLabel = `${monthName} ${year}`;
+    const text = createMonthlyReportMessageForParent({
+      studentName: student.name,
+      monthLabel,
+      groupName: group?.name,
+      attendance: {
+        total: attendanceRecords.length,
+        present: presentCount,
+        absent: absentCount,
+        percentage: attendancePercentage,
+      },
+      payment: paymentStatus,
+      exams: examsStats,
+      lessons: { counted: lessonScores.length, averagePercentage: lessonsAverage },
+      overallPercentage,
+    });
+    sendWhatsAppMessage(student.parent_phone, text);
+  };
+
   return (
     <div className="space-y-4">
       <div ref={reportRef} className="bg-white p-6 space-y-6" dir="rtl">
+        {/* Evaluation */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              التقييم
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <p className="text-2xl font-bold text-primary">{attendancePercentage}%</p>
+                <p className="text-sm text-muted-foreground">الحضور</p>
+              </div>
+              <div className="p-3 bg-secondary/10 rounded-lg">
+                <p className="text-2xl font-bold text-secondary">{lessonsAverage}%</p>
+                <p className="text-sm text-muted-foreground">الحصص</p>
+              </div>
+              <div className="p-3 bg-success/10 rounded-lg">
+                <p className="text-2xl font-bold text-success">{overallPercentage}%</p>
+                <p className="text-sm text-muted-foreground">التقييم العام</p>
+              </div>
+            </div>
+            {examsStats.total > 0 && (
+              <p className="text-xs text-muted-foreground mt-3">
+                الامتحانات: متوسط {examsStats.averagePercentage}% — غياب {examsStats.absent}/{examsStats.total}
+              </p>
+            )}
+          </CardContent>
+        </Card>
         {/* Header */}
         <div className="text-center border-b pb-4">
           <h1 className="text-2xl font-bold text-primary">التقرير الشهري</h1>
@@ -193,18 +305,26 @@ export function MonthlyReport({
             <CardContent>
               <div className="space-y-2">
                 {examResults.map((exam, index) => {
-                  const percentage = Math.round((exam.score / exam.maxScore) * 100);
+                  const percentage = exam.absent || exam.score === null
+                    ? 0
+                    : Math.round((exam.score / exam.maxScore) * 100);
                   return (
                     <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
                       <span className="font-medium">{exam.examName}</span>
                       <div className="flex items-center gap-2">
-                        <span>{exam.score}/{exam.maxScore}</span>
-                        <Badge className={
-                          percentage >= 75 ? 'bg-success' : 
-                          percentage >= 50 ? 'bg-warning' : 'bg-destructive'
-                        }>
-                          {percentage}%
-                        </Badge>
+                        {exam.absent ? (
+                          <Badge variant="destructive">غائب</Badge>
+                        ) : (
+                          <>
+                            <span>{exam.score}/{exam.maxScore}</span>
+                            <Badge className={
+                              percentage >= 75 ? 'bg-success' : 
+                              percentage >= 50 ? 'bg-warning' : 'bg-destructive'
+                            }>
+                              {percentage}%
+                            </Badge>
+                          </>
+                        )}
                       </div>
                     </div>
                   );
@@ -215,10 +335,16 @@ export function MonthlyReport({
         )}
       </div>
 
-      <Button onClick={handleDownloadPDF} className="w-full gap-2">
-        <Download className="h-4 w-4" />
-        تحميل التقرير PDF
-      </Button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <Button onClick={handleDownloadPDF} className="w-full gap-2">
+          <Download className="h-4 w-4" />
+          تحميل PDF
+        </Button>
+        <Button onClick={handleShare} variant="outline" className="w-full gap-2">
+          <Share2 className="h-4 w-4" />
+          إرسال/مشاركة (واتساب)
+        </Button>
+      </div>
     </div>
   );
 }

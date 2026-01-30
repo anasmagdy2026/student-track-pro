@@ -107,7 +107,10 @@ export default function StudentProfile() {
   const getReportData = () => {
     if (!student) return null;
 
-    const monthAttendance = getAttendanceByMonth(student.id, reportMonth);
+    const registeredAt = (student.registered_at || student.created_at?.slice(0, 10) || '').slice(0, 10);
+
+    const monthAttendance = getAttendanceByMonth(student.id, reportMonth)
+      .filter((a) => !registeredAt || a.date >= registeredAt);
     const attendanceRecords = monthAttendance.map(a => ({
       date: a.date,
       present: a.present,
@@ -119,28 +122,50 @@ export default function StudentProfile() {
       amount: payment?.amount ?? student.monthly_fee,
     };
 
-    const monthLessons = lessons.filter(l => l.date.startsWith(reportMonth));
-    const lessonScores = monthLessons.map(lesson => {
-      const sheet = studentSheets.find(s => s.lesson_id === lesson.id);
-      const recitation = studentRecitations.find(r => r.lesson_id === lesson.id);
-      return {
-        lessonName: lesson.name,
-        sheetScore: sheet?.score ?? null,
-        recitationScore: recitation?.score ?? null,
-        sheetMax: lesson.sheet_max_score,
-        recitationMax: lesson.recitation_max_score,
-      };
-    });
+    // Only lessons:
+    // - in selected month
+    // - in student's group only
+    // - after registration date
+    // - show only lessons where student has a recorded sheet or recitation ("حضرها")
+    const monthLessons = lessons
+      .filter((l) => l.date.startsWith(reportMonth))
+      .filter((l) => !registeredAt || l.date >= registeredAt)
+      .filter((l) => (student.group_id ? l.group_id === student.group_id : true))
+      .filter((l) => l.grade === student.grade);
+
+    const lessonScores = monthLessons
+      .map((lesson) => {
+        const sheet = studentSheets.find((s) => s.lesson_id === lesson.id);
+        const recitation = studentRecitations.find((r) => r.lesson_id === lesson.id);
+        const hasAny = !!sheet || !!recitation;
+        if (!hasAny) return null;
+        return {
+          lessonName: lesson.name,
+          sheetScore: sheet?.score ?? null,
+          recitationScore: recitation?.score ?? null,
+          sheetMax: lesson.sheet_max_score,
+          recitationMax: lesson.recitation_max_score,
+        };
+      })
+      .filter(Boolean) as {
+      lessonName: string;
+      sheetScore: number | null;
+      recitationScore: number | null;
+      sheetMax: number;
+      recitationMax: number;
+    }[];
 
     const monthExams = exams.filter(e => e.date.startsWith(reportMonth) && e.grade === student.grade);
+    // If no grade exists => consider absent
     const examResultsData = monthExams.map(exam => {
       const result = examResults.find(r => r.exam?.id === exam.id);
       return {
         examName: exam.name,
-        score: result?.score ?? 0,
+        score: result?.score ?? null,
         maxScore: exam.max_score,
+        absent: !result,
       };
-    }).filter(r => r.score > 0);
+    });
 
     return {
       attendanceRecords,

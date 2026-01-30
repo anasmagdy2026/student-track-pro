@@ -110,3 +110,34 @@ export const createLateMessageForStudent = (
 
 مستر/ محمد مجدي`;
 };
+
+export const createMonthlyReportMessageForParent = (params: {
+  studentName: string;
+  monthLabel: string;
+  groupName?: string;
+  attendance: { total: number; present: number; absent: number; percentage: number };
+  payment: { paid: boolean; amount: number };
+  exams: { total: number; absent: number; averagePercentage: number };
+  lessons: { counted: number; averagePercentage: number };
+  overallPercentage: number;
+}) => {
+  const groupLine = params.groupName ? `المجموعة: ${params.groupName}\n` : '';
+  const paidText = params.payment.paid ? 'مدفوع' : 'غير مدفوع';
+
+  return `السلام عليكم ورحمة الله وبركاته
+
+تقرير شهري: ${params.monthLabel}
+الطالب/ة: ${params.studentName}
+${groupLine}
+الحضور: ${params.attendance.present}/${params.attendance.total} (${params.attendance.percentage}%)
+الغياب: ${params.attendance.absent}
+
+المدفوعات: ${paidText} (المبلغ: ${params.payment.amount} جنيه)
+
+الامتحانات: متوسط ${params.exams.averagePercentage}% (غياب امتحان: ${params.exams.absent}/${params.exams.total})
+الحصص (شيت/تسميع): متوسط ${params.lessons.averagePercentage}% (عدد المسجل: ${params.lessons.counted})
+
+التقييم العام: ${params.overallPercentage}%
+
+مع تحيات مستر/ محمد مجدي`;
+};
