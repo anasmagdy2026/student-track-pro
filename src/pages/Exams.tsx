@@ -66,6 +66,18 @@ export default function Exams() {
 
   const [scores, setScores] = useState<Record<string, number>>({});
 
+  const saveScoreOnBlur = async (studentId: string) => {
+    if (!selectedExam) return;
+    const score = scores[studentId];
+    if (score === undefined || Number.isNaN(score)) return;
+    if (score < 0 || score > selectedExam.max_score) return;
+    try {
+      await addResult(selectedExam.id, studentId, score);
+    } catch {
+      toast.error('تعذر حفظ درجة الامتحان');
+    }
+  };
+
   const resetExamForm = () => {
     setExamName('');
     setExamDate(new Date().toISOString().split('T')[0]);
@@ -345,7 +357,7 @@ export default function Exams() {
               <DialogTitle>
                 إدخال درجات: {selectedExam?.name} (الدرجة النهائية: {selectedExam?.max_score})
               </DialogTitle>
-              <DialogDescription>أدخل درجات الطلاب - يتم الحفظ تلقائياً عند إضافة درجة بالكود</DialogDescription>
+                <DialogDescription>أدخل درجات الطلاب - يتم الحفظ تلقائياً عند ترك الخانة</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               {/* Quick Code Entry */}
@@ -436,6 +448,7 @@ export default function Exams() {
                                 [student.id]: Number(e.target.value),
                               })
                             }
+                            onBlur={() => saveScoreOnBlur(student.id)}
                             className="w-20 text-center"
                             placeholder="0"
                             max={selectedExam?.max_score}
