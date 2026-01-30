@@ -21,7 +21,13 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+ 
+  // Don't redirect while we are still hydrating the existing session.
+  // Otherwise users with a valid session can get bounced back to "/".
+  if (loading) {
+    return null;
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -31,7 +37,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
   
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
