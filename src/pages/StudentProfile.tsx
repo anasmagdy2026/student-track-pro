@@ -109,13 +109,6 @@ export default function StudentProfile() {
 
     const registeredAt = (student.registered_at || student.created_at?.slice(0, 10) || '').slice(0, 10);
 
-    const monthAttendance = getAttendanceByMonth(student.id, reportMonth)
-      .filter((a) => !registeredAt || a.date >= registeredAt);
-    const attendanceRecords = monthAttendance.map(a => ({
-      date: a.date,
-      present: a.present,
-    }));
-
     const payment = getPaymentByMonth(student.id, reportMonth);
     const paymentStatus = {
       paid: payment?.paid ?? false,
@@ -133,12 +126,25 @@ export default function StudentProfile() {
       .filter((l) => (student.group_id ? l.group_id === student.group_id : true))
       .filter((l) => l.grade === student.grade);
 
+    // Attendance for the report should reflect actual class days.
+    // We treat any lesson date without an attendance record as Absent (present=false)
+    // so the report shows meaningful حضور/غياب even if attendance wasn't explicitly saved.
+    const monthAttendance = getAttendanceByMonth(student.id, reportMonth)
+      .filter((a) => !registeredAt || a.date >= registeredAt);
+
+    const lessonDates = Array.from(new Set(monthLessons.map((l) => l.date))).sort();
+    const attendanceRecordMap = new Map(monthAttendance.map((a) => [a.date, a.present] as const));
+    const attendanceRecords = lessonDates.map((date) => ({
+      date,
+      present: attendanceRecordMap.get(date) ?? false,
+    }));
+
+    // Show lessons in the report even if the student has no recorded scores yet.
+    // This fixes cases where الشيتات/التسميع don't appear at all.
     const lessonScores = monthLessons
       .map((lesson) => {
         const sheet = studentSheets.find((s) => s.lesson_id === lesson.id);
         const recitation = studentRecitations.find((r) => r.lesson_id === lesson.id);
-        const hasAny = !!sheet || !!recitation;
-        if (!hasAny) return null;
         return {
           lessonName: lesson.name,
           sheetScore: sheet?.score ?? null,
@@ -147,13 +153,7 @@ export default function StudentProfile() {
           recitationMax: lesson.recitation_max_score,
         };
       })
-      .filter(Boolean) as {
-      lessonName: string;
-      sheetScore: number | null;
-      recitationScore: number | null;
-      sheetMax: number;
-      recitationMax: number;
-    }[];
+      .sort((a, b) => a.lessonName.localeCompare(b.lessonName, 'ar'));
 
     const monthExams = exams.filter(e => e.date.startsWith(reportMonth) && e.grade === student.grade);
     // If no grade exists => consider absent
