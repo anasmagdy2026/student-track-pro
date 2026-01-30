@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -121,6 +122,15 @@ export default function Login() {
                 {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
               </Button>
             </form>
+
+            <div className="mt-6 text-center">
+              <Link
+                to="/setup-admin"
+                className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+              >
+                تهيئة حساب المدير (مرة واحدة)
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
