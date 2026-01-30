@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,28 +6,58 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { GraduationCap, Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signIn, signUp } = useAuth();
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email('البريد الإلكتروني غير صحيح'),
+        password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
+      }),
+    []
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
-      if (login(username, password)) {
+    const parsed = schema.safeParse({ email, password });
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (mode === 'login') {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error('فشل تسجيل الدخول: تأكد من البريد وكلمة المرور');
+          return;
+        }
         toast.success('تم تسجيل الدخول بنجاح');
         navigate('/dashboard');
       } else {
-        toast.error('اسم المستخدم أو كلمة المرور غير صحيحة');
+        const { error } = await signUp(email, password);
+        if (error) {
+          // Supabase returns various messages; keep it user-friendly
+          toast.error('فشل إنشاء الحساب: ربما الحساب موجود بالفعل');
+          return;
+        }
+        toast.success('تم إنشاء الحساب. قد تحتاج لتأكيد البريد أولاً.');
       }
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -51,15 +81,15 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  اسم المستخدم
+                  البريد الإلكتروني
                 </label>
                 <div className="relative">
                   <User className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="أدخل اسم المستخدم"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
                     className="pr-10 h-12"
                     required
                   />
@@ -99,17 +129,25 @@ export default function Login() {
                 className="w-full h-12 text-base font-semibold"
                 disabled={loading}
               >
-                {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
+                {loading
+                  ? 'جاري المتابعة...'
+                  : mode === 'login'
+                    ? 'تسجيل الدخول'
+                    : 'إنشاء حساب'}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setMode((m) => (m === 'login' ? 'signup' : 'login'))}
+                disabled={loading}
+              >
+                {mode === 'login'
+                  ? 'ليس لديك حساب؟ إنشاء حساب'
+                  : 'لديك حساب بالفعل؟ تسجيل الدخول'}
               </Button>
             </form>
-
-            <div className="mt-6 p-4 bg-muted rounded-xl">
-              <p className="text-sm text-muted-foreground text-center">
-                <strong>بيانات الدخول الافتراضية:</strong>
-                <br />
-                اسم المستخدم: admin | كلمة المرور: admin123
-              </p>
-            </div>
           </CardContent>
         </Card>
 
