@@ -1,6 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { Badge } from '@/components/ui/badge';
-import { GRADE_LABELS, Student, Group } from '@/types';
+import { Student, Group } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { User } from 'lucide-react';
 
 interface PrintableStudentCardProps {
@@ -12,6 +13,7 @@ interface PrintableStudentCardProps {
  * Pure-HTML/SVG printable card (no canvas) so Arabic/RTL and QR render reliably in print.
  */
 export function PrintableStudentCard({ student, group }: PrintableStudentCardProps) {
+  const { getGradeLabel } = useGradeLevels();
   return (
     <div className="print-card" dir="rtl">
       <div className="print-card__inner">
@@ -37,7 +39,7 @@ export function PrintableStudentCard({ student, group }: PrintableStudentCardPro
             </Badge>
           </div>
           <div className="print-card__grade">
-            <Badge className="bg-primary/20 text-primary">{GRADE_LABELS[student.grade]}</Badge>
+            <Badge className="bg-primary/20 text-primary">{getGradeLabel(student.grade)}</Badge>
           </div>
           {group && (
             <div className="print-card__group">

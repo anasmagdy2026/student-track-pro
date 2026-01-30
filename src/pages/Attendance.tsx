@@ -17,7 +17,8 @@ import { useStudents } from '@/hooks/useStudents';
 import { useAttendance } from '@/hooks/useAttendance';
 import { useGroups } from '@/hooks/useGroups';
 import { QRScanner } from '@/components/QRScanner';
-import { DAYS_AR, GRADE_LABELS } from '@/types';
+import { DAYS_AR } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
@@ -49,6 +50,7 @@ export default function Attendance() {
   const { isMonthPaid } = usePayments();
   const { exams, results } = useExams();
   const { lessons, sheets, recitations } = useLessons();
+  const { getGradeLabel } = useGradeLevels();
   const { isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
 
@@ -768,7 +770,7 @@ export default function Attendance() {
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {GRADE_LABELS[student.grade]} - {studentGroup?.name || '-'}
+                            {getGradeLabel(student.grade)} - {studentGroup?.name || '-'}
                           </p>
                         </div>
                       </div>

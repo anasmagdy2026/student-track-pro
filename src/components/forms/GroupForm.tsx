@@ -10,17 +10,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DAYS_AR, GROUP_DAY_PATTERNS } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 
 interface GroupFormProps {
   initialData?: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     days: string[];
     time: string;
   };
   onSubmit: (data: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     days: string[];
     time: string;
   }) => void;
@@ -28,8 +29,10 @@ interface GroupFormProps {
 }
 
 export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormProps) {
+  const { activeGradeLevels } = useGradeLevels();
+  const firstGrade = activeGradeLevels[0]?.code ?? 'sec1';
   const [name, setName] = useState(initialData?.name || '');
-  const [grade, setGrade] = useState<'1' | '2' | '3'>(initialData?.grade || '1');
+  const [grade, setGrade] = useState<string>(initialData?.grade || firstGrade);
   const [days, setDays] = useState<string[]>(
     initialData?.days || ['السبت', 'الإثنين', 'الأربعاء']
   );
@@ -76,15 +79,17 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         <label className="text-sm font-medium">السنة الدراسية</label>
         <Select
           value={grade}
-          onValueChange={(value: '1' | '2' | '3') => setGrade(value)}
+          onValueChange={(value) => setGrade(value)}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">أولى ثانوي</SelectItem>
-            <SelectItem value="2">تانية ثانوي</SelectItem>
-            <SelectItem value="3">تالتة ثانوي</SelectItem>
+            {activeGradeLevels.map((g) => (
+              <SelectItem key={g.code} value={g.code}>
+                {g.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

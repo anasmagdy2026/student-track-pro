@@ -11,10 +11,11 @@ import {
 import { Group } from '@/types';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 
 type StudentFormData = {
   name: string;
-  grade: '1' | '2' | '3';
+  grade: string;
   group_id: string;
   parent_phone: string;
   student_phone?: string;
@@ -24,7 +25,7 @@ type StudentFormData = {
 interface StudentFormProps {
   initialData?: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     group_id: string;
     parent_phone: string;
     student_phone?: string;
@@ -34,7 +35,7 @@ interface StudentFormProps {
   getGroupsByGrade: (grade: string) => Group[];
   onSubmit: (data: {
     name: string;
-    grade: '1' | '2' | '3';
+    grade: string;
     group_id: string;
     parent_phone: string;
     student_phone?: string;
@@ -50,8 +51,10 @@ export function StudentForm({
   onSubmit,
   isEdit = false,
 }: StudentFormProps) {
+  const { activeGradeLevels } = useGradeLevels();
+  const firstGrade = activeGradeLevels[0]?.code ?? 'sec1';
   const [name, setName] = useState(initialData?.name || '');
-  const [grade, setGrade] = useState<'1' | '2' | '3'>(initialData?.grade || '1');
+  const [grade, setGrade] = useState<string>(initialData?.grade || firstGrade);
   const [groupId, setGroupId] = useState(initialData?.group_id || '');
   const [parentPhone, setParentPhone] = useState(initialData?.parent_phone || '');
   const [studentPhone, setStudentPhone] = useState(initialData?.student_phone || '');
@@ -66,7 +69,7 @@ export function StudentForm({
       .trim()
       .min(2, 'اسم الطالب قصير جداً')
       .max(100, 'اسم الطالب طويل جداً'),
-    grade: z.enum(['1', '2', '3']),
+    grade: z.string().min(1, 'اختر السنة الدراسية'),
     group_id: z.string().min(1, 'اختر مجموعة'),
     parent_phone: z
       .string()
@@ -137,7 +140,7 @@ export function StudentForm({
         <label className="text-sm font-medium">السنة الدراسية</label>
         <Select
           value={grade}
-          onValueChange={(value: '1' | '2' | '3') => {
+          onValueChange={(value) => {
             setGrade(value);
             if (errors.grade) setErrors((p) => ({ ...p, grade: '' }));
           }}
@@ -146,9 +149,11 @@ export function StudentForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">أولى ثانوي</SelectItem>
-            <SelectItem value="2">تانية ثانوي</SelectItem>
-            <SelectItem value="3">تالتة ثانوي</SelectItem>
+            {activeGradeLevels.map((g) => (
+              <SelectItem key={g.code} value={g.code}>
+                {g.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

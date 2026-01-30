@@ -15,22 +15,23 @@ import {
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { GRADE_LABELS } from '@/types';
+import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { GraduationCap, Users, UsersRound, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AcademicYears() {
   const { students } = useStudents();
   const { groups } = useGroups();
+  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
 
   const [academicYearLabel, setAcademicYearLabel] = useLocalStorage<string>('academic_year_label', '2024/2025');
   const [draftAcademicYearLabel, setDraftAcademicYearLabel] = useState<string>(academicYearLabel);
 
-  const grades = ['1', '2', '3'] as const;
+  const grades = activeGradeLevels.map((g) => g.code);
 
-  const getStats = (grade: '1' | '2' | '3') => {
-    const gradeStudents = students.filter(s => s.grade === grade);
-    const gradeGroups = groups.filter(g => g.grade === grade);
+  const getStats = (grade: string) => {
+    const gradeStudents = students.filter((s) => s.grade === grade);
+    const gradeGroups = groups.filter((g) => g.grade === grade);
     return {
       studentsCount: gradeStudents.length,
       groupsCount: gradeGroups.length,
@@ -105,7 +106,7 @@ export default function AcademicYears() {
                         <GraduationCap className="h-7 w-7 text-primary" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold">{GRADE_LABELS[grade]}</h2>
+                        <h2 className="text-2xl font-bold">{getGradeLabel(grade)}</h2>
                         <p className="text-sm text-muted-foreground mt-1">
                           العام الدراسي {academicYearLabel}
                         </p>
