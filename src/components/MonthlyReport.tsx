@@ -102,6 +102,11 @@ export function MonthlyReport({
     <style>
       @page { size: A4; margin: 12mm; }
       html, body { direction: rtl; }
+      /* Ensure browsers keep backgrounds/colors in print */
+      * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
       :root {
         /* Match app theme tokens (HSL) */
         --background: 220 20% 97%;
@@ -121,6 +126,25 @@ export function MonthlyReport({
         background: hsl(var(--background));
         color: hsl(var(--foreground));
         margin: 0;
+      }
+
+      /* Keep layout consistent on A4 */
+      body > * {
+        max-width: 190mm;
+        margin: 0 auto;
+      }
+
+      /* Prevent cards/sections from splitting across pages */
+      header, section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      /* If a grid still overflows, stack on print */
+      @media print {
+        .sm\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        .sm\\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+        /* Fallback if some browsers don't understand responsive classes */
       }
 
       /* Layout helpers used by the report */
