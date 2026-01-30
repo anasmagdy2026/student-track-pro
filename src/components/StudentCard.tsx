@@ -44,47 +44,57 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
         scale: 2,
       });
       
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open('', '_blank', 'noopener,noreferrer');
       if (printWindow) {
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html dir="rtl" lang="ar">
-          <head>
-            <title>طباعة بطاقة الطالب - ${student.name}</title>
-            <style>
-              @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
-              body {
-                font-family: 'Cairo', sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                margin: 0;
-                background: white;
-              }
-              img {
-                width: 86mm;
-                height: auto;
-              }
-              @media print {
-                @page { size: A4; margin: 10mm; }
-                body { min-height: auto; }
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${canvas.toDataURL('image/png')}" alt="بطاقة الطالب" />
-            <script>
-              window.onload = function() {
-                window.print();
-                window.onafterprint = function() {
-                  window.close();
-                };
-              };
-            </script>
-          </body>
-          </html>
-        `);
+        const dataUrl = canvas.toDataURL('image/png');
+        printWindow.document.open();
+        printWindow.document.write(`<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>طباعة بطاقة الطالب - ${student.name}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+      body {
+        font-family: 'Cairo', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: white;
+      }
+      img { width: 86mm; height: auto; }
+      @media print {
+        @page { size: A4; margin: 10mm; }
+        body { min-height: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <img id="cardImg" src="${dataUrl}" alt="بطاقة الطالب" />
+    <script>
+      (function () {
+        const img = document.getElementById('cardImg');
+        const doPrint = () => {
+          window.focus();
+          window.print();
+          window.onafterprint = () => window.close();
+        };
+        // Important: wait for image decoding to avoid blank prints
+        if (img && img.complete) {
+          doPrint();
+        } else if (img) {
+          img.onload = doPrint;
+          img.onerror = doPrint;
+        } else {
+          window.onload = doPrint;
+        }
+      })();
+    </script>
+  </body>
+</html>`);
         printWindow.document.close();
       }
     } catch (error) {
