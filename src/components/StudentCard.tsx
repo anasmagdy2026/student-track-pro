@@ -63,14 +63,12 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
                 background: white;
               }
               img {
-                max-width: 100%;
+                width: 86mm;
                 height: auto;
               }
               @media print {
-                body {
-                  margin: 0;
-                  padding: 20mm;
-                }
+                @page { size: A4; margin: 10mm; }
+                body { min-height: auto; }
               }
             </style>
           </head>
@@ -102,7 +100,7 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
             {/* Header */}
             <div className="flex items-center justify-center gap-2">
               <User className="h-6 w-6 text-primary" />
-              <h3 className="text-lg font-bold text-primary">بطاقة الطالب</h3>
+              <h3 className="text-lg font-bold text-primary">كارت حضور وغياب الطالب</h3>
             </div>
             
             {/* QR Code */}
@@ -133,6 +131,10 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
                   {group.name} - {group.time}
                 </p>
               )}
+
+              <div className="pt-3 border-t text-xs text-muted-foreground">
+                مستر محمد مجدي للتواصل 01060744547
+              </div>
             </div>
           </div>
         </CardContent>

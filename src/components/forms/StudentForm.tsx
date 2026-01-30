@@ -16,6 +16,7 @@ interface StudentFormProps {
     grade: '1' | '2' | '3';
     group_id: string;
     parent_phone: string;
+    student_phone?: string;
     monthly_fee: number;
   };
   groups: Group[];
@@ -25,6 +26,7 @@ interface StudentFormProps {
     grade: '1' | '2' | '3';
     group_id: string;
     parent_phone: string;
+    student_phone?: string;
     monthly_fee: number;
   }) => void;
   isEdit?: boolean;
@@ -41,6 +43,7 @@ export function StudentForm({
   const [grade, setGrade] = useState<'1' | '2' | '3'>(initialData?.grade || '1');
   const [groupId, setGroupId] = useState(initialData?.group_id || '');
   const [parentPhone, setParentPhone] = useState(initialData?.parent_phone || '');
+  const [studentPhone, setStudentPhone] = useState(initialData?.student_phone || '');
   const [monthlyFee, setMonthlyFee] = useState(initialData?.monthly_fee || 0);
 
   const availableGroups = getGroupsByGrade(grade);
@@ -58,6 +61,7 @@ export function StudentForm({
       grade,
       group_id: groupId,
       parent_phone: parentPhone,
+      student_phone: studentPhone || undefined,
       monthly_fee: monthlyFee,
     });
   };
@@ -122,6 +126,16 @@ export function StudentForm({
         <Input
           value={parentPhone}
           onChange={(e) => setParentPhone(e.target.value)}
+          placeholder="01xxxxxxxxx"
+          dir="ltr"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">رقم هاتف الطالب (اختياري)</label>
+        <Input
+          value={studentPhone}
+          onChange={(e) => setStudentPhone(e.target.value)}
           placeholder="01xxxxxxxxx"
           dir="ltr"
         />

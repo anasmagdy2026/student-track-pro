@@ -51,7 +51,10 @@ export default function Lessons() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isGradesOpen, setIsGradesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sheet');
-  const [filterGroup, setFilterGroup] = useState<string>('all');
+  const [filterGrade, setFilterGrade] = useState<string>('all');
+  const [filterGroup, setFilterGroup] = useState<string>('all'); // group_id
+  const [filterDay, setFilterDay] = useState<string>('all');
+  const [filterTime, setFilterTime] = useState<string>('all');
 
   // Form state - مفصولة لتجنب مشكلة الكتابة
   const [lessonName, setLessonName] = useState('');
@@ -65,9 +68,17 @@ export default function Lessons() {
   const [sheetScores, setSheetScores] = useState<Record<string, number>>({});
   const [recitationScores, setRecitationScores] = useState<Record<string, number>>({});
 
-  const filteredLessons = filterGroup === 'all'
-    ? lessons
-    : lessons.filter(l => l.group_id === filterGroup);
+  const availableTimes = Array.from(new Set(groups.map(g => g.time).filter(Boolean))).sort();
+  const availableDays = Array.from(new Set(groups.flatMap(g => g.days || []))).sort();
+
+  const filteredLessons = lessons.filter((lesson) => {
+    const group = lesson.group_id ? getGroupById(lesson.group_id) : null;
+    const matchesGrade = filterGrade === 'all' || lesson.grade === filterGrade;
+    const matchesGroup = filterGroup === 'all' || lesson.group_id === filterGroup;
+    const matchesDay = filterDay === 'all' || (group?.days || []).includes(filterDay);
+    const matchesTime = filterTime === 'all' || group?.time === filterTime;
+    return matchesGrade && matchesGroup && matchesDay && matchesTime;
+  });
 
   const filteredGroupsByGrade = groups.filter(g => g.grade === lessonGrade);
 
@@ -329,18 +340,72 @@ export default function Lessons() {
         {/* Filter */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">فلترة حسب المجموعة</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
+                <Select value={filterGrade} onValueChange={(v) => {
+                  setFilterGrade(v);
+                  setFilterGroup('all');
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="كل السنوات" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">كل السنوات</SelectItem>
+                    <SelectItem value="1">أولى ثانوي</SelectItem>
+                    <SelectItem value="2">تانية ثانوي</SelectItem>
+                    <SelectItem value="3">تالتة ثانوي</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">المجموعة</label>
                 <Select value={filterGroup} onValueChange={setFilterGroup}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="كل المجموعات" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">كل المجموعات</SelectItem>
-                    {groups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        {group.name}
+                    {groups
+                      .filter((g) => filterGrade === 'all' || g.grade === filterGrade)
+                      .map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">اليوم</label>
+                <Select value={filterDay} onValueChange={setFilterDay}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="كل الأيام" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">كل الأيام</SelectItem>
+                    {availableDays.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">ميعاد المجموعة</label>
+                <Select value={filterTime} onValueChange={setFilterTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="كل المواعيد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">كل المواعيد</SelectItem>
+                    {availableTimes.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
                       </SelectItem>
                     ))}
                   </SelectContent>
