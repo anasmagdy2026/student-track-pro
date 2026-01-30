@@ -4,6 +4,7 @@ import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import {
   Select,
   SelectContent,
@@ -20,9 +21,17 @@ import { GRADE_LABELS } from '@/types';
 import {
   sendWhatsAppMessage,
   createAbsenceMessage,
+  createLateMessageForParent,
+  createLateMessageForStudent,
 } from '@/utils/whatsapp';
 import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
+
+type PendingAttendanceAction = {
+  studentId: string;
+  present: boolean;
+  source: 'checkbox' | 'code' | 'qr' | 'bulk' | 'absent-button';
+};
 
 export default function Attendance() {
   const [searchParams] = useSearchParams();
@@ -36,6 +45,16 @@ export default function Attendance() {
   const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get('group') || 'all'); // group_id
   const [studentCode, setStudentCode] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [lateDecisionOpen, setLateDecisionOpen] = useState(false);
+  const [pending, setPending] = useState<PendingAttendanceAction | null>(null);
+  const [lateContext, setLateContext] = useState<{
+    studentId: string;
+    lateMinutes: number;
+    groupName: string;
+    groupTime: string;
+  } | null>(null);
 
   const todayGroups = getTodayGroups();
   const todayAttendance = getAttendanceByDate(selectedDate);
@@ -57,16 +76,71 @@ export default function Attendance() {
     return todayAttendance.find((a) => a.student_id === studentId);
   };
 
-  const handleAttendanceChange = (studentId: string, present: boolean) => {
-    markAttendance(studentId, selectedDate, present);
+  const parseTimeToDate = (dateIso: string, timeHHmm: string) => {
+    const [h, m] = timeHHmm.split(':').map(Number);
+    const d = new Date(`${dateIso}T00:00:00`);
+    d.setHours(h || 0, m || 0, 0, 0);
+    return d;
+  };
+
+  const getLateMinutes = (studentId: string) => {
+    const student = students.find((s) => s.id === studentId);
+    if (!student?.group_id) return null;
+    const group = getGroupById(student.group_id);
+    if (!group?.time) return null;
+
+    const now = new Date();
+    const scheduled = parseTimeToDate(selectedDate, group.time);
+    const diffMinutes = Math.floor((now.getTime() - scheduled.getTime()) / 60000);
+    return diffMinutes;
+  };
+
+  const performAttendance = async (studentId: string, present: boolean) => {
+    // prevent duplicate present
+    const existing = getStudentAttendance(studentId);
+    if (present && existing?.present) {
+      toast.error('تم تحضير الطالب بالفعل');
+      return;
+    }
+
+    if (present) {
+      const student = students.find((s) => s.id === studentId);
+      const group = student?.group_id ? getGroupById(student.group_id) : null;
+      const lateMinutes = getLateMinutes(studentId);
+
+      if (lateMinutes !== null && lateMinutes > 10 && group) {
+        setLateContext({
+          studentId,
+          lateMinutes,
+          groupName: group.name,
+          groupTime: group.time,
+        });
+        setLateDecisionOpen(true);
+        return;
+      }
+    }
+
+    await markAttendance(studentId, selectedDate, present);
     toast.success(present ? 'تم تسجيل الحضور' : 'تم تسجيل الغياب');
   };
 
+  const requestAttendance = (action: PendingAttendanceAction) => {
+    setPending(action);
+
+    // always confirm present before recording
+    if (action.present) {
+      setConfirmOpen(true);
+      return;
+    }
+
+    // absent doesn't need confirmation
+    performAttendance(action.studentId, false);
+  };
+
   const handleMarkAllPresent = () => {
-    filteredStudents.forEach((student) => {
-      markAttendance(student.id, selectedDate, true);
-    });
-    toast.success('تم تسجيل حضور جميع الطلاب');
+    // keep bulk behind confirmation to match “تأكيد الحضور قبل التسجيل”
+    setPending({ studentId: 'bulk', present: true, source: 'bulk' });
+    setConfirmOpen(true);
   };
 
   const handleCodeSubmit = (e: React.FormEvent) => {
@@ -78,8 +152,7 @@ export default function Attendance() {
   const processStudentCode = (code: string) => {
     const student = getStudentByCode(code);
     if (student) {
-      markAttendance(student.id, selectedDate, true);
-      toast.success(`تم تسجيل حضور: ${student.name}`);
+      requestAttendance({ studentId: student.id, present: true, source: 'code' });
       setStudentCode('');
     } else {
       toast.error('كود الطالب غير موجود');
@@ -89,6 +162,73 @@ export default function Attendance() {
   const handleQRScan = (code: string) => {
     setShowQRScanner(false);
     processStudentCode(code);
+  };
+
+  const handleConfirm = async () => {
+    const action = pending;
+    setConfirmOpen(false);
+
+    if (!action) return;
+    if (action.source === 'bulk') {
+      // bulk: mark present for all filtered students
+      for (const s of filteredStudents) {
+        // eslint-disable-next-line no-await-in-loop
+        await performAttendance(s.id, true);
+      }
+      toast.success('تم تسجيل حضور جميع الطلاب');
+      setPending(null);
+      return;
+    }
+
+    await performAttendance(action.studentId, action.present);
+    setPending(null);
+  };
+
+  const handleLateAllow = async () => {
+    if (!lateContext) return;
+    setLateDecisionOpen(false);
+    await markAttendance(lateContext.studentId, selectedDate, true);
+    toast.success(`تم تسجيل حضور متأخر (${lateContext.lateMinutes} دقيقة)`);
+    setLateContext(null);
+    setPending(null);
+  };
+
+  const handleLateDeny = async () => {
+    if (!lateContext) return;
+    setLateDecisionOpen(false);
+    await markAttendance(lateContext.studentId, selectedDate, false);
+    toast.error('تم رفض تسجيل التحضير بسبب التأخير');
+    setLateContext(null);
+    setPending(null);
+  };
+
+  const handleSendLateMessage = (studentId: string, target: 'parent' | 'student') => {
+    const student = students.find((s) => s.id === studentId);
+    if (!student?.group_id) return;
+    const group = getGroupById(student.group_id);
+    if (!group) return;
+
+    const lateMinutes = getLateMinutes(studentId);
+    const late = lateMinutes !== null ? Math.max(0, lateMinutes) : 0;
+    if (late <= 0) {
+      toast.error('لا يوجد تأخير مسجل');
+      return;
+    }
+
+    if (target === 'parent') {
+      const msg = createLateMessageForParent(student.name, selectedDate, group.name, group.time, late);
+      sendWhatsAppMessage(student.parent_phone, msg);
+      toast.success('تم فتح الواتساب');
+      return;
+    }
+
+    if (!student.student_phone) {
+      toast.error('رقم هاتف الطالب غير مسجل');
+      return;
+    }
+    const msg = createLateMessageForStudent(student.name, selectedDate, group.name, group.time, late);
+    sendWhatsAppMessage(student.student_phone, msg);
+    toast.success('تم فتح الواتساب');
   };
 
   const handleSendAbsenceMessage = (studentId: string) => {
@@ -296,7 +436,11 @@ export default function Attendance() {
                             id={`present-${student.id}`}
                             checked={isPresent}
                             onCheckedChange={(checked) =>
-                              handleAttendanceChange(student.id, checked === true)
+                              requestAttendance({
+                                studentId: student.id,
+                                present: checked === true,
+                                source: 'checkbox',
+                              })
                             }
                             className="h-6 w-6"
                           />
@@ -321,6 +465,51 @@ export default function Attendance() {
                       </div>
 
                       <div className="flex items-center gap-2">
+                        {isPresent && studentGroup?.time && (
+                          (() => {
+                            const late = getLateMinutes(student.id);
+                            if (late !== null && late > 0) {
+                              return (
+                                <span className="text-xs px-2 py-1 rounded bg-warning/10 text-warning" dir="rtl">
+                                  متأخر {late} د
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()
+                        )}
+
+                        {isPresent && studentGroup?.time && (
+                          (() => {
+                            const late = getLateMinutes(student.id);
+                            if (late !== null && late > 0) {
+                              return (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleSendLateMessage(student.id, 'parent')}
+                                    className="gap-1"
+                                  >
+                                    <MessageCircle className="h-4 w-4" />
+                                    تأخير للولي
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleSendLateMessage(student.id, 'student')}
+                                    className="gap-1"
+                                  >
+                                    <MessageCircle className="h-4 w-4" />
+                                    تأخير للطالب
+                                  </Button>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()
+                        )}
+
                         {!isPresent && attendance && (
                           <Button
                             size="sm"
@@ -337,7 +526,7 @@ export default function Attendance() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleAttendanceChange(student.id, false)}
+                            onClick={() => requestAttendance({ studentId: student.id, present: false, source: 'absent-button' })}
                           >
                             تسجيل غياب
                           </Button>
@@ -369,6 +558,38 @@ export default function Attendance() {
             title="مسح QR لتسجيل الحضور"
           />
         )}
+
+        {/* Confirm Attendance */}
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="تأكيد تسجيل الحضور"
+          description={
+            pending?.source === 'bulk'
+              ? 'هل أنت متأكد من تسجيل حضور جميع الطلاب في القائمة الحالية؟'
+              : 'هل أنت متأكد من تسجيل حضور الطالب؟'
+          }
+          confirmText="تسجيل الحضور"
+          cancelText="إلغاء"
+          onConfirm={handleConfirm}
+        />
+
+        {/* Late Decision */}
+        <ConfirmDialog
+          open={lateDecisionOpen}
+          onOpenChange={setLateDecisionOpen}
+          title="تأخير أكثر من 10 دقائق"
+          description={
+            lateContext
+              ? `الطالب متأخر ${lateContext.lateMinutes} دقيقة عن ميعاد المجموعة (${lateContext.groupTime}). هل تريد السماح بالدخول؟`
+              : ''
+          }
+          confirmText="السماح بالدخول"
+          cancelText="رفض الدخول"
+          onConfirm={handleLateAllow}
+          onCancel={handleLateDeny}
+          variant="destructive"
+        />
       </div>
     </Layout>
   );

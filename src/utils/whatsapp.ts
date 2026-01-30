@@ -68,3 +68,45 @@ export const createExamResultMessage = (studentName: string, examName: string, s
 
 مع تحيات مستر/ محمد مجدي`;
 };
+
+export const createLateMessageForParent = (
+  studentName: string,
+  date: string,
+  groupName: string,
+  groupTime: string,
+  lateMinutes: number,
+) => {
+  const dateWithDay = formatArabicDateWithDay(date);
+  return `السلام عليكم ورحمة الله وبركاته
+
+نحيط علم سيادتكم أن الطالب/ة: ${studentName}
+تأخر/ت عن حصة ${groupName}
+يوم: ${dateWithDay}
+ميعاد المجموعة: ${groupTime}
+مدة التأخير: ${lateMinutes} دقيقة
+
+برجاء الالتزام بمواعيد الحضور.
+
+مع تحيات مستر/ محمد مجدي`;
+};
+
+export const createLateMessageForStudent = (
+  studentName: string,
+  date: string,
+  groupName: string,
+  groupTime: string,
+  lateMinutes: number,
+) => {
+  const dateWithDay = formatArabicDateWithDay(date);
+  return `السلام عليكم
+
+يا ${studentName}، تم تسجيل حضورك متأخرًا.
+حصة: ${groupName}
+يوم: ${dateWithDay}
+ميعاد المجموعة: ${groupTime}
+مدة التأخير: ${lateMinutes} دقيقة
+
+حاول الالتزام بالميعاد من فضلك.
+
+مستر/ محمد مجدي`;
+};
