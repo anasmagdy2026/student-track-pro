@@ -1,15 +1,30 @@
+import { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { GRADE_LABELS } from '@/types';
-import { GraduationCap, Users, UsersRound } from 'lucide-react';
+import { GraduationCap, Users, UsersRound, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AcademicYears() {
   const { students } = useStudents();
   const { groups } = useGroups();
+
+  const [academicYearLabel, setAcademicYearLabel] = useLocalStorage<string>('academic_year_label', '2024/2025');
+  const [draftAcademicYearLabel, setDraftAcademicYearLabel] = useState<string>(academicYearLabel);
 
   const grades = ['1', '2', '3'] as const;
 
@@ -27,14 +42,53 @@ export default function AcademicYears() {
     <Layout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <GraduationCap className="h-8 w-8 text-primary" />
-            السنوات الدراسية
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            عرض تفاصيل كل سنة دراسية
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <GraduationCap className="h-8 w-8 text-primary" />
+              السنوات الدراسية
+            </h1>
+            <p className="text-muted-foreground mt-1">عرض تفاصيل كل سنة دراسية</p>
+          </div>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setDraftAcademicYearLabel(academicYearLabel)}
+              >
+                <Pencil className="h-4 w-4" />
+                إضافة / تعديل العام الدراسي
+              </Button>
+            </DialogTrigger>
+            <DialogContent dir="rtl">
+              <DialogHeader>
+                <DialogTitle>تعديل العام الدراسي</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">العام الدراسي</label>
+                <Input
+                  value={draftAcademicYearLabel}
+                  onChange={(e) => setDraftAcademicYearLabel(e.target.value)}
+                  placeholder="مثال: 2025/2026"
+                  dir="ltr"
+                />
+                <p className="text-xs text-muted-foreground">سيظهر هذا النص داخل كل بطاقات السنوات.</p>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    const v = draftAcademicYearLabel.trim() || '2024/2025';
+                    setAcademicYearLabel(v);
+                  }}
+                >
+                  حفظ
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Academic Years Grid */}
@@ -53,7 +107,7 @@ export default function AcademicYears() {
                       <div>
                         <h2 className="text-2xl font-bold">{GRADE_LABELS[grade]}</h2>
                         <p className="text-sm text-muted-foreground mt-1">
-                          العام الدراسي 2024/2025
+                          العام الدراسي {academicYearLabel}
                         </p>
                       </div>
                     </div>

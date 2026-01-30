@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Attendance } from '@/types';
 
+export type MarkAttendanceResult =
+  | { status: 'inserted'; record: Attendance }
+  | { status: 'updated'; record: Attendance }
+  | { status: 'already_present' }
+  | { status: 'already_exists' };
+
 export function useAttendance() {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,12 +30,17 @@ export function useAttendance() {
     fetchData();
   }, [fetchData]);
 
-  const markAttendance = async (studentId: string, date: string, present: boolean) => {
+  const markAttendance = async (studentId: string, date: string, present: boolean): Promise<MarkAttendanceResult> => {
     const existingRecord = attendance.find(
       a => a.student_id === studentId && a.date === date
     );
 
     if (existingRecord) {
+      // If already present and user tries to mark present again, treat as duplicate scan.
+      if (present && existingRecord.present) {
+        return { status: 'already_present' };
+      }
+
       const { error } = await supabase
         .from('attendance')
         .update({
@@ -40,6 +51,13 @@ export function useAttendance() {
         .eq('id', existingRecord.id);
       
       if (error) throw error;
+
+      const updated: Attendance = {
+        ...existingRecord,
+        present,
+        notified: false,
+        checked_in_at: present ? new Date().toISOString() : (existingRecord.checked_in_at ?? null),
+      };
       
       setAttendance(prev =>
         prev.map(a =>
@@ -53,6 +71,8 @@ export function useAttendance() {
             : a
         )
       );
+
+      return { status: 'updated', record: updated };
     } else {
       const { data, error } = await supabase
         .from('attendance')
@@ -71,12 +91,26 @@ export function useAttendance() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const code = (error as any)?.code;
         if (code === '23505') {
-          return;
+          // Determine whether it's already present or just already has a record.
+          const { data: existing } = await supabase
+            .from('attendance')
+            .select('present')
+            .eq('student_id', studentId)
+            .eq('date', date)
+            .maybeSingle();
+
+          if (present && existing?.present) {
+            return { status: 'already_present' };
+          }
+
+          return { status: 'already_exists' };
         }
         throw error;
       }
       
       setAttendance(prev => [data as Attendance, ...prev]);
+
+      return { status: 'inserted', record: data as Attendance };
     }
   };
 

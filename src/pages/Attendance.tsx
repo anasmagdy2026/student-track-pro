@@ -203,7 +203,11 @@ export default function Attendance() {
       }
     }
 
-    await markAttendance(studentId, selectedDate, present);
+    const res = await markAttendance(studentId, selectedDate, present);
+    if (res.status === 'already_present') {
+      toast.error('تم تحضير الطالب بالفعل');
+      return;
+    }
     toast.success(present ? 'تم تسجيل الحضور' : 'تم تسجيل الغياب');
   };
 
@@ -270,8 +274,12 @@ export default function Attendance() {
   const handleLateAllow = async () => {
     if (!lateContext) return;
     setLateDecisionOpen(false);
-    await markAttendance(lateContext.studentId, selectedDate, true);
-    toast.success(`تم تسجيل حضور متأخر (${lateContext.lateMinutes} دقيقة)`);
+    const res = await markAttendance(lateContext.studentId, selectedDate, true);
+    if (res.status === 'already_present') {
+      toast.error('تم تحضير الطالب بالفعل');
+    } else {
+      toast.success(`تم تسجيل حضور متأخر (${lateContext.lateMinutes} دقيقة)`);
+    }
     setLateContext(null);
     setPending(null);
   };
@@ -288,8 +296,12 @@ export default function Attendance() {
   const handleGroupAllow = async () => {
     if (!groupDecisionContext) return;
     setGroupDecisionOpen(false);
-    await markAttendance(groupDecisionContext.studentId, selectedDate, true);
-    toast.success('تم تسجيل الحضور (سماح استثنائي)');
+    const res = await markAttendance(groupDecisionContext.studentId, selectedDate, true);
+    if (res.status === 'already_present') {
+      toast.error('تم تحضير الطالب بالفعل');
+    } else {
+      toast.success('تم تسجيل الحضور (سماح استثنائي)');
+    }
     setGroupDecisionContext(null);
     setPending(null);
   };
