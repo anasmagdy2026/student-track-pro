@@ -9,6 +9,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Group } from '@/types';
+import { z } from 'zod';
+import { toast } from 'sonner';
+
+type StudentFormData = {
+  name: string;
+  grade: '1' | '2' | '3';
+  group_id: string;
+  parent_phone: string;
+  student_phone?: string;
+  monthly_fee: number;
+};
 
 interface StudentFormProps {
   initialData?: {
@@ -45,8 +56,35 @@ export function StudentForm({
   const [parentPhone, setParentPhone] = useState(initialData?.parent_phone || '');
   const [studentPhone, setStudentPhone] = useState(initialData?.student_phone || '');
   const [monthlyFee, setMonthlyFee] = useState(initialData?.monthly_fee || 0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const availableGroups = getGroupsByGrade(grade);
+
+  const schema = z.object({
+    name: z
+      .string()
+      .trim()
+      .min(2, 'اسم الطالب قصير جداً')
+      .max(100, 'اسم الطالب طويل جداً'),
+    grade: z.enum(['1', '2', '3']),
+    group_id: z.string().min(1, 'اختر مجموعة'),
+    parent_phone: z
+      .string()
+      .trim()
+      .regex(/^01\d{9}$/, 'رقم واتساب ولي الأمر غير صحيح (مثال: 01xxxxxxxxx)'),
+    student_phone: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v && v.length ? v : undefined))
+      .refine((v) => v === undefined || /^01\d{9}$/.test(v), {
+        message: 'رقم هاتف الطالب غير صحيح (مثال: 01xxxxxxxxx)',
+      }),
+    monthly_fee: z
+      .number({ invalid_type_error: 'قيمة الدرس الشهرية غير صحيحة' })
+      .min(0, 'القيمة لا يمكن أن تكون سالبة')
+      .max(100000, 'القيمة كبيرة جداً'),
+  });
 
   // إعادة تعيين المجموعة عند تغيير السنة الدراسية
   useEffect(() => {
@@ -56,14 +94,28 @@ export function StudentForm({
   }, [grade, isEdit]);
 
   const handleSubmit = () => {
-    onSubmit({
+    const parsed = schema.safeParse({
       name,
       grade,
       group_id: groupId,
       parent_phone: parentPhone,
-      student_phone: studentPhone || undefined,
-      monthly_fee: monthlyFee,
+      student_phone: studentPhone,
+      monthly_fee: Number.isFinite(monthlyFee) ? monthlyFee : NaN,
     });
+
+    if (!parsed.success) {
+      const nextErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? 'form');
+        if (!nextErrors[key]) nextErrors[key] = issue.message;
+      }
+      setErrors(nextErrors);
+      toast.error(Object.values(nextErrors)[0] ?? 'بيانات غير صحيحة');
+      return;
+    }
+
+    setErrors({});
+    onSubmit(parsed.data as StudentFormData);
   };
 
   return (
@@ -72,16 +124,23 @@ export function StudentForm({
         <label className="text-sm font-medium">اسم الطالب</label>
         <Input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (errors.name) setErrors((p) => ({ ...p, name: '' }));
+          }}
           placeholder="أدخل اسم الطالب"
         />
+        {!!errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium">السنة الدراسية</label>
         <Select
           value={grade}
-          onValueChange={(value: '1' | '2' | '3') => setGrade(value)}
+          onValueChange={(value: '1' | '2' | '3') => {
+            setGrade(value);
+            if (errors.grade) setErrors((p) => ({ ...p, grade: '' }));
+          }}
         >
           <SelectTrigger>
             <SelectValue />
@@ -96,7 +155,13 @@ export function StudentForm({
 
       <div className="space-y-2">
         <label className="text-sm font-medium">المجموعة</label>
-        <Select value={groupId} onValueChange={setGroupId}>
+        <Select
+          value={groupId}
+          onValueChange={(v) => {
+            setGroupId(v);
+            if (errors.group_id) setErrors((p) => ({ ...p, group_id: '' }));
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="اختر المجموعة" />
           </SelectTrigger>
@@ -114,6 +179,7 @@ export function StudentForm({
             )}
           </SelectContent>
         </Select>
+        {!!errors.group_id && <p className="text-xs text-destructive">{errors.group_id}</p>}
         {availableGroups.length === 0 && (
           <p className="text-xs text-muted-foreground">
             قم بإنشاء مجموعة لهذه السنة الدراسية أولاً
@@ -125,20 +191,28 @@ export function StudentForm({
         <label className="text-sm font-medium">رقم واتساب ولي الأمر</label>
         <Input
           value={parentPhone}
-          onChange={(e) => setParentPhone(e.target.value)}
+          onChange={(e) => {
+            setParentPhone(e.target.value);
+            if (errors.parent_phone) setErrors((p) => ({ ...p, parent_phone: '' }));
+          }}
           placeholder="01xxxxxxxxx"
           dir="ltr"
         />
+        {!!errors.parent_phone && <p className="text-xs text-destructive">{errors.parent_phone}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium">رقم هاتف الطالب (اختياري)</label>
         <Input
           value={studentPhone}
-          onChange={(e) => setStudentPhone(e.target.value)}
+          onChange={(e) => {
+            setStudentPhone(e.target.value);
+            if (errors.student_phone) setErrors((p) => ({ ...p, student_phone: '' }));
+          }}
           placeholder="01xxxxxxxxx"
           dir="ltr"
         />
+        {!!errors.student_phone && <p className="text-xs text-destructive">{errors.student_phone}</p>}
       </div>
 
       <div className="space-y-2">
@@ -146,10 +220,14 @@ export function StudentForm({
         <Input
           type="number"
           value={monthlyFee || ''}
-          onChange={(e) => setMonthlyFee(Number(e.target.value))}
+          onChange={(e) => {
+            setMonthlyFee(Number(e.target.value));
+            if (errors.monthly_fee) setErrors((p) => ({ ...p, monthly_fee: '' }));
+          }}
           placeholder="0"
           dir="ltr"
         />
+        {!!errors.monthly_fee && <p className="text-xs text-destructive">{errors.monthly_fee}</p>}
       </div>
 
       <Button
