@@ -17,7 +17,7 @@ import { useStudents } from '@/hooks/useStudents';
 import { useAttendance } from '@/hooks/useAttendance';
 import { useGroups } from '@/hooks/useGroups';
 import { QRScanner } from '@/components/QRScanner';
-import { GRADE_LABELS } from '@/types';
+import { DAYS_AR, GRADE_LABELS } from '@/types';
 import {
   sendWhatsAppMessage,
   createAbsenceMessage,
@@ -48,12 +48,22 @@ export default function Attendance() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lateDecisionOpen, setLateDecisionOpen] = useState(false);
+  const [groupDecisionOpen, setGroupDecisionOpen] = useState(false);
   const [pending, setPending] = useState<PendingAttendanceAction | null>(null);
   const [lateContext, setLateContext] = useState<{
     studentId: string;
     lateMinutes: number;
     groupName: string;
     groupTime: string;
+  } | null>(null);
+
+  const [groupDecisionContext, setGroupDecisionContext] = useState<{
+    studentId: string;
+    studentGroupName: string;
+    studentGroupTime: string;
+    selectedGroupName: string;
+    selectedGroupTime: string;
+    reason: 'different_group' | 'different_day';
   } | null>(null);
 
   const todayGroups = getTodayGroups();
@@ -95,6 +105,23 @@ export default function Attendance() {
     return diffMinutes;
   };
 
+  const getDayNameForDate = (dateIso: string) => {
+    const d = new Date(`${dateIso}T00:00:00`);
+    return DAYS_AR[d.getDay()];
+  };
+
+  const requestGroupDecision = (ctx: {
+    studentId: string;
+    studentGroupName: string;
+    studentGroupTime: string;
+    selectedGroupName: string;
+    selectedGroupTime: string;
+    reason: 'different_group' | 'different_day';
+  }) => {
+    setGroupDecisionContext(ctx);
+    setGroupDecisionOpen(true);
+  };
+
   const performAttendance = async (studentId: string, present: boolean) => {
     // prevent duplicate present
     const existing = getStudentAttendance(studentId);
@@ -105,15 +132,48 @@ export default function Attendance() {
 
     if (present) {
       const student = students.find((s) => s.id === studentId);
-      const group = student?.group_id ? getGroupById(student.group_id) : null;
-      const lateMinutes = getLateMinutes(studentId);
+      const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
 
-      if (lateMinutes !== null && lateMinutes > 10 && group) {
+      // Rule 1: student can only attend in their own group.
+      if (selectedGroup !== 'all') {
+        if (!student?.group_id || student.group_id !== selectedGroup) {
+          const selectedG = getGroupById(selectedGroup);
+          requestGroupDecision({
+            studentId,
+            studentGroupName: studentGroup?.name || 'بدون مجموعة',
+            studentGroupTime: studentGroup?.time || '-',
+            selectedGroupName: selectedG?.name || 'غير معروف',
+            selectedGroupTime: selectedG?.time || '-',
+            reason: 'different_group',
+          });
+          return;
+        }
+      } else {
+        // Rule 2 (when all groups): verify today's date is one of the student's group days.
+        if (studentGroup?.days?.length) {
+          const dayName = getDayNameForDate(selectedDate);
+          if (!studentGroup.days.includes(dayName)) {
+            requestGroupDecision({
+              studentId,
+              studentGroupName: studentGroup.name,
+              studentGroupTime: studentGroup.time,
+              selectedGroupName: 'كل المجموعات',
+              selectedGroupTime: dayName,
+              reason: 'different_day',
+            });
+            return;
+          }
+        }
+      }
+
+      // Existing rule: late more than 10 minutes
+      const lateMinutes = getLateMinutes(studentId);
+      if (lateMinutes !== null && lateMinutes > 10 && studentGroup) {
         setLateContext({
           studentId,
           lateMinutes,
-          groupName: group.name,
-          groupTime: group.time,
+          groupName: studentGroup.name,
+          groupTime: studentGroup.time,
         });
         setLateDecisionOpen(true);
         return;
@@ -199,6 +259,24 @@ export default function Attendance() {
     await markAttendance(lateContext.studentId, selectedDate, false);
     toast.error('تم رفض تسجيل التحضير بسبب التأخير');
     setLateContext(null);
+    setPending(null);
+  };
+
+  const handleGroupAllow = async () => {
+    if (!groupDecisionContext) return;
+    setGroupDecisionOpen(false);
+    await markAttendance(groupDecisionContext.studentId, selectedDate, true);
+    toast.success('تم تسجيل الحضور (سماح استثنائي)');
+    setGroupDecisionContext(null);
+    setPending(null);
+  };
+
+  const handleGroupDeny = async () => {
+    if (!groupDecisionContext) return;
+    setGroupDecisionOpen(false);
+    await markAttendance(groupDecisionContext.studentId, selectedDate, false);
+    toast.error('تم رفض تسجيل الحضور (اعتُبر غائب)');
+    setGroupDecisionContext(null);
     setPending(null);
   };
 
@@ -595,6 +673,29 @@ export default function Attendance() {
           cancelText="رفض الدخول"
           onConfirm={handleLateAllow}
           onCancel={handleLateDeny}
+          variant="destructive"
+        />
+
+        {/* Group/Day Decision */}
+        <ConfirmDialog
+          open={groupDecisionOpen}
+          onOpenChange={setGroupDecisionOpen}
+          title={
+            groupDecisionContext?.reason === 'different_group'
+              ? 'الطالب ليس في هذه المجموعة'
+              : 'اليوم ليس من أيام مجموعة الطالب'
+          }
+          description={(() => {
+            if (!groupDecisionContext) return '';
+            if (groupDecisionContext.reason === 'different_group') {
+              return `مجموعة الطالب: ${groupDecisionContext.studentGroupName} (${groupDecisionContext.studentGroupTime})\nالمجموعة المختارة: ${groupDecisionContext.selectedGroupName} (${groupDecisionContext.selectedGroupTime})\nهل تريد السماح بتسجيل الحضور؟`;
+            }
+            return `مجموعة الطالب: ${groupDecisionContext.studentGroupName} (${groupDecisionContext.studentGroupTime})\nاليوم: ${groupDecisionContext.selectedGroupTime}\nهل تريد السماح بتسجيل الحضور؟`;
+          })()}
+          confirmText="السماح"
+          cancelText="رفض (يُعتبر غائب)"
+          onConfirm={handleGroupAllow}
+          onCancel={handleGroupDeny}
           variant="destructive"
         />
       </div>
