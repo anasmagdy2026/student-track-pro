@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
 import { useLessons } from '@/hooks/useLessons';
+import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { GRADE_LABELS, Lesson } from '@/types';
 import { 
   BookOpen, 
@@ -47,6 +48,8 @@ export default function Lessons() {
     getLessonSheets,
     getLessonRecitations,
   } = useLessons();
+
+  const { isBlocked, getActiveBlock } = useStudentBlocks();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -181,6 +184,11 @@ export default function Lessons() {
     try {
       for (const [studentId, score] of Object.entries(sheetScores)) {
         if (score !== undefined && !isNaN(score)) {
+          if (isBlocked(studentId)) {
+            const b = getActiveBlock(studentId);
+            toast.error(`لا يمكن حفظ درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+            continue;
+          }
           await addSheet(selectedLesson.id, studentId, score);
         }
       }
@@ -195,6 +203,11 @@ export default function Lessons() {
     try {
       for (const [studentId, score] of Object.entries(recitationScores)) {
         if (score !== undefined && !isNaN(score)) {
+          if (isBlocked(studentId)) {
+            const b = getActiveBlock(studentId);
+            toast.error(`لا يمكن حفظ درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+            continue;
+          }
           await addRecitation(selectedLesson.id, studentId, score);
         }
       }
@@ -216,6 +229,11 @@ export default function Lessons() {
 
   const saveSheetOnBlur = async (studentId: string) => {
     if (!selectedLesson) return;
+    if (isBlocked(studentId)) {
+      const b = getActiveBlock(studentId);
+      toast.error(`لا يمكن تسجيل درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+      return;
+    }
     const score = sheetScores[studentId];
     if (score === undefined || Number.isNaN(score)) return;
     if (score < 0 || score > selectedLesson.sheet_max_score) return;
@@ -228,6 +246,11 @@ export default function Lessons() {
 
   const saveRecitationOnBlur = async (studentId: string) => {
     if (!selectedLesson) return;
+    if (isBlocked(studentId)) {
+      const b = getActiveBlock(studentId);
+      toast.error(`لا يمكن تسجيل درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+      return;
+    }
     const score = recitationScores[studentId];
     if (score === undefined || Number.isNaN(score)) return;
     if (score < 0 || score > selectedLesson.recitation_max_score) return;

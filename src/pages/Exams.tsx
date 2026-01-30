@@ -22,6 +22,7 @@ import {
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { useExams } from '@/hooks/useExams';
+import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { GRADE_LABELS, Exam } from '@/types';
 import {
   sendWhatsAppMessage,
@@ -51,6 +52,8 @@ export default function Exams() {
     markResultAsNotified,
   } = useExams();
 
+  const { isBlocked, getActiveBlock } = useStudentBlocks();
+
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [isAddExamOpen, setIsAddExamOpen] = useState(false);
   const [isResultsOpen, setIsResultsOpen] = useState(false);
@@ -68,6 +71,11 @@ export default function Exams() {
 
   const saveScoreOnBlur = async (studentId: string) => {
     if (!selectedExam) return;
+    if (isBlocked(studentId)) {
+      const b = getActiveBlock(studentId);
+      toast.error(`لا يمكن تسجيل درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+      return;
+    }
     const score = scores[studentId];
     if (score === undefined || Number.isNaN(score)) return;
     if (score < 0 || score > selectedExam.max_score) return;
@@ -135,6 +143,11 @@ export default function Exams() {
 
     const student = getStudentByCode(studentCode.trim());
     if (student) {
+      if (isBlocked(student.id)) {
+        const b = getActiveBlock(student.id);
+        toast.error(`الطالب مُجمّد: ${b?.reason || 'غير مسموح بتسجيل درجات'}`);
+        return;
+      }
       if (student.grade !== selectedExam.grade) {
         toast.error('هذا الطالب ليس في نفس السنة الدراسية للامتحان');
         return;
@@ -163,6 +176,12 @@ export default function Exams() {
   const handleSaveScores = async () => {
     if (!selectedExam) return;
     try {
+      const blocked = Object.keys(scores).find((studentId) => isBlocked(studentId));
+      if (blocked) {
+        const b = getActiveBlock(blocked);
+        toast.error(`يوجد طالب مُجمّد داخل الدرجات (مثال: ${b?.student_id}). فك التجميد أو تجاهله.`);
+        return;
+      }
       await saveAllResults(selectedExam.id, scores);
       toast.success('✅ تم حفظ جميع الدرجات بنجاح');
     } catch (error) {
