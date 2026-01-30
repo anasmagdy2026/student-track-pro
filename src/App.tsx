@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import AcademicYears from "./pages/AcademicYears";
 import NotFound from "./pages/NotFound";
 import PrintCards from "./pages/PrintCards";
+import Alerts from "./pages/Alerts";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
           <Route path="/student/:id" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
           <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
