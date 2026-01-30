@@ -316,6 +316,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_active: boolean
           updated_at: string
           user_id: string
           username: string
@@ -324,6 +325,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_active?: boolean
           updated_at?: string
           user_id: string
           username: string
@@ -332,6 +334,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_active?: boolean
           updated_at?: string
           user_id?: string
           username?: string
@@ -388,12 +391,30 @@ export type Database = {
           },
         ]
       }
+      user_admins: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
