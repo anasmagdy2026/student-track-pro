@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,6 +68,7 @@ export default function StudentProfile() {
   const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
   const [reportMonth, setReportMonth] = useState<string>(new Date().toISOString().slice(0, 7));
 
   const student = getStudentById(id || '');
@@ -87,6 +88,30 @@ export default function StudentProfile() {
       lessons.map((l) => l.date.substring(0, 7))
     )
   ).sort().reverse();
+
+  // Get available months from attendance (for month filter in attendance section)
+  const availableAttendanceMonths = useMemo(() => {
+    return Array.from(new Set(attendance.map((a) => a.date.substring(0, 7)))).sort().reverse();
+  }, [attendance]);
+
+  const filteredAttendance = useMemo(() => {
+    const base = attendanceMonth === 'all'
+      ? attendance
+      : attendance.filter((a) => a.date.startsWith(attendanceMonth));
+
+    const sorted = [...base].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Preserve previous behavior: last 10 records when no month filter is selected
+    return attendanceMonth === 'all' ? sorted.slice(0, 10) : sorted;
+  }, [attendance, attendanceMonth]);
+
+  const filteredAttendanceStats = useMemo(() => {
+    if (attendanceMonth === 'all') return attendanceStats;
+    const monthRecords = attendance.filter((a) => a.date.startsWith(attendanceMonth));
+    const present = monthRecords.filter((a) => a.present).length;
+    const absent = monthRecords.filter((a) => !a.present).length;
+    return { present, absent, total: monthRecords.length };
+  }, [attendanceMonth, attendance, attendanceStats]);
 
   // Filter lesson data by month
   const filteredSheets = filterMonth === 'all'
@@ -380,35 +405,48 @@ export default function StudentProfile() {
         {/* Attendance Stats */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              الحضور والغياب
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                الحضور والغياب
+              </CardTitle>
+
+              <Select value={attendanceMonth} onValueChange={setAttendanceMonth}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="فلترة بالشهر" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل الشهور</SelectItem>
+                  {availableAttendanceMonths.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {getMonthLabel(month)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="p-4 bg-success/10 rounded-xl text-center">
-                <p className="text-3xl font-bold text-success">{attendanceStats.present}</p>
+                <p className="text-3xl font-bold text-success">{filteredAttendanceStats.present}</p>
                 <p className="text-sm text-muted-foreground">حضور</p>
               </div>
               <div className="p-4 bg-destructive/10 rounded-xl text-center">
-                <p className="text-3xl font-bold text-destructive">{attendanceStats.absent}</p>
+                <p className="text-3xl font-bold text-destructive">{filteredAttendanceStats.absent}</p>
                 <p className="text-sm text-muted-foreground">غياب</p>
               </div>
               <div className="p-4 bg-primary/10 rounded-xl text-center">
-                <p className="text-3xl font-bold text-primary">{attendanceStats.total}</p>
+                <p className="text-3xl font-bold text-primary">{filteredAttendanceStats.total}</p>
                 <p className="text-sm text-muted-foreground">إجمالي</p>
               </div>
             </div>
 
-            {attendance.length > 0 ? (
+            {filteredAttendance.length > 0 ? (
               <>
                 {/* Mobile: cards */}
                 <div className="space-y-3 md:hidden">
-                  {attendance
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .slice(0, 10)
-                    .map((record) => (
+                  {filteredAttendance.map((record) => (
                       <div key={record.id} className="rounded-xl border bg-muted/40 p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -458,10 +496,7 @@ export default function StudentProfile() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {attendance
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                        .slice(0, 10)
-                        .map((record) => (
+                      {filteredAttendance.map((record) => (
                           <TableRow key={record.id}>
                             <TableCell className="text-right">
                               {new Date(record.date).toLocaleDateString('ar-EG')}
