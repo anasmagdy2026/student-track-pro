@@ -30,7 +30,8 @@ import {
   Trash2, 
   FileText, 
   Mic,
-  Users 
+  Users,
+  Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -67,6 +68,7 @@ export default function Lessons() {
 
   const [sheetScores, setSheetScores] = useState<Record<string, number>>({});
   const [recitationScores, setRecitationScores] = useState<Record<string, number>>({});
+  const [gradesSearch, setGradesSearch] = useState('');
 
   const availableTimes = Array.from(new Set(groups.map(g => g.time).filter(Boolean))).sort();
   const availableDays = Array.from(new Set(groups.flatMap(g => g.days || []))).sort();
@@ -206,6 +208,35 @@ export default function Lessons() {
   const lessonStudents = selectedLesson && selectedLesson.group_id
     ? getStudentsByGroup(selectedLesson.group_id)
     : [];
+
+  const filteredLessonStudents = lessonStudents.filter((s) => {
+    if (!gradesSearch.trim()) return true;
+    return s.name.includes(gradesSearch) || s.code.includes(gradesSearch);
+  });
+
+  const saveSheetOnBlur = async (studentId: string) => {
+    if (!selectedLesson) return;
+    const score = sheetScores[studentId];
+    if (score === undefined || Number.isNaN(score)) return;
+    if (score < 0 || score > selectedLesson.sheet_max_score) return;
+    try {
+      await addSheet(selectedLesson.id, studentId, score);
+    } catch {
+      toast.error('تعذر حفظ درجة الشيت');
+    }
+  };
+
+  const saveRecitationOnBlur = async (studentId: string) => {
+    if (!selectedLesson) return;
+    const score = recitationScores[studentId];
+    if (score === undefined || Number.isNaN(score)) return;
+    if (score < 0 || score > selectedLesson.recitation_max_score) return;
+    try {
+      await addRecitation(selectedLesson.id, studentId, score);
+    } catch {
+      toast.error('تعذر حفظ درجة التسميع');
+    }
+  };
 
   return (
     <Layout>
@@ -506,6 +537,16 @@ export default function Lessons() {
                 <span>درجة التسميع: {selectedLesson?.recitation_max_score}</span>
               </div>
 
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={gradesSearch}
+                  onChange={(e) => setGradesSearch(e.target.value)}
+                  placeholder="بحث باسم الطالب أو الكود..."
+                  className="pr-9"
+                />
+              </div>
+
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="sheet" className="gap-2">
@@ -519,9 +560,9 @@ export default function Lessons() {
                 </TabsList>
 
                 <TabsContent value="sheet" className="space-y-4 mt-4">
-                  {lessonStudents.length > 0 ? (
+                  {filteredLessonStudents.length > 0 ? (
                     <>
-                      {lessonStudents.map((student) => (
+                      {filteredLessonStudents.map((student) => (
                         <div
                           key={student.id}
                           className="flex items-center gap-4 p-3 bg-muted rounded-xl"
@@ -540,6 +581,7 @@ export default function Lessons() {
                                   [student.id]: Number(e.target.value),
                                 })
                               }
+                              onBlur={() => saveSheetOnBlur(student.id)}
                               className="w-20 text-center"
                               placeholder="0"
                               min={0}
@@ -552,22 +594,22 @@ export default function Lessons() {
                           </div>
                         </div>
                       ))}
-                      <Button onClick={handleSaveSheetScores} className="w-full">
-                        حفظ درجات الشيت
+                      <Button onClick={handleSaveSheetScores} variant="outline" className="w-full">
+                        حفظ (اختياري)
                       </Button>
                     </>
                   ) : (
                     <div className="text-center py-8">
                       <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">لا يوجد طلاب في هذه المجموعة</p>
+                      <p className="text-muted-foreground">لا يوجد نتائج للبحث / لا يوجد طلاب</p>
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="recitation" className="space-y-4 mt-4">
-                  {lessonStudents.length > 0 ? (
+                  {filteredLessonStudents.length > 0 ? (
                     <>
-                      {lessonStudents.map((student) => (
+                      {filteredLessonStudents.map((student) => (
                         <div
                           key={student.id}
                           className="flex items-center gap-4 p-3 bg-muted rounded-xl"
@@ -586,6 +628,7 @@ export default function Lessons() {
                                   [student.id]: Number(e.target.value),
                                 })
                               }
+                              onBlur={() => saveRecitationOnBlur(student.id)}
                               className="w-20 text-center"
                               placeholder="0"
                               min={0}
@@ -598,14 +641,14 @@ export default function Lessons() {
                           </div>
                         </div>
                       ))}
-                      <Button onClick={handleSaveRecitationScores} className="w-full">
-                        حفظ درجات التسميع
+                      <Button onClick={handleSaveRecitationScores} variant="outline" className="w-full">
+                        حفظ (اختياري)
                       </Button>
                     </>
                   ) : (
                     <div className="text-center py-8">
                       <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">لا يوجد طلاب في هذه المجموعة</p>
+                      <p className="text-muted-foreground">لا يوجد نتائج للبحث / لا يوجد طلاب</p>
                     </div>
                   )}
                 </TabsContent>
