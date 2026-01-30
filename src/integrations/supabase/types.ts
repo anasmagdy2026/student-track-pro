@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_events: {
+        Row: {
+          context: Json
+          created_at: string
+          id: string
+          message: string
+          resolved_at: string | null
+          rule_code: string
+          severity: string
+          status: string
+          student_id: string
+          title: string
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          id?: string
+          message: string
+          resolved_at?: string | null
+          rule_code: string
+          severity?: string
+          status?: string
+          student_id: string
+          title: string
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          rule_code?: string
+          severity?: string
+          status?: string
+          student_id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      alert_rules: {
+        Row: {
+          code: string
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          severity: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          severity?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          severity?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           checked_in_at: string | null
@@ -174,6 +249,36 @@ export type Database = {
           id?: string
           name?: string
           time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lesson_homework: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_id: string
+          note: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_id: string
+          note?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          note?: string | null
+          status?: string
+          student_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -365,6 +470,39 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string
+        }
+        Relationships: []
+      }
+      student_blocks: {
+        Row: {
+          block_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          reason: string | null
+          student_id: string
+          triggered_by_rule_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          block_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          student_id: string
+          triggered_by_rule_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          block_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          student_id?: string
+          triggered_by_rule_code?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
