@@ -76,6 +76,22 @@ serve(async (req) => {
 
     if (authError || !authData.session) {
       console.error('login-with-username authError:', authError)
+
+      // Make the real cause visible to the client (without leaking sensitive details)
+      const code = (authError as any)?.code as string | undefined
+      if (code === 'email_provider_disabled') {
+        return new Response(
+          JSON.stringify({
+            error: 'Email/password sign-in is disabled in backend auth settings',
+            code,
+          }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        )
+      }
+
       return new Response(JSON.stringify({ error: 'Invalid username or password' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
