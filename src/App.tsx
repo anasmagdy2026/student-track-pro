@@ -19,6 +19,7 @@ import AcademicYears from "./pages/AcademicYears";
 import NotFound from "./pages/NotFound";
 import PrintCards from "./pages/PrintCards";
 import Alerts from "./pages/Alerts";
+import SetupAdmin from "./pages/SetupAdmin";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/setup-admin" element={<PublicRoute><SetupAdmin /></PublicRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
