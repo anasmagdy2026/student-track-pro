@@ -50,7 +50,7 @@ serve(async (req) => {
     }
 
     // Use internal email (username@internal.local) for login
-    const internalEmail = profile.email || `${username}@internal.local`
+    const internalEmail = (profile.email || `${username}@internal.local`).trim().toLowerCase()
 
     // Sign in with email+password using Supabase Auth
     const supabaseClient = createClient(
@@ -75,6 +75,7 @@ serve(async (req) => {
     })
 
     if (authError || !authData.session) {
+      console.error('login-with-username authError:', authError)
       return new Response(JSON.stringify({ error: 'Invalid username or password' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
