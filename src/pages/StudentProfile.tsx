@@ -402,55 +402,102 @@ export default function StudentProfile() {
             </div>
 
             {attendance.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>إرسال رسالة</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {attendance
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .slice(0, 10)
-                      .map((record) => (
-                        <TableRow key={record.id}>
-                          <TableCell>
-                            {new Date(record.date).toLocaleDateString('ar-EG')}
-                          </TableCell>
-                          <TableCell>
-                            {record.present ? (
-                              <Badge className="bg-success text-success-foreground">
-                                <CheckCircle className="h-3 w-3 ml-1" />
-                                حاضر
-                              </Badge>
-                            ) : (
-                              <Badge variant="destructive">
-                                <XCircle className="h-3 w-3 ml-1" />
-                                غائب
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
+              <>
+                {/* Mobile: cards */}
+                <div className="space-y-3 md:hidden">
+                  {attendance
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 10)
+                    .map((record) => (
+                      <div key={record.id} className="rounded-xl border bg-muted/40 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{new Date(record.date).toLocaleDateString('ar-EG')}</p>
+                            <div className="mt-2">
+                              {record.present ? (
+                                <Badge className="bg-success text-success-foreground">
+                                  <CheckCircle className="h-3 w-3 ml-1" />
+                                  حاضر
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">
+                                  <XCircle className="h-3 w-3 ml-1" />
+                                  غائب
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
                             {!record.present && (
                               <Button
                                 size="sm"
                                 variant={record.notified ? 'ghost' : 'outline'}
                                 onClick={() => handleSendAbsenceMessage(record.date, record.id)}
                                 disabled={record.notified}
+                                className="justify-center"
                               >
                                 <MessageCircle className="h-4 w-4 ml-1" />
                                 {record.notified ? 'تم الإرسال' : 'إرسال للولي'}
                               </Button>
                             )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Desktop/Tablet: table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">التاريخ</TableHead>
+                        <TableHead className="text-center">الحالة</TableHead>
+                        <TableHead className="text-center">إرسال رسالة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendance
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 10)
+                        .map((record) => (
+                          <TableRow key={record.id}>
+                            <TableCell className="text-right">
+                              {new Date(record.date).toLocaleDateString('ar-EG')}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {record.present ? (
+                                <Badge className="bg-success text-success-foreground">
+                                  <CheckCircle className="h-3 w-3 ml-1" />
+                                  حاضر
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">
+                                  <XCircle className="h-3 w-3 ml-1" />
+                                  غائب
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {!record.present && (
+                                <Button
+                                  size="sm"
+                                  variant={record.notified ? 'ghost' : 'outline'}
+                                  onClick={() => handleSendAbsenceMessage(record.date, record.id)}
+                                  disabled={record.notified}
+                                >
+                                  <MessageCircle className="h-4 w-4 ml-1" />
+                                  {record.notified ? 'تم الإرسال' : 'إرسال للولي'}
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             ) : (
               <p className="text-center text-muted-foreground py-4">
                 لا يوجد سجل حضور بعد
