@@ -37,6 +37,7 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
     initialData?.days || ['السبت', 'الإثنين', 'الأربعاء']
   );
   const [time, setTime] = useState(initialData?.time || '10:00');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getPatternLabel = (valueDays: string[]) => {
     const match = GROUP_DAY_PATTERNS.find((p) =>
@@ -60,8 +61,14 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
     });
   };
 
-  const handleSubmit = () => {
-    onSubmit({ name, grade, days, time });
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit({ name, grade, days, time });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -168,8 +175,8 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         />
       </div>
 
-      <Button onClick={handleSubmit} className="w-full">
-        {isEdit ? 'حفظ التعديلات' : 'إضافة المجموعة'}
+      <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? 'جاري الحفظ...' : isEdit ? 'حفظ التعديلات' : 'إضافة المجموعة'}
       </Button>
     </div>
   );

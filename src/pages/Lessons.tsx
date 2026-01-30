@@ -74,6 +74,7 @@ export default function Lessons() {
   const [sheetScores, setSheetScores] = useState<Record<string, number>>({});
   const [recitationScores, setRecitationScores] = useState<Record<string, number>>({});
   const [gradesSearch, setGradesSearch] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableTimes = Array.from(new Set(groups.map(g => g.time).filter(Boolean))).sort();
   const availableDays = Array.from(new Set(groups.flatMap(g => g.days || []))).sort();
@@ -110,6 +111,8 @@ export default function Lessons() {
       return;
     }
 
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       if (selectAllGroups) {
         // Create lesson for all groups in the selected grade
@@ -145,6 +148,8 @@ export default function Lessons() {
       setIsAddOpen(false);
     } catch (error) {
       toast.error('حدث خطأ أثناء إضافة الحصة');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -387,8 +392,8 @@ export default function Lessons() {
                     </div>
                   )}
                 </div>
-                <Button onClick={handleAddLesson} className="w-full">
-                  إضافة الحصة
+                <Button onClick={handleAddLesson} className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? 'جاري الإضافة...' : 'إضافة الحصة'}
                 </Button>
               </div>
             </DialogContent>
