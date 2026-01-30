@@ -32,6 +32,8 @@ import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useGroups } from '@/hooks/useGroups';
 import { useLessons } from '@/hooks/useLessons';
+import { useStudentBlocks } from '@/hooks/useStudentBlocks';
+import { useAlertEvents } from '@/hooks/useAlertEvents';
 import { StudentCard } from '@/components/StudentCard';
 import { MonthlyReport } from '@/components/MonthlyReport';
 import { GRADE_LABELS, MONTHS_AR } from '@/types';
@@ -54,6 +56,9 @@ import {
   Mic,
   QrCode,
   Download,
+  Snowflake,
+  Undo2,
+  Bell,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -66,10 +71,15 @@ export default function StudentProfile() {
   const { exams, getStudentResultsWithExams, markResultAsNotified } = useExams();
   const { getGroupById } = useGroups();
   const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
+  const { isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
+  const { events, createEvent } = useAlertEvents();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
   const [reportMonth, setReportMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+
+  const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
+  const [freezeReason, setFreezeReason] = useState('');
 
   const student = getStudentById(id || '');
   const attendance = getStudentAttendance(id || '');
@@ -77,6 +87,20 @@ export default function StudentProfile() {
   const payments = getStudentPayments(id || '');
   const examResults = getStudentResultsWithExams(id || '');
   const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
+
+  const activeBlock = useMemo(() => {
+    if (!student) return null;
+    return getActiveBlock(student.id);
+  }, [student, getActiveBlock]);
+
+  const decisionEvents = useMemo(() => {
+    if (!student) return [];
+    const decisionCodes = new Set(['decision_freeze', 'decision_unfreeze', 'decision_resolve']);
+    return events
+      .filter((e) => e.student_id === student.id)
+      .filter((e) => decisionCodes.has(e.rule_code))
+      .slice(0, 10);
+  }, [events, student]);
 
   // Get lesson sheets and recitations for this student
   const studentSheets = getStudentSheets(id || '');
@@ -255,6 +279,51 @@ export default function StudentProfile() {
 
   const reportData = getReportData();
 
+  const handleFreeze = async () => {
+    const reason = freezeReason.trim() || 'قرار يدوي: تجميد كامل من ملف الطالب';
+    try {
+      await freezeStudent({ studentId: student.id, reason });
+      try {
+        await createEvent({
+          studentId: student.id,
+          ruleCode: 'decision_freeze',
+          title: 'قرار: تجميد كامل',
+          message: reason,
+          severity: 'info',
+          context: { source: 'student_profile' },
+        });
+      } catch {
+        // ignore
+      }
+      toast.success('تم تجميد الطالب');
+      setFreezeDialogOpen(false);
+      setFreezeReason('');
+    } catch {
+      toast.error('تعذر تجميد الطالب');
+    }
+  };
+
+  const handleUnfreeze = async () => {
+    try {
+      await unfreezeStudent(student.id);
+      try {
+        await createEvent({
+          studentId: student.id,
+          ruleCode: 'decision_unfreeze',
+          title: 'قرار: فك التجميد',
+          message: 'تم فك التجميد من ملف الطالب.',
+          severity: 'info',
+          context: { source: 'student_profile' },
+        });
+      } catch {
+        // ignore
+      }
+      toast.success('تم فك التجميد');
+    } catch {
+      toast.error('تعذر فك التجميد');
+    }
+  };
+
   // Generate month options for report
   const currentDate = new Date();
   const reportMonthOptions = [];
@@ -410,6 +479,122 @@ export default function StudentProfile() {
                     : '-'}
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Freeze Status */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                حالة التجميد وسجل القرارات
+              </CardTitle>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {isBlocked(student.id) ? (
+                  <Badge variant="destructive">مُجمّد</Badge>
+                ) : (
+                  <Badge variant="secondary">غير مُجمّد</Badge>
+                )}
+
+                {isBlocked(student.id) ? (
+                  <Button variant="outline" onClick={handleUnfreeze} className="gap-2">
+                    <Undo2 className="h-4 w-4" />
+                    فك التجميد
+                  </Button>
+                ) : (
+                  <Dialog open={freezeDialogOpen} onOpenChange={setFreezeDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="secondary" className="gap-2">
+                        <Snowflake className="h-4 w-4" />
+                        تجميد كامل
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>تجميد كامل</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          اكتب سبب التجميد (هيظهر في ملف الطالب وسجل القرارات).
+                        </p>
+                        <input
+                          value={freezeReason}
+                          onChange={(e) => setFreezeReason(e.target.value)}
+                          placeholder="مثال: غير مدفوع للشهر الحالي"
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setFreezeDialogOpen(false)}>
+                            إلغاء
+                          </Button>
+                          <Button onClick={handleFreeze}>تأكيد التجميد</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
+                <Button variant="outline" onClick={() => navigate('/alerts')}>
+                  فتح صفحة التنبيهات
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-muted rounded-xl">
+                <p className="text-sm text-muted-foreground">السبب</p>
+                <p className="font-medium text-foreground mt-1 whitespace-pre-line">
+                  {activeBlock?.reason || '—'}
+                </p>
+              </div>
+              <div className="p-4 bg-muted rounded-xl">
+                <p className="text-sm text-muted-foreground">آخر تحديث</p>
+                <p className="font-medium text-foreground mt-1">
+                  {activeBlock?.updated_at ? new Date(activeBlock.updated_at).toLocaleString('ar-EG') : '—'}
+                </p>
+              </div>
+              <div className="p-4 bg-muted rounded-xl">
+                <p className="text-sm text-muted-foreground">نوع الحظر</p>
+                <p className="font-medium text-foreground mt-1">{activeBlock?.block_type || '—'}</p>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-foreground">سجل القرارات (آخر 10)</h3>
+              </div>
+              {decisionEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">لا يوجد قرارات مسجلة بعد.</p>
+              ) : (
+                <div className="rounded-xl border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>التاريخ</TableHead>
+                        <TableHead>القرار</TableHead>
+                        <TableHead>ملاحظة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {decisionEvents.map((e) => (
+                        <TableRow key={e.id}>
+                          <TableCell className="whitespace-nowrap">
+                            {new Date(e.created_at).toLocaleString('ar-EG')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{e.title}</Badge>
+                          </TableCell>
+                          <TableCell className="whitespace-pre-line">{e.message}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
