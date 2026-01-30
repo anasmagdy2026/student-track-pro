@@ -62,6 +62,7 @@ export default function Exams() {
   const [studentCode, setStudentCode] = useState('');
   const [codeScore, setCodeScore] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [examName, setExamName] = useState('');
@@ -100,6 +101,8 @@ export default function Exams() {
       toast.error('برجاء إدخال اسم الامتحان');
       return;
     }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await addExam({
         name: examName,
@@ -112,6 +115,8 @@ export default function Exams() {
       setIsAddExamOpen(false);
     } catch (error) {
       toast.error('حدث خطأ أثناء إضافة الامتحان');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -298,7 +303,7 @@ export default function Exams() {
                   </Select>
                 </div>
                 <Button onClick={handleAddExam} className="w-full">
-                  إضافة الامتحان
+                  {isSubmitting ? 'جاري الإضافة...' : 'إضافة الامتحان'}
                 </Button>
               </div>
             </DialogContent>

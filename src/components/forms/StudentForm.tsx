@@ -60,6 +60,7 @@ export function StudentForm({
   const [studentPhone, setStudentPhone] = useState(initialData?.student_phone || '');
   const [monthlyFee, setMonthlyFee] = useState(initialData?.monthly_fee || 0);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableGroups = getGroupsByGrade(grade);
 
@@ -96,7 +97,10 @@ export function StudentForm({
     }
   }, [grade, isEdit]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     const parsed = schema.safeParse({
       name,
       grade,
@@ -114,11 +118,16 @@ export function StudentForm({
       }
       setErrors(nextErrors);
       toast.error(Object.values(nextErrors)[0] ?? 'بيانات غير صحيحة');
+      setIsSubmitting(false);
       return;
     }
 
     setErrors({});
-    onSubmit(parsed.data as StudentFormData);
+    try {
+      await onSubmit(parsed.data as StudentFormData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -238,9 +247,9 @@ export function StudentForm({
       <Button
         onClick={handleSubmit}
         className="w-full"
-        disabled={availableGroups.length === 0 && !isEdit}
+        disabled={(availableGroups.length === 0 && !isEdit) || isSubmitting}
       >
-        {isEdit ? 'حفظ التعديلات' : 'إضافة الطالب'}
+        {isSubmitting ? 'جاري الحفظ...' : isEdit ? 'حفظ التعديلات' : 'إضافة الطالب'}
       </Button>
     </div>
   );
