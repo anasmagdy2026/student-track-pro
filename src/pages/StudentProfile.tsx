@@ -140,15 +140,20 @@ export default function StudentProfile() {
       amount: payment?.amount ?? student.monthly_fee,
     };
 
-    // Only lessons:
+    // Lessons for the report:
     // - in selected month
-    // - in student's group only
+    // - match student's grade
+    // - if lesson has no group_id, treat it as a general lesson for the grade
     // - after registration date
-    // - show only lessons where student has a recorded sheet or recitation ("حضرها")
     const monthLessons = lessons
       .filter((l) => l.date.startsWith(reportMonth))
       .filter((l) => !registeredAt || l.date >= registeredAt)
-      .filter((l) => (student.group_id ? l.group_id === student.group_id : true))
+      .filter((l) => {
+        if (!student.group_id) return true;
+        // If lesson isn't tied to a group, include it (common source of "empty report")
+        if (!l.group_id) return true;
+        return l.group_id === student.group_id;
+      })
       .filter((l) => l.grade === student.grade);
 
     // Attendance for the report should reflect actual class days.
@@ -157,7 +162,14 @@ export default function StudentProfile() {
     const monthAttendance = getAttendanceByMonth(student.id, reportMonth)
       .filter((a) => !registeredAt || a.date >= registeredAt);
 
-    const lessonDates = Array.from(new Set(monthLessons.map((l) => l.date))).sort();
+    // Attendance dates should reflect actual class/activity days.
+    // Use union of lesson dates and recorded attendance dates to avoid empty sections.
+    const lessonDates = Array.from(
+      new Set([
+        ...monthLessons.map((l) => l.date),
+        ...monthAttendance.map((a) => a.date),
+      ])
+    ).sort();
     const attendanceRecordMap = new Map(monthAttendance.map((a) => [a.date, a.present] as const));
     const attendanceRecords = lessonDates.map((date) => ({
       date,

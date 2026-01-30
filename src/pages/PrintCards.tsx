@@ -91,10 +91,20 @@ export default function PrintCards() {
       @page { size: A4; margin: 10mm; }
       html, body { direction: rtl; }
       body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; margin: 0; }
-      .print-grid { display: flex; flex-wrap: wrap; gap: 8mm; justify-content: flex-start; }
+      /* 4 cards per page (2 columns) */
+      .print-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8mm;
+        align-items: start;
+      }
 
       /* Card sizing: 86mm matches common ID card width */
-      .print-card { width: 86mm; }
+      .print-card {
+        width: 86mm;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
       .print-card__inner {
         border: 2px solid rgba(0,0,0,0.08);
         border-radius: 12px;
@@ -118,7 +128,7 @@ export default function PrintCards() {
   <body>
     ${html}
     <script>
-      window.onload = () => { window.focus(); window.print(); };
+       window.onload = () => { window.focus(); window.print(); };
     </script>
   </body>
 </html>`);
