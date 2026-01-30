@@ -170,7 +170,11 @@ export default function Attendance() {
     setGroupDecisionOpen(true);
   };
 
-  const performAttendance = async (studentId: string, present: boolean) => {
+  const performAttendance = async (
+    studentId: string,
+    present: boolean,
+    opts?: { skipAlertsOnce?: boolean }
+  ) => {
     const student = students.find((s) => s.id === studentId);
     if (!student) return;
 
@@ -192,6 +196,9 @@ export default function Attendance() {
       const studentGroup = student.group_id ? getGroupById(student.group_id) : null;
 
       // Alert rules before group/late checks (as requested: during check-in)
+      // When the user chooses “Allow once” from the alert dialog, we skip this block once
+      // to prevent an infinite loop reopening the same alert dialog.
+      if (!opts?.skipAlertsOnce) {
       // Fetch last 60 days attendance for accurate rule checks.
       const since = new Date(selectedDate);
       since.setDate(since.getDate() - 60);
@@ -274,7 +281,7 @@ export default function Attendance() {
          return rule ? !!rule.is_active : true;
        });
 
-      if (alerts.length > 0) {
+       if (alerts.length > 0) {
         // Create events in DB (best-effort)
         for (const a of alerts) {
           // eslint-disable-next-line no-await-in-loop
@@ -301,6 +308,8 @@ export default function Attendance() {
         setAlertDecisionOpen(true);
         return;
       }
+
+      } // end alert rules block
 
       // Rule 1: student can only attend in their own group.
       if (selectedGroup !== 'all') {
@@ -361,7 +370,7 @@ export default function Attendance() {
     const ctx = pendingAlert;
     setPendingAlert(null);
     if (!ctx) return;
-    await performAttendance(ctx.studentId, true);
+    await performAttendance(ctx.studentId, true, { skipAlertsOnce: true });
   };
 
   const handleAlertFreeze = async () => {
