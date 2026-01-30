@@ -47,10 +47,30 @@ export function useAuth() {
   const isAuthenticated = !!state.user;
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    // Use edge function to login with username
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/login-with-username`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password }),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      return { data: null, error: { message: err.error || 'Login failed' } };
+    }
+
+    const { session, user } = await res.json();
+    
+    // Set session manually
+    const { error } = await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
     });
+
+    const data = error ? null : { session, user };
     return { data, error };
   };
 

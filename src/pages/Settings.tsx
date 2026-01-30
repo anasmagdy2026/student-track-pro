@@ -172,10 +172,10 @@ export default function Settings() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Label htmlFor="email">البريد الإلكتروني</Label>
-                  <Input id="email" value={user?.email ?? ''} readOnly placeholder="-" />
+                  <Label htmlFor="email">اسم المستخدم</Label>
+                  <Input id="email" value={user?.user_metadata?.username ?? user?.email ?? ''} readOnly placeholder="-" />
                   <p className="text-sm text-muted-foreground">
-                    هذا هو البريد المستخدم لتسجيل الدخول.
+                    هذا هو اسم المستخدم للدخول إلى النظام.
                   </p>
                 </div>
               </CardContent>
@@ -331,14 +331,17 @@ export default function Settings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="create-email">البريد الإلكتروني</Label>
+                  <Label htmlFor="create-email">البريد الإلكتروني (اختياري)</Label>
                   <Input
                     id="create-email"
                     type="email"
                     value={createForm.email}
                     onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
-                    required
+                    placeholder="اترك فارغاً لتوليد بريد داخلي"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    إذا تُرك فارغاً، سيتم توليد بريد داخلي تلقائياً
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="create-password">كلمة المرور</Label>
