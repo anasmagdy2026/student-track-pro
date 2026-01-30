@@ -265,15 +265,15 @@ export function MonthlyReport({
         </Card>
 
         {/* Lesson Scores */}
-        {lessonScores.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                درجات الحصص
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              درجات الحصص
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {lessonScores.length > 0 ? (
               <div className="space-y-2">
                 {lessonScores.map((lesson, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
@@ -289,9 +289,11 @@ export function MonthlyReport({
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <p className="text-sm text-muted-foreground">لا توجد حصص مسجلة لهذا الشهر.</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Exam Results */}
         {examResults.length > 0 && (
