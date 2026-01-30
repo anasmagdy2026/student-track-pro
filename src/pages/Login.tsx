@@ -9,18 +9,17 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
 
   const schema = useMemo(
     () =>
       z.object({
-        email: z.string().email('البريد الإلكتروني غير صحيح'),
+        username: z.string().min(2, 'اسم المستخدم قصير جداً'),
         password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
       }),
     []
@@ -30,7 +29,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const parsed = schema.safeParse({ email, password });
+    const parsed = schema.safeParse({ username, password });
     if (!parsed.success) {
       toast.error(parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة');
       setLoading(false);
@@ -38,23 +37,13 @@ export default function Login() {
     }
 
     try {
-      if (mode === 'login') {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast.error('فشل تسجيل الدخول: تأكد من البريد وكلمة المرور');
-          return;
-        }
-        toast.success('تم تسجيل الدخول بنجاح');
-        navigate('/dashboard');
-      } else {
-        const { error } = await signUp(email, password);
-        if (error) {
-          // Supabase returns various messages; keep it user-friendly
-          toast.error('فشل إنشاء الحساب: ربما الحساب موجود بالفعل');
-          return;
-        }
-        toast.success('تم إنشاء الحساب. قد تحتاج لتأكيد البريد أولاً.');
+      const { error } = await signIn(username, password);
+      if (error) {
+        toast.error('فشل تسجيل الدخول: تأكد من اسم المستخدم وكلمة المرور');
+        return;
       }
+      toast.success('تم تسجيل الدخول بنجاح');
+      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
@@ -81,15 +70,15 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  البريد الإلكتروني
+                  اسم المستخدم
                 </label>
                 <div className="relative">
                   <User className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="أدخل اسم المستخدم"
                     className="pr-10 h-12"
                     required
                   />
@@ -129,23 +118,7 @@ export default function Login() {
                 className="w-full h-12 text-base font-semibold"
                 disabled={loading}
               >
-                {loading
-                  ? 'جاري المتابعة...'
-                  : mode === 'login'
-                    ? 'تسجيل الدخول'
-                    : 'إنشاء حساب'}
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => setMode((m) => (m === 'login' ? 'signup' : 'login'))}
-                disabled={loading}
-              >
-                {mode === 'login'
-                  ? 'ليس لديك حساب؟ إنشاء حساب'
-                  : 'لديك حساب بالفعل؟ تسجيل الدخول'}
+                {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
               </Button>
             </form>
           </CardContent>

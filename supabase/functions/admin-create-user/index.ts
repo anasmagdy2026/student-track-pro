@@ -46,16 +46,19 @@ serve(async (req) => {
 
     const { email, password, username, is_active, is_admin: makeAdmin } = await req.json()
 
-    if (!email || !password || !username) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: email, password, username' }), {
+    if (!password || !username) {
+      return new Response(JSON.stringify({ error: 'Missing required fields: username, password' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    // Generate internal email from username (hidden from user)
+    const internalEmail = email && email.trim() ? email.trim() : `${username}@internal.local`
+
     // Create auth user (email auto-confirmed since admin is creating)
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: internalEmail,
       password,
       email_confirm: true,
     })
@@ -71,7 +74,7 @@ serve(async (req) => {
     const { error: profileError } = await supabaseAdmin.from('profiles').insert({
       user_id: newUser.user.id,
       username,
-      email,
+      email: internalEmail,
       is_active: is_active ?? true,
     })
 
