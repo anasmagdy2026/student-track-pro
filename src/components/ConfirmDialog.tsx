@@ -17,6 +17,7 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   onConfirm: () => void;
+  onCancel?: () => void;
   variant?: 'default' | 'destructive';
 }
 
@@ -28,6 +29,7 @@ export function ConfirmDialog({
   confirmText = 'تأكيد',
   cancelText = 'إلغاء',
   onConfirm,
+  onCancel,
   variant = 'default',
 }: ConfirmDialogProps) {
   return (
@@ -38,7 +40,7 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{cancelText}</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className={variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
