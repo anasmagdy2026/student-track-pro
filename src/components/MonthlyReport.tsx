@@ -205,6 +205,35 @@ export function MonthlyReport({
       .items-center { align-items: center !important; }
       .justify-center { justify-content: center !important; }
 
+      .print-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        border-radius: 9999px !important;
+        padding: 2px 10px !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        border: 1px solid hsl(var(--border)) !important;
+        white-space: nowrap !important;
+      }
+
+      /* Tables */
+      table.report-table { width: 100% !important; border-collapse: collapse !important; }
+      table.report-table th, table.report-table td {
+        border: 1px solid hsl(var(--border)) !important;
+        padding: 8px 10px !important;
+        vertical-align: top !important;
+      }
+      table.report-table th {
+        background: hsl(var(--muted) / 0.6) !important;
+        color: hsl(var(--foreground)) !important;
+        font-weight: 800 !important;
+        font-size: 12px !important;
+      }
+      table.report-table td { font-size: 12px !important; }
+      .text-right { text-align: right !important; }
+      .text-left { text-align: left !important; }
+      .font-semibold { font-weight: 700 !important; }
+
       /* Hide interactive buttons in print */
       button { display: none !important; }
     </style>
@@ -269,6 +298,16 @@ export function MonthlyReport({
     return absentDates;
   }, [attendanceRecords]);
 
+  const formatDayLabel = (isoDate: string) => {
+    const d = parseISO(isoDate);
+    return d.toLocaleDateString('ar-EG', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div ref={reportRef} className="bg-card p-6 space-y-6 rounded-xl border" dir="rtl">
@@ -281,7 +320,7 @@ export function MonthlyReport({
             </div>
 
             <div className="text-left" dir="ltr">
-              <Badge variant="outline" className="font-mono">
+              <Badge variant="outline" className="font-mono print-badge">
                 {student.code}
               </Badge>
             </div>
@@ -313,7 +352,7 @@ export function MonthlyReport({
               <h2 className="text-lg font-bold text-foreground">التقييم</h2>
             </div>
             {examsStats.total > 0 && (
-              <Badge variant="outline" className="text-muted-foreground">
+              <Badge variant="outline" className="text-muted-foreground print-badge">
                 الامتحانات: متوسط {examsStats.averagePercentage}% — غياب {examsStats.absent}/{examsStats.total}
               </Badge>
             )}
@@ -413,6 +452,34 @@ export function MonthlyReport({
             </div>
           </div>
 
+          {attendanceRecords.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-bold text-foreground">تفاصيل الحضور</p>
+              <div className="rounded-xl border overflow-hidden">
+                <table className="report-table w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="text-right">اليوم</th>
+                      <th className="text-center">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendanceRecords.map((a) => (
+                      <tr key={a.date} className="bg-card">
+                        <td className="text-right">{formatDayLabel(a.date)}</td>
+                        <td className="text-center">
+                          <span className={`print-badge ${a.present ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}`}>
+                            {a.present ? 'حاضر' : 'غائب'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {absentDetails.length > 0 && (
             <div className="mt-4 space-y-2">
               <p className="text-sm font-bold text-foreground">أيام الغياب</p>
@@ -461,25 +528,33 @@ export function MonthlyReport({
           </div>
 
           {lessonScores.length > 0 ? (
-            <div className="space-y-2">
-              {lessonScores.map((lesson, index) => (
-                <div key={index} className="rounded-xl border bg-muted/20 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-bold text-foreground line-clamp-1">{lesson.lessonName}</p>
-                      <p className="text-xs text-muted-foreground">شيت + تسميع</p>
-                    </div>
-                    <div className="flex gap-2 text-sm">
-                      <Badge className="bg-primary/10 text-primary">
-                        شيت: {lesson.sheetScore !== null ? `${lesson.sheetScore}/${lesson.sheetMax}` : '-'}
-                      </Badge>
-                      <Badge className="bg-secondary/10 text-secondary">
-                        تسميع: {lesson.recitationScore !== null ? `${lesson.recitationScore}/${lesson.recitationMax}` : '-'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-xl border overflow-hidden">
+              <table className="report-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-right">الحصة</th>
+                    <th className="text-center">درجة الشيت</th>
+                    <th className="text-center">درجة التسميع</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lessonScores.map((lesson, index) => (
+                    <tr key={index} className="bg-card">
+                      <td className="text-right font-semibold">{lesson.lessonName}</td>
+                      <td className="text-center">
+                        <span className="print-badge bg-primary/10 text-primary">
+                          {lesson.sheetScore !== null ? `${lesson.sheetScore}/${lesson.sheetMax}` : '-'}
+                        </span>
+                      </td>
+                      <td className="text-center">
+                        <span className="print-badge bg-secondary/10 text-secondary">
+                          {lesson.recitationScore !== null ? `${lesson.recitationScore}/${lesson.recitationMax}` : '-'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">لا توجد حصص مسجلة لهذا الشهر.</p>
@@ -496,40 +571,53 @@ export function MonthlyReport({
               <h2 className="text-lg font-bold text-foreground">نتائج الامتحانات</h2>
             </div>
 
-            <div className="space-y-2">
-              {examResults.map((exam, index) => {
-                const percentage = exam.absent || exam.score === null
-                  ? 0
-                  : Math.round((exam.score / exam.maxScore) * 100);
+            <div className="rounded-xl border overflow-hidden">
+              <table className="report-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-right">الامتحان</th>
+                    <th className="text-center">الدرجة</th>
+                    <th className="text-center">النسبة</th>
+                    <th className="text-center">الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {examResults.map((exam, index) => {
+                    const percentage = exam.absent || exam.score === null
+                      ? 0
+                      : Math.round((exam.score / exam.maxScore) * 100);
 
-                const badgeClass = exam.absent
-                  ? 'bg-destructive text-destructive-foreground'
-                  : percentage >= 75
-                    ? 'bg-success text-success-foreground'
-                    : percentage >= 50
-                      ? 'bg-warning text-warning-foreground'
-                      : 'bg-destructive text-destructive-foreground';
+                    const statusBadgeClass = exam.absent
+                      ? 'bg-destructive text-destructive-foreground'
+                      : 'bg-success text-success-foreground';
 
-                return (
-                  <div key={index} className="rounded-xl border bg-muted/20 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-bold text-foreground line-clamp-1">{exam.examName}</p>
-                      <div className="flex items-center gap-2">
-                        {exam.absent ? (
-                          <Badge className={badgeClass}>غائب</Badge>
-                        ) : (
-                          <>
-                            <Badge variant="outline" className="font-mono" dir="ltr">
-                              {exam.score}/{exam.maxScore}
-                            </Badge>
-                            <Badge className={badgeClass}>{percentage}%</Badge>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    const percentageBadgeClass = exam.absent
+                      ? 'bg-destructive text-destructive-foreground'
+                      : percentage >= 75
+                        ? 'bg-success text-success-foreground'
+                        : percentage >= 50
+                          ? 'bg-warning text-warning-foreground'
+                          : 'bg-destructive text-destructive-foreground';
+
+                    return (
+                      <tr key={index} className="bg-card">
+                        <td className="text-right font-semibold">{exam.examName}</td>
+                        <td className="text-center" dir="ltr">
+                          <span className="print-badge bg-muted/60 text-foreground">
+                            {exam.absent ? '-' : `${exam.score}/${exam.maxScore}`}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <span className={`print-badge ${percentageBadgeClass}`}>{percentage}%</span>
+                        </td>
+                        <td className="text-center">
+                          <span className={`print-badge ${statusBadgeClass}`}>{exam.absent ? 'غائب' : 'حاضر'}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </section>
         )}
