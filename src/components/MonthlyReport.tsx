@@ -185,190 +185,267 @@ export function MonthlyReport({
 
   return (
     <div className="space-y-4">
-      <div ref={reportRef} className="bg-white p-6 space-y-6" dir="rtl">
-        {/* Evaluation */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              التقييم
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <p className="text-2xl font-bold text-primary">{attendancePercentage}%</p>
-                <p className="text-sm text-muted-foreground">الحضور</p>
-              </div>
-              <div className="p-3 bg-secondary/10 rounded-lg">
-                <p className="text-2xl font-bold text-secondary">{lessonsAverage}%</p>
-                <p className="text-sm text-muted-foreground">الحصص</p>
-              </div>
-              <div className="p-3 bg-success/10 rounded-lg">
-                <p className="text-2xl font-bold text-success">{overallPercentage}%</p>
-                <p className="text-sm text-muted-foreground">التقييم العام</p>
-              </div>
-            </div>
-            {examsStats.total > 0 && (
-              <p className="text-xs text-muted-foreground mt-3">
-                الامتحانات: متوسط {examsStats.averagePercentage}% — غياب {examsStats.absent}/{examsStats.total}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      <div ref={reportRef} className="bg-card p-6 space-y-6 rounded-xl border" dir="rtl">
         {/* Header */}
-        <div className="text-center border-b pb-4">
-          <h1 className="text-2xl font-bold text-primary">التقرير الشهري</h1>
-          <p className="text-lg">{monthName} {year}</p>
-        </div>
-
-        {/* Student Info */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              بيانات الطالب
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="font-medium">الاسم:</span> {student.name}</div>
-              <div><span className="font-medium">الكود:</span> {student.code}</div>
-              <div><span className="font-medium">السنة:</span> {GRADE_LABELS[student.grade]}</div>
-              <div><span className="font-medium">المجموعة:</span> {group?.name || '-'}</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Attendance */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              الحضور والغياب
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 bg-success/10 rounded-lg">
-                <p className="text-2xl font-bold text-success">{presentCount}</p>
-                <p className="text-sm text-muted-foreground">حضور</p>
-              </div>
-              <div className="p-3 bg-destructive/10 rounded-lg">
-                <p className="text-2xl font-bold text-destructive">{absentCount}</p>
-                <p className="text-sm text-muted-foreground">غياب</p>
-              </div>
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <p className="text-2xl font-bold text-primary">{attendancePercentage}%</p>
-                <p className="text-sm text-muted-foreground">نسبة الحضور</p>
-              </div>
+        <header className="rounded-xl border bg-primary/5 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-extrabold tracking-tight text-foreground">التقرير الشهري</h1>
+              <p className="text-sm text-muted-foreground">{monthName} {year}</p>
             </div>
 
-            {absentDetails.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <p className="text-sm font-medium">أيام الغياب:</p>
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <ul className="list-disc pr-5 space-y-1 text-sm">
-                    {absentDetails.map((label, idx) => (
-                      <li key={idx}>{label}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Payment Status */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              المدفوعات
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">قيمة الاشتراك: {student.monthly_fee} ج</p>
-              </div>
-              <Badge className={paymentStatus.paid ? 'bg-success' : 'bg-destructive'}>
-                {paymentStatus.paid ? 'مدفوع' : 'غير مدفوع'}
+            <div className="text-left" dir="ltr">
+              <Badge variant="outline" className="font-mono">
+                {student.code}
               </Badge>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg border bg-background/60 p-3">
+              <p className="text-xs text-muted-foreground">الطالب</p>
+              <p className="font-bold text-foreground line-clamp-1">{student.name}</p>
+            </div>
+            <div className="rounded-lg border bg-background/60 p-3">
+              <p className="text-xs text-muted-foreground">السنة</p>
+              <p className="font-bold text-foreground">{GRADE_LABELS[student.grade]}</p>
+            </div>
+            <div className="rounded-lg border bg-background/60 p-3">
+              <p className="text-xs text-muted-foreground">المجموعة</p>
+              <p className="font-bold text-foreground line-clamp-1">{group?.name || '-'}</p>
+            </div>
+          </div>
+        </header>
+
+        {/* Evaluation */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="grid place-items-center h-9 w-9 rounded-lg bg-primary/10 text-primary">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-bold text-foreground">التقييم</h2>
+            </div>
+            {examsStats.total > 0 && (
+              <Badge variant="outline" className="text-muted-foreground">
+                الامتحانات: متوسط {examsStats.averagePercentage}% — غياب {examsStats.absent}/{examsStats.total}
+              </Badge>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border bg-primary/5 p-4">
+              <p className="text-sm text-muted-foreground">الحضور</p>
+              <div className="mt-1 flex items-end justify-between">
+                <p className="text-3xl font-extrabold text-primary">{attendancePercentage}%</p>
+                <p className="text-xs text-muted-foreground">{presentCount}/{attendanceRecords.length || 0}</p>
+              </div>
+              <div className="mt-3 h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: `${attendancePercentage}%` }} />
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-secondary/10 p-4">
+              <p className="text-sm text-muted-foreground">الحصص</p>
+              <div className="mt-1 flex items-end justify-between">
+                <p className="text-3xl font-extrabold text-secondary">{lessonsAverage}%</p>
+                <p className="text-xs text-muted-foreground">عدد الحصص: {lessonScores.length}</p>
+              </div>
+              <div className="mt-3 h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-secondary" style={{ width: `${lessonsAverage}%` }} />
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-success/10 p-4">
+              <p className="text-sm text-muted-foreground">التقييم العام</p>
+              <div className="mt-1 flex items-end justify-between">
+                <p className="text-3xl font-extrabold text-success">{overallPercentage}%</p>
+                <p className="text-xs text-muted-foreground">ملخص الشهر</p>
+              </div>
+              <div className="mt-3 h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-success" style={{ width: `${overallPercentage}%` }} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Student Info (compact) */}
+        <section className="rounded-xl border bg-muted/20 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="grid place-items-center h-9 w-9 rounded-lg bg-muted text-foreground">
+              <FileText className="h-5 w-5" />
+            </div>
+            <h2 className="text-lg font-bold text-foreground">بيانات الطالب</h2>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div className="rounded-lg border bg-card p-3">
+              <p className="text-xs text-muted-foreground">الاسم</p>
+              <p className="font-bold text-foreground line-clamp-1">{student.name}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-3">
+              <p className="text-xs text-muted-foreground">الكود</p>
+              <p className="font-bold text-foreground font-mono" dir="ltr">{student.code}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-3">
+              <p className="text-xs text-muted-foreground">السنة</p>
+              <p className="font-bold text-foreground">{GRADE_LABELS[student.grade]}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-3">
+              <p className="text-xs text-muted-foreground">المجموعة</p>
+              <p className="font-bold text-foreground line-clamp-1">{group?.name || '-'}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Attendance */}
+        <section className="rounded-xl border bg-card p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <div className="grid place-items-center h-9 w-9 rounded-lg bg-primary/10 text-primary">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-bold text-foreground">الحضور والغياب</h2>
+            </div>
+            <Badge variant="outline" className="text-muted-foreground">
+              إجمالي الأيام: {attendanceRecords.length}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border bg-success/10 p-4 text-center">
+              <p className="text-3xl font-extrabold text-success">{presentCount}</p>
+              <p className="text-sm text-muted-foreground">حضور</p>
+            </div>
+            <div className="rounded-xl border bg-destructive/10 p-4 text-center">
+              <p className="text-3xl font-extrabold text-destructive">{absentCount}</p>
+              <p className="text-sm text-muted-foreground">غياب</p>
+            </div>
+            <div className="rounded-xl border bg-primary/10 p-4 text-center">
+              <p className="text-3xl font-extrabold text-primary">{attendancePercentage}%</p>
+              <p className="text-sm text-muted-foreground">نسبة الحضور</p>
+            </div>
+          </div>
+
+          {absentDetails.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-bold text-foreground">أيام الغياب</p>
+              <div className="rounded-xl border bg-muted/20 p-3">
+                <ul className="list-disc pr-5 space-y-1 text-sm">
+                  {absentDetails.map((label, idx) => (
+                    <li key={idx} className="text-foreground">{label}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Payment Status */}
+        <section className="rounded-xl border bg-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="grid place-items-center h-9 w-9 rounded-lg bg-muted text-foreground">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-foreground">المدفوعات</h2>
+                <p className="text-sm text-muted-foreground">قيمة الاشتراك: {student.monthly_fee} ج</p>
+              </div>
+            </div>
+
+            <Badge className={paymentStatus.paid ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}>
+              {paymentStatus.paid ? 'مدفوع' : 'غير مدفوع'}
+            </Badge>
+          </div>
+        </section>
 
         {/* Lesson Scores */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              درجات الحصص
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {lessonScores.length > 0 ? (
-              <div className="space-y-2">
-                {lessonScores.map((lesson, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
-                    <span className="font-medium">{lesson.lessonName}</span>
-                    <div className="flex gap-4">
-                      <span>
+        <section className="rounded-xl border bg-card p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <div className="grid place-items-center h-9 w-9 rounded-lg bg-secondary/10 text-secondary">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-bold text-foreground">درجات الحصص</h2>
+            </div>
+            <Badge variant="outline" className="text-muted-foreground">
+              {lessonScores.length} حصة
+            </Badge>
+          </div>
+
+          {lessonScores.length > 0 ? (
+            <div className="space-y-2">
+              {lessonScores.map((lesson, index) => (
+                <div key={index} className="rounded-xl border bg-muted/20 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-foreground line-clamp-1">{lesson.lessonName}</p>
+                      <p className="text-xs text-muted-foreground">شيت + تسميع</p>
+                    </div>
+                    <div className="flex gap-2 text-sm">
+                      <Badge className="bg-primary/10 text-primary">
                         شيت: {lesson.sheetScore !== null ? `${lesson.sheetScore}/${lesson.sheetMax}` : '-'}
-                      </span>
-                      <span>
+                      </Badge>
+                      <Badge className="bg-secondary/10 text-secondary">
                         تسميع: {lesson.recitationScore !== null ? `${lesson.recitationScore}/${lesson.recitationMax}` : '-'}
-                      </span>
+                      </Badge>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">لا توجد حصص مسجلة لهذا الشهر.</p>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">لا توجد حصص مسجلة لهذا الشهر.</p>
+          )}
+        </section>
 
         {/* Exam Results */}
         {examResults.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
+          <section className="rounded-xl border bg-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="grid place-items-center h-9 w-9 rounded-lg bg-muted text-foreground">
                 <FileText className="h-5 w-5" />
-                نتائج الامتحانات
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {examResults.map((exam, index) => {
-                  const percentage = exam.absent || exam.score === null
-                    ? 0
-                    : Math.round((exam.score / exam.maxScore) * 100);
-                  return (
-                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
-                      <span className="font-medium">{exam.examName}</span>
+              </div>
+              <h2 className="text-lg font-bold text-foreground">نتائج الامتحانات</h2>
+            </div>
+
+            <div className="space-y-2">
+              {examResults.map((exam, index) => {
+                const percentage = exam.absent || exam.score === null
+                  ? 0
+                  : Math.round((exam.score / exam.maxScore) * 100);
+
+                const badgeClass = exam.absent
+                  ? 'bg-destructive text-destructive-foreground'
+                  : percentage >= 75
+                    ? 'bg-success text-success-foreground'
+                    : percentage >= 50
+                      ? 'bg-warning text-warning-foreground'
+                      : 'bg-destructive text-destructive-foreground';
+
+                return (
+                  <div key={index} className="rounded-xl border bg-muted/20 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-bold text-foreground line-clamp-1">{exam.examName}</p>
                       <div className="flex items-center gap-2">
                         {exam.absent ? (
-                          <Badge variant="destructive">غائب</Badge>
+                          <Badge className={badgeClass}>غائب</Badge>
                         ) : (
                           <>
-                            <span>{exam.score}/{exam.maxScore}</span>
-                            <Badge className={
-                              percentage >= 75 ? 'bg-success' : 
-                              percentage >= 50 ? 'bg-warning' : 'bg-destructive'
-                            }>
-                              {percentage}%
+                            <Badge variant="outline" className="font-mono" dir="ltr">
+                              {exam.score}/{exam.maxScore}
                             </Badge>
+                            <Badge className={badgeClass}>{percentage}%</Badge>
                           </>
                         )}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
       </div>
 
