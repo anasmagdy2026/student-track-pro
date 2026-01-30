@@ -23,6 +23,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
+import { useAlertRules } from '@/hooks/useAlertRules';
 import { buildAttendanceAlerts } from '@/lib/alertRules';
 import { AlertDecisionDialog } from '@/components/AlertDecisionDialog';
 import {
@@ -53,6 +54,7 @@ export default function Attendance() {
   const { getGradeLabel } = useGradeLevels();
   const { isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
+  const { rules } = useAlertRules();
 
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
@@ -254,7 +256,7 @@ export default function Attendance() {
       const avg = allItems.length ? allItems.reduce((a, b) => a + b, 0) / allItems.length : null;
       const performanceBelow50 = avg !== null && avg < 0.5;
 
-      const alerts = buildAttendanceAlerts({
+       const alertsRaw = buildAttendanceAlerts({
         student,
         selectedDate,
         now: new Date(),
@@ -264,6 +266,13 @@ export default function Attendance() {
         homeworkStatus,
         performanceBelow50,
       });
+
+       // Apply activation toggles from alert_rules (if a rule exists and is disabled, skip it)
+       const rulesByCode = new Map(rules.map((r) => [r.code, r] as const));
+       const alerts = alertsRaw.filter((a) => {
+         const rule = rulesByCode.get(a.ruleCode);
+         return rule ? !!rule.is_active : true;
+       });
 
       if (alerts.length > 0) {
         // Create events in DB (best-effort)
