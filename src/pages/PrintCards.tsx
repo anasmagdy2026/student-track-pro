@@ -77,20 +77,31 @@ export default function PrintCards() {
     const html = printAreaRef.current.outerHTML;
     const title = `طباعة-كروت-${selectedStudents.length}`;
 
-    // Popup first, fallback to iframe if blocked
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-    const writeDoc = (doc: Document) => {
-      doc.open();
-      doc.write(`<!doctype html>
+    // Always use iframe+srcdoc (more reliable than popup for avoiding blank print pages)
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.setAttribute('aria-hidden', 'true');
+
+      const srcdoc = `<!doctype html>
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <style>
       @page { size: A4; margin: 10mm; }
       html, body { direction: rtl; }
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; margin: 0; }
+      body { font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; margin: 0; }
+
       /* 4 cards per page (2 columns) */
       .print-grid {
         display: grid;
@@ -119,49 +130,29 @@ export default function PrintCards() {
       .print-card__code { margin-bottom: 3mm; }
       .print-card__group { font-size: 12px; color: #6b7280; margin-top: 2mm; }
       .print-card__footer { margin-top: 6mm; padding-top: 3mm; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280; }
-
-      /* Minimal badge styling */
-      .badge { display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
-      .badge-outline { border: 1px solid #e5e7eb; }
     </style>
   </head>
   <body>
     ${html}
-    <script>
-       window.onload = () => { window.focus(); window.print(); };
-    </script>
   </body>
-</html>`);
-      doc.close();
-    };
+</html>`;
 
-    if (printWindow) {
-      writeDoc(printWindow.document);
-      return;
-    }
+      iframe.onload = () => {
+        const w = iframe.contentWindow;
+        if (!w) return;
+        // Give layout/fonts a tick to settle to avoid blank output
+        setTimeout(() => {
+          w.focus();
+          w.print();
+          setTimeout(() => iframe.remove(), 1500);
+        }, 200);
+      };
 
-    try {
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.setAttribute('aria-hidden', 'true');
+      iframe.srcdoc = srcdoc;
       document.body.appendChild(iframe);
-
-      const doc = iframe.contentDocument;
-      const w = iframe.contentWindow;
-      if (!doc || !w) throw new Error('no_iframe');
-      writeDoc(doc);
-      w.focus();
-      w.print();
-
-      setTimeout(() => iframe.remove(), 1500);
     } catch (e) {
-      console.error('Print cards fallback failed:', e);
-      toast.error('المتصفح منع الطباعة. فعّل Popups ثم جرّب مرة أخرى.');
+      console.error('Print cards failed:', e);
+      toast.error('تعذر بدء الطباعة. جرّب مرة أخرى.');
     }
   };
 

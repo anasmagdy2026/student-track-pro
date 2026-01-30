@@ -76,37 +76,33 @@ export function MonthlyReport({
   const handleDownloadPDF = () => {
     if (!reportRef.current) return;
 
-    // Browser print-to-PDF preserves Arabic shaping/RTL much better than canvas-based PDFs.
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-    if (!printWindow) {
-      // Popup blocked: fallback to a hidden iframe and trigger print from it.
-      try {
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        iframe.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(iframe);
+    // Use iframe+srcdoc and wait for load to avoid blank printed pages
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.setAttribute('aria-hidden', 'true');
 
-        const title = `تقرير-${student.name}-${monthName}-${year}`;
-        const html = reportRef.current.outerHTML;
+      const title = `تقرير-${student.name}-${monthName}-${year}`;
+      const html = reportRef.current.outerHTML;
 
-        const doc = iframe.contentDocument;
-        if (!doc) throw new Error('no_iframe_document');
-        doc.open();
-        doc.write(`<!doctype html>
+      const srcdoc = `<!doctype html>
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <style>
       @page { size: A4; margin: 12mm; }
       html, body { direction: rtl; }
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; }
+      body { font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; margin: 0; }
       .bg-white { background: #fff !important; }
       .p-6 { padding: 16px !important; }
       .space-y-6 > * + * { margin-top: 16px !important; }
@@ -130,72 +126,24 @@ export function MonthlyReport({
   <body>
     ${html}
   </body>
-</html>`);
-        doc.close();
+</html>`;
 
+      iframe.onload = () => {
         const w = iframe.contentWindow;
-        if (!w) throw new Error('no_iframe_window');
-        w.focus();
-        w.print();
-
-        // Cleanup after a short delay (print dialog is async)
+        if (!w) return;
         setTimeout(() => {
-          iframe.remove();
-        }, 1500);
-      } catch (e) {
-        console.error('Print fallback failed:', e);
-        toast.error('المتصفح منع الطباعة. جرّب السماح بالنوافذ المنبثقة (Popups)');
-      }
-      return;
-    }
-
-    const title = `تقرير-${student.name}-${monthName}-${year}`;
-    const html = reportRef.current.outerHTML;
-
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html>
-<html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${title}</title>
-    <style>
-      @page { size: A4; margin: 12mm; }
-      html, body { direction: rtl; }
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; }
-      /* Try to keep the report close to the app styles */
-      .bg-white { background: #fff !important; }
-      .p-6 { padding: 16px !important; }
-      .space-y-6 > * + * { margin-top: 16px !important; }
-      .space-y-2 > * + * { margin-top: 8px !important; }
-      .rounded-lg { border-radius: 10px !important; }
-      .border { border: 1px solid #e5e7eb !important; }
-      .text-center { text-align: center !important; }
-      .grid { display: grid !important; }
-      .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-      .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-      .gap-4 { gap: 12px !important; }
-      .text-2xl { font-size: 22px !important; }
-      .text-lg { font-size: 18px !important; }
-      .font-bold { font-weight: 700 !important; }
-      .text-sm { font-size: 13px !important; }
-      .text-xs { font-size: 12px !important; }
-      .text-muted-foreground { color: #6b7280 !important; }
-      /* Hide action buttons inside the report if any */
-      button { display: none !important; }
-    </style>
-  </head>
-  <body>
-    ${html}
-    <script>
-      window.onload = () => {
-        window.focus();
-        window.print();
+          w.focus();
+          w.print();
+          setTimeout(() => iframe.remove(), 1500);
+        }, 200);
       };
-    </script>
-  </body>
-</html>`);
-    printWindow.document.close();
+
+      iframe.srcdoc = srcdoc;
+      document.body.appendChild(iframe);
+    } catch (e) {
+      console.error('Print report failed:', e);
+      toast.error('تعذر بدء الطباعة. جرّب مرة أخرى.');
+    }
   };
 
   const handleShare = async () => {
