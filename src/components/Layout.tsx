@@ -18,6 +18,7 @@ import {
   Settings,
   UserX,
   Printer,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -28,6 +29,7 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
+  { path: '/alerts', label: 'التنبيهات', icon: Bell },
   { path: '/students', label: 'الطلاب', icon: Users },
   { path: '/print-cards', label: 'طباعة الكروت', icon: Printer },
   { path: '/groups', label: 'المجموعات', icon: UsersRound },
