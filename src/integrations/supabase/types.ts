@@ -121,6 +121,33 @@ export type Database = {
         }
         Relationships: []
       }
+      grade_levels: {
+        Row: {
+          code: string
+          created_at: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       groups: {
         Row: {
           created_at: string
