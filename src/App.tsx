@@ -17,6 +17,7 @@ import Lessons from "./pages/Lessons";
 import Settings from "./pages/Settings";
 import AcademicYears from "./pages/AcademicYears";
 import NotFound from "./pages/NotFound";
+import PrintCards from "./pages/PrintCards";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
           <Route path="/attendance/daily-absence" element={<ProtectedRoute><DailyAbsence /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
           <Route path="/exams" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
+          <Route path="/print-cards" element={<ProtectedRoute><PrintCards /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
