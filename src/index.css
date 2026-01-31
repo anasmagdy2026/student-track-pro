@@ -125,4 +125,13 @@
   .font-cairo {
     font-family: 'Cairo', sans-serif !important;
   }
+
+  /* Hide scrollbars but keep scrolling (used in sidebar nav) */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
 }
