@@ -335,17 +335,14 @@ export default function StudentProfile() {
     }
   };
 
-  const handleDeleteFreezeHistory = async () => {
+  const handleDeleteFreezeBlock = async (blockId: string) => {
     try {
-      const { error } = await supabase
-        .from('student_blocks')
-        .delete()
-        .eq('student_id', student.id);
+      const { error } = await supabase.from('student_blocks').delete().eq('id', blockId);
       if (error) throw error;
       await refetchBlocks();
-      toast.success('تم حذف سجل التجميد');
+      toast.success('تم حذف السجل');
     } catch {
-      toast.error('تعذر حذف سجل التجميد');
+      toast.error('تعذر حذف السجل');
     }
   };
 
@@ -457,7 +454,7 @@ export default function StudentProfile() {
           blocks={studentFreezeBlocks}
           decisionEvents={decisionEvents}
           onUnfreeze={handleUnfreeze}
-          onDeleteFreezeHistory={handleDeleteFreezeHistory}
+          onDeleteFreezeBlock={handleDeleteFreezeBlock}
         />
 
         {/* Student Info */}
