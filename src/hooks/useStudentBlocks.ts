@@ -68,18 +68,17 @@ export function useStudentBlocks() {
       triggered_by_rule_code: params.triggeredByRuleCode ?? null,
     };
 
+    // Keep history: if there's an active block, deactivate it first, then insert a new record.
     if (existing) {
-      const { error } = await supabase
+      const { error: deactivateError } = await supabase
         .from('student_blocks')
-        .update(payload)
+        .update({ is_active: false })
         .eq('id', existing.id);
-      if (error) throw error;
-      await fetchBlocks();
-      return;
+      if (deactivateError) throw deactivateError;
     }
 
-    const { error } = await supabase.from('student_blocks').insert([payload]);
-    if (error) throw error;
+    const { error: insertError } = await supabase.from('student_blocks').insert([payload]);
+    if (insertError) throw insertError;
     await fetchBlocks();
   };
 
