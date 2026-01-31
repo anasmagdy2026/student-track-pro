@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -16,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { Trash2, Undo2 } from 'lucide-react';
+import { Snowflake, Trash2, Undo2 } from 'lucide-react';
 
 type StudentBlock = {
   id: string;
@@ -45,6 +46,7 @@ type Props = {
   activeBlock: StudentBlock | null;
   blocks: StudentBlock[];
   decisionEvents: AlertEvent[];
+  onFreeze: (reason: string) => Promise<void>;
   onUnfreeze: () => Promise<void>;
   onDeleteFreezeBlock: (blockId: string) => Promise<void>;
 };
@@ -56,10 +58,12 @@ export function StudentStatusDialog({
   activeBlock,
   blocks,
   decisionEvents,
+  onFreeze,
   onUnfreeze,
   onDeleteFreezeBlock,
 }: Props) {
   const [deleteBlockId, setDeleteBlockId] = useState<string | null>(null);
+  const [freezeReason, setFreezeReason] = useState('');
   const [busy, setBusy] = useState<'unfreeze' | 'delete' | null>(null);
 
   const freezeHistory = useMemo(() => {
@@ -82,6 +86,27 @@ export function StudentStatusDialog({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {!activeBlock && (
+                <Button
+                  variant="secondary"
+                  disabled={busy !== null}
+                  onClick={async () => {
+                    const reason = freezeReason.trim() || 'قرار يدوي: تجميد كامل';
+                    try {
+                      setBusy('unfreeze');
+                      await onFreeze(reason);
+                      setFreezeReason('');
+                    } finally {
+                      setBusy(null);
+                    }
+                  }}
+                  className="gap-2"
+                >
+                  <Snowflake className="h-4 w-4" />
+                  تجميد كامل
+                </Button>
+              )}
+
               {activeBlock && (
                 <Button
                   variant="outline"
@@ -112,6 +137,18 @@ export function StudentStatusDialog({
                 <Badge variant="secondary">غير مُجمّد</Badge>
               )}
             </div>
+
+            {!activeBlock && (
+              <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                <div className="text-sm font-medium text-foreground">سبب التجميد (اختياري)</div>
+                <Textarea
+                  value={freezeReason}
+                  onChange={(e) => setFreezeReason(e.target.value)}
+                  placeholder="مثال: غير مدفوع للشهر الحالي"
+                  className="min-h-[80px]"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border bg-card p-4">

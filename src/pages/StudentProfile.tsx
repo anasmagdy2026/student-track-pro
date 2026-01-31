@@ -314,6 +314,27 @@ export default function StudentProfile() {
     }
   };
 
+  const handleFreezeFromStatus = async (reason: string) => {
+    try {
+      await freezeStudent({ studentId: student.id, reason });
+      try {
+        await createEvent({
+          studentId: student.id,
+          ruleCode: 'decision_freeze',
+          title: 'قرار: تجميد كامل',
+          message: reason,
+          severity: 'info',
+          context: { source: 'student_status_dialog' },
+        });
+      } catch {
+        // ignore
+      }
+      toast.success('تم تجميد الطالب');
+    } catch {
+      toast.error('تعذر تجميد الطالب');
+    }
+  };
+
   const handleUnfreeze = async () => {
     try {
       await unfreezeStudent(student.id);
@@ -453,6 +474,7 @@ export default function StudentProfile() {
           activeBlock={activeBlock}
           blocks={studentFreezeBlocks}
           decisionEvents={decisionEvents}
+          onFreeze={handleFreezeFromStatus}
           onUnfreeze={handleUnfreeze}
           onDeleteFreezeBlock={handleDeleteFreezeBlock}
         />
