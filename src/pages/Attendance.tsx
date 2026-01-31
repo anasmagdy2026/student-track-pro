@@ -982,7 +982,7 @@ export default function Attendance() {
             if (!open) setBlockedContext(null);
           }}
         >
-          <AlertDialogContent className="border-destructive/40 bg-destructive/5">
+          <AlertDialogContent className="border-destructive/40 bg-card">
             <AlertDialogHeader>
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
