@@ -40,11 +40,14 @@ export default function Login() {
     try {
       const { error } = await signIn(username, password);
       if (error) {
-        toast.error('فشل تسجيل الدخول: تأكد من اسم المستخدم وكلمة المرور');
+        toast.error(error.message || 'فشل تسجيل الدخول: تأكد من اسم المستخدم وكلمة المرور');
         return;
       }
       toast.success('تم تسجيل الدخول بنجاح');
       navigate('/dashboard');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg || 'حدث خطأ غير متوقع أثناء تسجيل الدخول');
     } finally {
       setLoading(false);
     }

@@ -47,31 +47,50 @@ export function useAuth() {
   const isAuthenticated = !!state.user;
 
   const signIn = async (email: string, password: string) => {
-    // Use edge function to login with username
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/login-with-username`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password }),
+    try {
+      // Use backend function to login with username
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/login-with-username`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: email, password }),
+        }
+      );
+
+      // Always try to parse JSON safely (some error responses may be empty/non-JSON)
+      const payload = await res
+        .json()
+        .catch(() => ({ error: 'Login failed', code: 'invalid_response' }));
+
+      if (!res.ok) {
+        return {
+          data: null,
+          error: { message: payload?.error || 'Login failed' },
+        };
       }
-    );
 
-    if (!res.ok) {
-      const err = await res.json();
-      return { data: null, error: { message: err.error || 'Login failed' } };
+      const { session, user } = payload as { session: Session; user: User };
+
+      if (!session?.access_token || !session?.refresh_token) {
+        return {
+          data: null,
+          error: { message: 'Login failed: missing session tokens' },
+        };
+      }
+
+      // Set session manually
+      const { error } = await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+
+      const data = error ? null : { session, user };
+      return { data, error };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      return { data: null, error: { message } };
     }
-
-    const { session, user } = await res.json();
-    
-    // Set session manually
-    const { error } = await supabase.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    });
-
-    const data = error ? null : { session, user };
-    return { data, error };
   };
 
   const signUp = async (email: string, password: string) => {
