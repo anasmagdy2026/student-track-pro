@@ -17,6 +17,15 @@ import { usePayments } from '@/hooks/usePayments';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { QRScanner } from '@/components/QRScanner';
 import { MONTHS_AR } from '@/types';
 import {
@@ -65,17 +74,34 @@ export default function Payments() {
     studentName: string;
   }>({ open: false, paymentId: '', studentName: '' });
 
+  const [blockedDialogOpen, setBlockedDialogOpen] = useState(false);
+  const [blockedContext, setBlockedContext] = useState<{
+    studentName: string;
+    reason: string;
+    actionLabel: string;
+  } | null>(null);
+
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
     const matchesGroup = selectedGroup === 'all' || student.group_id === selectedGroup;
     return matchesGrade && matchesGroup;
   });
 
+  const showBlockedDialog = (studentId: string, actionLabel: string, fallbackReason: string) => {
+    const st = students.find((s) => s.id === studentId);
+    const b = getActiveBlock(studentId);
+    setBlockedContext({
+      studentName: st?.name ?? 'الطالب',
+      reason: b?.reason || fallbackReason,
+      actionLabel,
+    });
+    setBlockedDialogOpen(true);
+  };
+
   const handlePayment = async (studentId: string, amount: number) => {
     try {
       if (isBlocked(studentId)) {
-        const b = getActiveBlock(studentId);
-        toast.error(`لا يمكن تسجيل الدفع: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+        showBlockedDialog(studentId, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء التجميد.');
         return;
       }
       await addPayment(studentId, selectedMonth, amount);
@@ -91,7 +117,7 @@ export default function Payments() {
       // no refund when student is expelled/frozen
       const payment = payments.find((p) => p.id === paymentId);
       if (payment && isBlocked(payment.student_id)) {
-        toast.error('غير مسموح بالاسترداد في حالة الطرد/التجميد');
+        showBlockedDialog(payment.student_id, 'استرداد المبلغ', 'غير مسموح بالاسترداد في حالة التجميد.');
         return;
       }
       await markAsUnpaid(paymentId);
@@ -114,8 +140,7 @@ export default function Payments() {
     const student = getStudentByCode(code);
     if (student) {
       if (isBlocked(student.id)) {
-        const b = getActiveBlock(student.id);
-        toast.error(`الطالب مُجمّد: ${b?.reason || 'غير مسموح بالدفع/الإجراءات'}`);
+        showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بالدفع/الإجراءات أثناء التجميد.');
         return;
       }
       if (isMonthPaid(student.id, selectedMonth)) {
@@ -384,8 +409,13 @@ export default function Payments() {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              disabled={isBlocked(student.id)}
-                              onClick={() => openPaymentConfirm(student.id, student.name, student.monthly_fee)}
+                              onClick={() => {
+                                if (isBlocked(student.id)) {
+                                  showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء التجميد.');
+                                  return;
+                                }
+                                openPaymentConfirm(student.id, student.name, student.monthly_fee);
+                              }}
                             >
                               تسجيل الدفع
                             </Button>
@@ -439,6 +469,35 @@ export default function Payments() {
           onConfirm={() => handleRefund(confirmRefund.paymentId)}
           variant="destructive"
         />
+
+        <AlertDialog
+          open={blockedDialogOpen}
+          onOpenChange={(open) => {
+            setBlockedDialogOpen(open);
+            if (!open) setBlockedContext(null);
+          }}
+        >
+          <AlertDialogContent className="border-destructive/40 bg-card">
+            <AlertDialogHeader>
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="h-10 w-10 text-destructive" />
+                </div>
+                <AlertDialogTitle className="text-destructive">تحذير: الطالب مُجمّد</AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
+                {blockedContext
+                  ? `الطالب: ${blockedContext.studentName}\nلا يمكن تنفيذ: ${blockedContext.actionLabel}\n\nالسبب: ${blockedContext.reason}`
+                  : ''}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="sm:justify-center">
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                حسناً
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* QR Scanner Modal */}
         {showQRScanner && (
