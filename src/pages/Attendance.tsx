@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -103,6 +112,12 @@ export default function Attendance() {
     ruleCodes: string[];
   } | null>(null);
 
+  const [blockedDialogOpen, setBlockedDialogOpen] = useState(false);
+  const [blockedContext, setBlockedContext] = useState<{
+    studentName: string;
+    reason: string;
+  } | null>(null);
+
   // Auto-select today's group if available
   useEffect(() => {
     if (!searchParams.get('group') && todayGroups.length === 1) {
@@ -173,7 +188,7 @@ export default function Attendance() {
   const performAttendance = async (
     studentId: string,
     present: boolean,
-    opts?: { skipAlertsOnce?: boolean }
+    opts?: { skipAlertsOnce?: boolean; showBlockedDialog?: boolean }
   ) => {
     const student = students.find((s) => s.id === studentId);
     if (!student) return;
@@ -181,7 +196,14 @@ export default function Attendance() {
     // Full freeze: prevent any attendance registration
     if (isBlocked(studentId)) {
       const block = getActiveBlock(studentId);
-      toast.error(`الطالب مُجمّد: ${block?.reason || 'غير مسموح بالتحضير'}`);
+
+      const reason = block?.reason || 'الطالب محظور من دخول الحصة.';
+      if (opts?.showBlockedDialog === false) {
+        toast.error(`الطالب مُجمّد: ${reason}`);
+      } else {
+        setBlockedContext({ studentName: student.name, reason });
+        setBlockedDialogOpen(true);
+      }
       return;
     }
 
@@ -441,7 +463,7 @@ export default function Attendance() {
       // bulk: mark present for all filtered students
       for (const s of filteredStudents) {
         // eslint-disable-next-line no-await-in-loop
-        await performAttendance(s.id, true);
+        await performAttendance(s.id, true, { showBlockedDialog: false });
       }
       toast.success('تم تسجيل حضور جميع الطلاب');
       setPending(null);
@@ -951,6 +973,28 @@ export default function Attendance() {
           onAllow={handleAlertAllow}
           onFreeze={handleAlertFreeze}
         />
+
+        <AlertDialog
+          open={blockedDialogOpen}
+          onOpenChange={(open) => {
+            setBlockedDialogOpen(open);
+            if (!open) setBlockedContext(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>تحذير: الطالب مُجمّد</AlertDialogTitle>
+              <AlertDialogDescription style={{ whiteSpace: 'pre-line' }}>
+                {blockedContext
+                  ? `الطالب: ${blockedContext.studentName}\nغير مسموح بدخول الحصة.\n\nالسبب: ${blockedContext.reason}`
+                  : ''}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction>حسناً</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );
