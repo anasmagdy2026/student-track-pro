@@ -41,7 +41,7 @@ import {
   createLateMessageForParent,
   createLateMessageForStudent,
 } from '@/utils/whatsapp';
-import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine } from 'lucide-react';
+import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useLessons } from '@/hooks/useLessons';
@@ -982,17 +982,24 @@ export default function Attendance() {
             if (!open) setBlockedContext(null);
           }}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="border-destructive/40 bg-destructive/5">
             <AlertDialogHeader>
-              <AlertDialogTitle>تحذير: الطالب مُجمّد</AlertDialogTitle>
-              <AlertDialogDescription style={{ whiteSpace: 'pre-line' }}>
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="h-10 w-10 text-destructive" />
+                </div>
+                <AlertDialogTitle className="text-destructive">تحذير: الطالب مُجمّد</AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
                 {blockedContext
                   ? `الطالب: ${blockedContext.studentName}\nغير مسموح بدخول الحصة.\n\nالسبب: ${blockedContext.reason}`
                   : ''}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction>حسناً</AlertDialogAction>
+            <AlertDialogFooter className="sm:justify-center">
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                حسناً
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
