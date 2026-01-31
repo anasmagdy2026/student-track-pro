@@ -29,16 +29,14 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-  { path: '/alerts', label: 'التنبيهات', icon: Bell },
-  { path: '/students', label: 'الطلاب', icon: Users },
-  { path: '/print-cards', label: 'طباعة الكروت', icon: Printer },
-  { path: '/groups', label: 'المجموعات', icon: UsersRound },
-  { path: '/academic-years', label: 'السنوات الدراسية', icon: GraduationCap },
-  { path: '/lessons', label: 'الحصص', icon: BookOpen },
   { path: '/attendance', label: 'الحضور والغياب', icon: Calendar },
   { path: '/attendance/daily-absence', label: 'غياب اليوم', icon: UserX },
-  { path: '/payments', label: 'المدفوعات', icon: CreditCard },
+  { path: '/groups', label: 'المجموعات', icon: UsersRound },
+  { path: '/students', label: 'الطلاب', icon: Users },
+  { path: '/lessons', label: 'الحصص', icon: BookOpen },
   { path: '/exams', label: 'الامتحانات', icon: FileText },
+  { path: '/alerts', label: 'التنبيهات', icon: Bell },
+  { path: '/payments', label: 'المدفوعات', icon: CreditCard },
 ];
 
 export function Layout({ children }: LayoutProps) {
@@ -126,7 +124,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto scrollbar-hide">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
