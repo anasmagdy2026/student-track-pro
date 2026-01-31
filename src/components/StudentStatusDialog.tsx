@@ -64,7 +64,7 @@ export function StudentStatusDialog({
 }: Props) {
   const [deleteBlockId, setDeleteBlockId] = useState<string | null>(null);
   const [freezeReason, setFreezeReason] = useState('');
-  const [busy, setBusy] = useState<'unfreeze' | 'delete' | null>(null);
+  const [busy, setBusy] = useState<'freeze' | 'unfreeze' | 'delete' | null>(null);
 
   const freezeHistory = useMemo(() => {
     return [...blocks].sort(
@@ -93,7 +93,7 @@ export function StudentStatusDialog({
                   onClick={async () => {
                     const reason = freezeReason.trim() || 'قرار يدوي: تجميد كامل';
                     try {
-                      setBusy('unfreeze');
+                      setBusy('freeze');
                       await onFreeze(reason);
                       setFreezeReason('');
                     } finally {
