@@ -359,7 +359,7 @@ export default function Payments() {
                   return (
                     <div
                       key={student.id}
-                      className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
+                      className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl border transition-colors ${
                         isPaid
                           ? 'bg-success/10 border-success/30'
                           : 'bg-destructive/10 border-destructive/30'
@@ -390,7 +390,7 @@ export default function Payments() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
                         <Badge variant="outline" className="text-lg px-3 py-1">
                           {student.monthly_fee} ج
                         </Badge>
