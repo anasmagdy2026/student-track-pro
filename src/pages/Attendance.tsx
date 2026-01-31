@@ -773,7 +773,7 @@ export default function Attendance() {
                   return (
                     <div
                       key={student.id}
-                      className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
+                      className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-xl border transition-colors ${
                         isPresent
                           ? 'bg-success/10 border-success/30'
                           : isAbsent
@@ -781,7 +781,7 @@ export default function Attendance() {
                           : 'bg-muted/50'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                         <div className="flex items-center gap-2">
                           <Checkbox
                             id={`present-${student.id}`}
@@ -802,8 +802,8 @@ export default function Attendance() {
                             حاضر
                           </label>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-bold">{student.name}</p>
                             <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
                               {student.code}
@@ -815,7 +815,7 @@ export default function Attendance() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
                         {isPresent && studentGroup?.time && (
                           (() => {
                             const late = getLateMinutes(student.id);
@@ -835,12 +835,12 @@ export default function Attendance() {
                             const late = getLateMinutes(student.id);
                             if (late !== null && late > 0) {
                               return (
-                                <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto">
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleSendLateMessage(student.id, 'parent')}
-                                    className="gap-1"
+                                    className="gap-1 w-full"
                                   >
                                     <MessageCircle className="h-4 w-4" />
                                     تأخير للولي
@@ -849,12 +849,12 @@ export default function Attendance() {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleSendLateMessage(student.id, 'student')}
-                                    className="gap-1"
+                                    className="gap-1 w-full"
                                   >
                                     <MessageCircle className="h-4 w-4" />
                                     تأخير للطالب
                                   </Button>
-                                </>
+                                </div>
                               );
                             }
                             return null;
@@ -867,7 +867,7 @@ export default function Attendance() {
                             variant={attendance.notified ? 'ghost' : 'default'}
                             onClick={() => handleSendAbsenceMessage(student.id)}
                             disabled={attendance.notified}
-                            className="gap-1"
+                            className="gap-1 w-full sm:w-auto"
                           >
                             <MessageCircle className="h-4 w-4" />
                             {attendance.notified ? 'تم الإرسال' : 'إرسال للولي'}
@@ -878,6 +878,7 @@ export default function Attendance() {
                             size="sm"
                             variant="outline"
                             onClick={() => requestAttendance({ studentId: student.id, present: false, source: 'absent-button' })}
+                            className="w-full sm:w-auto"
                           >
                             تسجيل غياب
                           </Button>
