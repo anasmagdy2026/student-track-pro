@@ -28,10 +28,12 @@ serve(async (req) => {
     }
 
     // Find profile by username
+    // Case-insensitive match for username to avoid ANAS vs anas issues.
+    // (No wildcards => behaves like exact match but case-insensitive.)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('user_id, email, is_active')
-      .eq('username', username.trim())
+      .ilike('username', username.trim())
       .maybeSingle()
 
     if (profileError || !profile) {
