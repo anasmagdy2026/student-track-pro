@@ -46,7 +46,7 @@ type Props = {
   blocks: StudentBlock[];
   decisionEvents: AlertEvent[];
   onUnfreeze: () => Promise<void>;
-  onDeleteFreezeHistory: () => Promise<void>;
+  onDeleteFreezeBlock: (blockId: string) => Promise<void>;
 };
 
 export function StudentStatusDialog({
@@ -57,9 +57,9 @@ export function StudentStatusDialog({
   blocks,
   decisionEvents,
   onUnfreeze,
-  onDeleteFreezeHistory,
+  onDeleteFreezeBlock,
 }: Props) {
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteBlockId, setDeleteBlockId] = useState<string | null>(null);
   const [busy, setBusy] = useState<'unfreeze' | 'delete' | null>(null);
 
   const freezeHistory = useMemo(() => {
@@ -98,18 +98,6 @@ export function StudentStatusDialog({
                 >
                   <Undo2 className="h-4 w-4" />
                   فك التجميد
-                </Button>
-              )}
-
-              {blocks.length > 0 && (
-                <Button
-                  variant="destructive"
-                  disabled={busy !== null}
-                  onClick={() => setDeleteConfirmOpen(true)}
-                  className="gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  حذف سجل التجميد
                 </Button>
               )}
             </div>
@@ -160,6 +148,7 @@ export function StudentStatusDialog({
                       <TableHead>الحالة</TableHead>
                       <TableHead>السبب</TableHead>
                       <TableHead>قاعدة التنبيه</TableHead>
+                      <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -177,6 +166,18 @@ export function StudentStatusDialog({
                         </TableCell>
                         <TableCell className="whitespace-pre-line">{b.reason || '—'}</TableCell>
                         <TableCell className="font-mono text-xs">{b.triggered_by_rule_code || '—'}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="gap-2"
+                            disabled={busy !== null}
+                            onClick={() => setDeleteBlockId(b.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            حذف
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -219,18 +220,21 @@ export function StudentStatusDialog({
         </div>
 
         <ConfirmDialog
-          open={deleteConfirmOpen}
-          onOpenChange={setDeleteConfirmOpen}
+          open={!!deleteBlockId}
+          onOpenChange={(open) => {
+            if (!open) setDeleteBlockId(null);
+          }}
           variant="destructive"
           title="حذف سجل التجميد"
-          description="سيتم حذف كل سجلات التجميد لهذا الطالب (وسيُزال التجميد الحالي إن وجد). هل أنت متأكد؟"
+          description="سيتم حذف هذا السجل فقط من سجل التجميد. هل أنت متأكد؟"
           confirmText="حذف"
           cancelText="إلغاء"
           onConfirm={async () => {
+            if (!deleteBlockId) return;
             try {
               setBusy('delete');
-              await onDeleteFreezeHistory();
-              setDeleteConfirmOpen(false);
+              await onDeleteFreezeBlock(deleteBlockId);
+              setDeleteBlockId(null);
             } finally {
               setBusy(null);
             }
