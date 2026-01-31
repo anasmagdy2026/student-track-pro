@@ -36,6 +36,7 @@ import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
 import { StudentCard } from '@/components/StudentCard';
 import { MonthlyReport } from '@/components/MonthlyReport';
+import { StudentStatusDialog } from '@/components/StudentStatusDialog';
 import { MONTHS_AR } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
@@ -73,7 +74,7 @@ export default function StudentProfile() {
   const { getGroupById } = useGroups();
   const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
   const { getGradeLabel } = useGradeLevels();
-  const { isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
+  const { blocks, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
   const { events, createEvent } = useAlertEvents();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
@@ -82,6 +83,8 @@ export default function StudentProfile() {
 
   const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
   const [freezeReason, setFreezeReason] = useState('');
+
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
   const student = getStudentById(id || '');
   const attendance = getStudentAttendance(id || '');
@@ -95,13 +98,18 @@ export default function StudentProfile() {
     return getActiveBlock(student.id);
   }, [student, getActiveBlock]);
 
+  const studentFreezeBlocks = useMemo(() => {
+    if (!student) return [];
+    return blocks.filter((b) => b.student_id === student.id);
+  }, [blocks, student]);
+
   const decisionEvents = useMemo(() => {
     if (!student) return [];
     const decisionCodes = new Set(['decision_freeze', 'decision_unfreeze', 'decision_resolve']);
     return events
       .filter((e) => e.student_id === student.id)
       .filter((e) => decisionCodes.has(e.rule_code))
-      .slice(0, 10);
+      .slice(0, 50);
   }, [events, student]);
 
   // Get lesson sheets and recitations for this student
@@ -355,6 +363,16 @@ export default function StudentProfile() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setStatusDialogOpen(true)}>
+              <Snowflake className="h-4 w-4" />
+              حالة التجميد
+              {isBlocked(student.id) ? (
+                <Badge variant="destructive">مُجمّد</Badge>
+              ) : (
+                <Badge variant="secondary">غير مُجمّد</Badge>
+              )}
+            </Button>
+
             {/* Student Card Dialog */}
             <Dialog>
               <DialogTrigger asChild>
@@ -415,6 +433,15 @@ export default function StudentProfile() {
             </Dialog>
           </div>
         </div>
+
+        <StudentStatusDialog
+          open={statusDialogOpen}
+          onOpenChange={setStatusDialogOpen}
+          studentName={student.name}
+          activeBlock={activeBlock}
+          blocks={studentFreezeBlocks}
+          decisionEvents={decisionEvents}
+        />
 
         {/* Student Info */}
         <Card>
@@ -546,58 +573,9 @@ export default function StudentProfile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-muted rounded-xl">
-                <p className="text-sm text-muted-foreground">السبب</p>
-                <p className="font-medium text-foreground mt-1 whitespace-pre-line">
-                  {activeBlock?.reason || '—'}
-                </p>
-              </div>
-              <div className="p-4 bg-muted rounded-xl">
-                <p className="text-sm text-muted-foreground">آخر تحديث</p>
-                <p className="font-medium text-foreground mt-1">
-                  {activeBlock?.updated_at ? new Date(activeBlock.updated_at).toLocaleString('ar-EG') : '—'}
-                </p>
-              </div>
-              <div className="p-4 bg-muted rounded-xl">
-                <p className="text-sm text-muted-foreground">نوع الحظر</p>
-                <p className="font-medium text-foreground mt-1">{activeBlock?.block_type || '—'}</p>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-foreground">سجل القرارات (آخر 10)</h3>
-              </div>
-              {decisionEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">لا يوجد قرارات مسجلة بعد.</p>
-              ) : (
-                <div className="rounded-xl border border-border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>التاريخ</TableHead>
-                        <TableHead>القرار</TableHead>
-                        <TableHead>ملاحظة</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {decisionEvents.map((e) => (
-                        <TableRow key={e.id}>
-                          <TableCell className="whitespace-nowrap">
-                            {new Date(e.created_at).toLocaleString('ar-EG')}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{e.title}</Badge>
-                          </TableCell>
-                          <TableCell className="whitespace-pre-line">{e.message}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              لعرض حالة التجميد وسجل التجميد وسجل القرارات استخدم زر (حالة التجميد) أعلى الصفحة.
+            </p>
           </CardContent>
         </Card>
 
