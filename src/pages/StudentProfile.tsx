@@ -34,6 +34,7 @@ import { useGroups } from '@/hooks/useGroups';
 import { useLessons } from '@/hooks/useLessons';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
+import { supabase } from '@/integrations/supabase/client';
 import { StudentCard } from '@/components/StudentCard';
 import { MonthlyReport } from '@/components/MonthlyReport';
 import { StudentStatusDialog } from '@/components/StudentStatusDialog';
@@ -74,7 +75,7 @@ export default function StudentProfile() {
   const { getGroupById } = useGroups();
   const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
   const { getGradeLabel } = useGradeLevels();
-  const { blocks, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
+  const { blocks, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent, refetch: refetchBlocks } = useStudentBlocks();
   const { events, createEvent } = useAlertEvents();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
@@ -334,6 +335,20 @@ export default function StudentProfile() {
     }
   };
 
+  const handleDeleteFreezeHistory = async () => {
+    try {
+      const { error } = await supabase
+        .from('student_blocks')
+        .delete()
+        .eq('student_id', student.id);
+      if (error) throw error;
+      await refetchBlocks();
+      toast.success('تم حذف سجل التجميد');
+    } catch {
+      toast.error('تعذر حذف سجل التجميد');
+    }
+  };
+
   // Generate month options for report
   const currentDate = new Date();
   const reportMonthOptions = [];
@@ -441,6 +456,8 @@ export default function StudentProfile() {
           activeBlock={activeBlock}
           blocks={studentFreezeBlocks}
           decisionEvents={decisionEvents}
+          onUnfreeze={handleUnfreeze}
+          onDeleteFreezeHistory={handleDeleteFreezeHistory}
         />
 
         {/* Student Info */}
@@ -509,73 +526,6 @@ export default function StudentProfile() {
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Freeze Status */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-primary" />
-                حالة التجميد وسجل القرارات
-              </CardTitle>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {isBlocked(student.id) ? (
-                  <Badge variant="destructive">مُجمّد</Badge>
-                ) : (
-                  <Badge variant="secondary">غير مُجمّد</Badge>
-                )}
-
-                {isBlocked(student.id) ? (
-                  <Button variant="outline" onClick={handleUnfreeze} className="gap-2">
-                    <Undo2 className="h-4 w-4" />
-                    فك التجميد
-                  </Button>
-                ) : (
-                  <Dialog open={freezeDialogOpen} onOpenChange={setFreezeDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="secondary" className="gap-2">
-                        <Snowflake className="h-4 w-4" />
-                        تجميد كامل
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>تجميد كامل</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground">
-                          اكتب سبب التجميد (هيظهر في ملف الطالب وسجل القرارات).
-                        </p>
-                        <input
-                          value={freezeReason}
-                          onChange={(e) => setFreezeReason(e.target.value)}
-                          placeholder="مثال: غير مدفوع للشهر الحالي"
-                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        />
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setFreezeDialogOpen(false)}>
-                            إلغاء
-                          </Button>
-                          <Button onClick={handleFreeze}>تأكيد التجميد</Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                )}
-
-                <Button variant="outline" onClick={() => navigate('/alerts')}>
-                  فتح صفحة التنبيهات
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              لعرض حالة التجميد وسجل التجميد وسجل القرارات استخدم زر (حالة التجميد) أعلى الصفحة.
-            </p>
           </CardContent>
         </Card>
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -14,6 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { Trash2, Undo2 } from 'lucide-react';
 
 type StudentBlock = {
   id: string;
@@ -42,6 +45,8 @@ type Props = {
   activeBlock: StudentBlock | null;
   blocks: StudentBlock[];
   decisionEvents: AlertEvent[];
+  onUnfreeze: () => Promise<void>;
+  onDeleteFreezeHistory: () => Promise<void>;
 };
 
 export function StudentStatusDialog({
@@ -51,7 +56,12 @@ export function StudentStatusDialog({
   activeBlock,
   blocks,
   decisionEvents,
+  onUnfreeze,
+  onDeleteFreezeHistory,
 }: Props) {
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [busy, setBusy] = useState<'unfreeze' | 'delete' | null>(null);
+
   const freezeHistory = useMemo(() => {
     return [...blocks].sort(
       (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
@@ -66,6 +76,45 @@ export function StudentStatusDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-sm text-muted-foreground">
+              إدارة التجميد من نفس النافذة.
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {activeBlock && (
+                <Button
+                  variant="outline"
+                  disabled={busy !== null}
+                  onClick={async () => {
+                    try {
+                      setBusy('unfreeze');
+                      await onUnfreeze();
+                    } finally {
+                      setBusy(null);
+                    }
+                  }}
+                  className="gap-2"
+                >
+                  <Undo2 className="h-4 w-4" />
+                  فك التجميد
+                </Button>
+              )}
+
+              {blocks.length > 0 && (
+                <Button
+                  variant="destructive"
+                  disabled={busy !== null}
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  حذف سجل التجميد
+                </Button>
+              )}
+            </div>
+          </div>
+
           <section className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold text-foreground">الحالة الحالية</h3>
@@ -168,6 +217,25 @@ export function StudentStatusDialog({
             )}
           </section>
         </div>
+
+        <ConfirmDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          variant="destructive"
+          title="حذف سجل التجميد"
+          description="سيتم حذف كل سجلات التجميد لهذا الطالب (وسيُزال التجميد الحالي إن وجد). هل أنت متأكد؟"
+          confirmText="حذف"
+          cancelText="إلغاء"
+          onConfirm={async () => {
+            try {
+              setBusy('delete');
+              await onDeleteFreezeHistory();
+              setDeleteConfirmOpen(false);
+            } finally {
+              setBusy(null);
+            }
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
