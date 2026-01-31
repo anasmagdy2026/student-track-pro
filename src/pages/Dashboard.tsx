@@ -17,13 +17,16 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function Dashboard() {
-  const { students } = useStudents();
-  const { attendance, getAbsentStudents } = useAttendance();
-  const { getPaymentStats } = usePayments();
-  const { exams } = useExams();
-  const { activeGradeLevels } = useGradeLevels();
+  const { students, loading: studentsLoading } = useStudents();
+  const { attendance, loading: attendanceLoading, getAbsentStudents } = useAttendance();
+  const { loading: paymentsLoading, getPaymentStats } = usePayments();
+  const { exams, loading: examsLoading } = useExams();
+  const { activeGradeLevels, loading: gradesLoading } = useGradeLevels();
+
+  const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading || gradesLoading;
 
   const today = new Date().toISOString().split('T')[0];
   const todayAbsent = getAbsentStudents(today);
@@ -71,7 +74,10 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-8 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل لوحة التحكم" description="بنجهّز الإحصائيات…" />
+      ) : (
+        <div className="space-y-8 animate-fade-in">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">لوحة التحكم</h1>
@@ -217,7 +223,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

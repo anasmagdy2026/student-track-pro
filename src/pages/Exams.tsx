@@ -40,12 +40,14 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function Exams() {
-  const { students, getStudentByCode } = useStudents();
-  const { getGroupById } = useGroups();
+  const { students, loading: studentsLoading, getStudentByCode } = useStudents();
+  const { loading: groupsLoading, getGroupById } = useGroups();
   const {
     exams,
+    loading: examsLoading,
     addExam,
     deleteExam,
     addResult,
@@ -54,8 +56,10 @@ export default function Exams() {
     markResultAsNotified,
   } = useExams();
 
-  const { isBlocked, getActiveBlock } = useStudentBlocks();
-  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
+  const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
+  const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+
+  const isLoading = studentsLoading || groupsLoading || examsLoading || blocksLoading || gradesLoading;
 
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [isAddExamOpen, setIsAddExamOpen] = useState(false);
@@ -233,7 +237,10 @@ export default function Exams() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل الامتحانات" description="بنجمّع الامتحانات ونتائج الطلاب…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -534,7 +541,8 @@ export default function Exams() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

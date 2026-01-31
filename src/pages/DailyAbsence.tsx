@@ -27,13 +27,16 @@ import { useAttendance } from '@/hooks/useAttendance';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Printer, UserX, ArrowRight, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function DailyAbsence() {
   const [searchParams] = useSearchParams();
-  const { students } = useStudents();
-  const { groups, getTodayGroups, getGroupById } = useGroups();
-  const { getAttendanceByDate, markAttendance } = useAttendance();
-  const { getGradeLabel } = useGradeLevels();
+  const { students, loading: studentsLoading } = useStudents();
+  const { groups, loading: groupsLoading, getTodayGroups, getGroupById } = useGroups();
+  const { loading: attendanceLoading, getAttendanceByDate, markAttendance } = useAttendance();
+  const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
+
+  const isLoading = studentsLoading || groupsLoading || attendanceLoading || gradesLoading;
 
   const today = new Date().toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -143,7 +146,10 @@ export default function DailyAbsence() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل تقرير الغياب" description="بنجهّز بيانات اليوم…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
             <Link to="/attendance">
@@ -269,7 +275,8 @@ export default function DailyAbsence() {
           cancelText="إلغاء"
           onConfirm={handleAutoMarkAbsent}
         />
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

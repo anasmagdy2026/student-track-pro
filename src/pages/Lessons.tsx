@@ -37,12 +37,14 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function Lessons() {
-  const { groups, getGroupById } = useGroups();
-  const { getStudentsByGroup } = useStudents();
+  const { groups, loading: groupsLoading, getGroupById } = useGroups();
+  const { loading: studentsLoading, getStudentsByGroup } = useStudents();
   const {
     lessons,
+    loading: lessonsLoading,
     addLesson,
     deleteLesson,
     addSheet,
@@ -51,8 +53,10 @@ export default function Lessons() {
     getLessonRecitations,
   } = useLessons();
 
-  const { isBlocked, getActiveBlock } = useStudentBlocks();
-  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
+  const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
+  const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+
+  const isLoading = groupsLoading || studentsLoading || lessonsLoading || blocksLoading || gradesLoading;
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -284,6 +288,10 @@ export default function Lessons() {
 
   return (
     <Layout>
+      {isLoading ? (
+        <PageLoading title="جاري تحميل الحصص" description="بنجهّز الحصص والدرجات…" />
+      ) : (
+        <>
       {bulkProgress.active && bulkProgress.total > 0 && (
         <div className="fixed top-0 left-0 right-0 z-[60] h-1 bg-primary/15">
           <div
@@ -722,6 +730,8 @@ export default function Lessons() {
           </DialogContent>
         </Dialog>
       </div>
+        </>
+      )}
     </Layout>
   );
 }
