@@ -18,11 +18,14 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { GraduationCap, Users, UsersRound, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function AcademicYears() {
-  const { students } = useStudents();
-  const { groups } = useGroups();
-  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
+  const { students, loading: studentsLoading } = useStudents();
+  const { groups, loading: groupsLoading } = useGroups();
+  const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+
+  const isLoading = studentsLoading || groupsLoading || gradesLoading;
 
   const [academicYearLabel, setAcademicYearLabel] = useLocalStorage<string>('academic_year_label', '2024/2025');
   const [draftAcademicYearLabel, setDraftAcademicYearLabel] = useState<string>(academicYearLabel);
@@ -41,7 +44,10 @@ export default function AcademicYears() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل السنوات الدراسية" description="بنجهّز الإحصائيات…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
@@ -170,7 +176,8 @@ export default function AcademicYears() {
             );
           })}
         </div>
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

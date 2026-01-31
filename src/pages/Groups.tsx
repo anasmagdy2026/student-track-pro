@@ -26,11 +26,14 @@ import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Users, Plus, Pencil, Trash2, Clock, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function Groups() {
-  const { groups, addGroup, updateGroup, deleteGroup, getTodayGroups } = useGroups();
-  const { getStudentsByGroup } = useStudents();
-  const { getGradeLabel } = useGradeLevels();
+  const { groups, loading: groupsLoading, addGroup, updateGroup, deleteGroup, getTodayGroups } = useGroups();
+  const { loading: studentsLoading, getStudentsByGroup } = useStudents();
+  const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
+
+  const isLoading = groupsLoading || studentsLoading || gradesLoading;
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
@@ -96,7 +99,10 @@ export default function Groups() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل المجموعات" description="بنجهّز جدول الحصص…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -274,7 +280,8 @@ export default function Groups() {
             </Card>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

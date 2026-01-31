@@ -35,11 +35,14 @@ import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function Students() {
-  const { students, addStudent, updateStudent, deleteStudent } = useStudents();
-  const { groups, getGroupsByGrade, getGroupById } = useGroups();
-  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
+  const { students, loading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudents();
+  const { groups, loading: groupsLoading, getGroupsByGrade, getGroupById } = useGroups();
+  const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+
+  const isLoading = studentsLoading || groupsLoading || gradesLoading;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState<string>('all');
@@ -116,7 +119,10 @@ export default function Students() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل الطلاب" description="بنجهّز القوائم والفلاتر…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -328,7 +334,8 @@ export default function Students() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

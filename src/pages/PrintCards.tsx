@@ -17,11 +17,14 @@ import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { PrintableStudentCard } from '@/components/PrintableStudentCard';
 import { toast } from 'sonner';
 import { Printer, Search, Users } from 'lucide-react';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function PrintCards() {
-  const { students } = useStudents();
-  const { groups, getGroupById, getGroupsByGrade } = useGroups();
+  const { students, loading: studentsLoading } = useStudents();
+  const { groups, loading: groupsLoading, getGroupById, getGroupsByGrade } = useGroups();
   const { activeGradeLevels, loading: gradeLevelsLoading } = useGradeLevels();
+
+  const isLoading = studentsLoading || groupsLoading || gradeLevelsLoading;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrade, setFilterGrade] = useState<string>('all');
@@ -160,7 +163,10 @@ export default function PrintCards() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل بيانات الطباعة" description="بنجهّز الطلاب والمجموعات…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">طباعة كروت الطلاب</h1>
@@ -283,7 +289,8 @@ export default function PrintCards() {
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

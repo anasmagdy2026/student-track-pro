@@ -12,6 +12,7 @@ import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, Snowflake, Undo2, Search } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { PageLoading } from '@/components/PageLoading';
 
 const severityVariant = (severity: string): 'default' | 'secondary' | 'destructive' => {
   if (severity === 'critical') return 'destructive';
@@ -20,10 +21,12 @@ const severityVariant = (severity: string): 'default' | 'secondary' | 'destructi
 };
 
 export default function Alerts() {
-  const { students } = useStudents();
-  const { events, resolveEvent, createEvent } = useAlertEvents();
+  const { students, loading: studentsLoading } = useStudents();
+  const { events, loading: eventsLoading, resolveEvent, createEvent } = useAlertEvents();
   const { rules, loading: rulesLoading, setRuleActive } = useAlertRules();
-  const { isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
+  const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
+
+  const isLoading = studentsLoading || eventsLoading || rulesLoading || blocksLoading;
 
   const [query, setQuery] = useState('');
   const [showResolved, setShowResolved] = useState(false);
@@ -138,7 +141,10 @@ export default function Alerts() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل التنبيهات" description="بنجهّز الأحداث والقواعد…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">التنبيهات</h1>
@@ -323,7 +329,8 @@ export default function Alerts() {
             })}
           </div>
         )}
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

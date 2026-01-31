@@ -17,8 +17,10 @@ export type AlertEvent = {
 
 export function useAlertEvents() {
   const [events, setEvents] = useState<AlertEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchEvents = useCallback(async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from('alert_events')
       .select('*')
@@ -28,9 +30,11 @@ export function useAlertEvents() {
     if (error) {
       console.error('Error fetching alert events:', error);
       setEvents([]);
+      setLoading(false);
       return;
     }
     setEvents((data as AlertEvent[]) || []);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -77,8 +81,10 @@ export function useAlertEvents() {
 
   return {
     events,
+    loading,
     refetch: fetchEvents,
     createEvent,
     resolveEvent,
   };
 }
+

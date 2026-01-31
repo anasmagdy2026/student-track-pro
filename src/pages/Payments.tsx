@@ -43,13 +43,16 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageLoading } from '@/components/PageLoading';
 
 export default function Payments() {
-  const { students, getStudentByCode } = useStudents();
-  const { groups, getGroupById } = useGroups();
-  const { addPayment, isMonthPaid, payments, markAsNotified, markAsUnpaid } = usePayments();
-  const { isBlocked, getActiveBlock } = useStudentBlocks();
-  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
+  const { students, loading: studentsLoading, getStudentByCode } = useStudents();
+  const { groups, loading: groupsLoading, getGroupById } = useGroups();
+  const { loading: paymentsLoading, addPayment, isMonthPaid, payments, markAsNotified, markAsUnpaid } = usePayments();
+  const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
+  const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+
+  const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading;
 
   const currentDate = new Date();
   const currentMonth = currentDate.toISOString().slice(0, 7);
@@ -202,7 +205,10 @@ export default function Payments() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل المدفوعات" description="بنجهّز سجل المدفوعات…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">المدفوعات</h1>
@@ -507,7 +513,8 @@ export default function Payments() {
             title="مسح QR لتسجيل الدفع"
           />
         )}
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }

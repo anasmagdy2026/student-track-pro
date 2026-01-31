@@ -45,6 +45,7 @@ import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine, XCircle } 
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useLessons } from '@/hooks/useLessons';
+import { PageLoading } from '@/components/PageLoading';
 
 type PendingAttendanceAction = {
   studentId: string;
@@ -54,16 +55,27 @@ type PendingAttendanceAction = {
 
 export default function Attendance() {
   const [searchParams] = useSearchParams();
-  const { students, getStudentByCode } = useStudents();
-  const { markAttendance, getAttendanceByDate, markAsNotified } = useAttendance();
-  const { groups, getTodayGroups, getGroupById } = useGroups();
-  const { isMonthPaid } = usePayments();
-  const { exams, results } = useExams();
-  const { lessons, sheets, recitations } = useLessons();
-  const { getGradeLabel } = useGradeLevels();
-  const { isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
+  const { students, loading: studentsLoading, getStudentByCode } = useStudents();
+  const { loading: attendanceLoading, markAttendance, getAttendanceByDate, markAsNotified } = useAttendance();
+  const { groups, loading: groupsLoading, getTodayGroups, getGroupById } = useGroups();
+  const { loading: paymentsLoading, isMonthPaid } = usePayments();
+  const { exams, results, loading: examsLoading } = useExams();
+  const { lessons, sheets, recitations, loading: lessonsLoading } = useLessons();
+  const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
-  const { rules } = useAlertRules();
+  const { rules, loading: rulesLoading } = useAlertRules();
+
+  const isLoading =
+    studentsLoading ||
+    attendanceLoading ||
+    groupsLoading ||
+    paymentsLoading ||
+    examsLoading ||
+    lessonsLoading ||
+    gradesLoading ||
+    blocksLoading ||
+    rulesLoading;
 
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
@@ -570,7 +582,10 @@ export default function Attendance() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      {isLoading ? (
+        <PageLoading title="جاري تحميل الحضور" description="بنجهّز قوائم الطلاب والتقارير…" />
+      ) : (
+        <div className="space-y-6 animate-fade-in">
         {/* Quick scan mismatch banner */}
         {quickScanMismatch && (
           <Card className="bg-muted/40">
@@ -1003,7 +1018,8 @@ export default function Attendance() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+        </div>
+      )}
     </Layout>
   );
 }
