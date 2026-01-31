@@ -37,6 +37,8 @@ const navItems = [
   { path: '/exams', label: 'الامتحانات', icon: FileText },
   { path: '/alerts', label: 'التنبيهات', icon: Bell },
   { path: '/payments', label: 'المدفوعات', icon: CreditCard },
+  { path: '/print-cards', label: 'طباعة الكروت', icon: Printer },
+  { path: '/academic-years', label: 'السنوات الدراسية', icon: GraduationCap },
 ];
 
 export function Layout({ children }: LayoutProps) {
