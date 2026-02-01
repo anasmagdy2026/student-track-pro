@@ -231,6 +231,50 @@ export type Database = {
         }
         Relationships: []
       }
+      group_next_session_reminders: {
+        Row: {
+          created_at: string
+          exam: string | null
+          group_id: string
+          homework: string | null
+          id: string
+          note: string | null
+          recitation: string | null
+          sheet: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exam?: string | null
+          group_id: string
+          homework?: string | null
+          id?: string
+          note?: string | null
+          recitation?: string | null
+          sheet?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exam?: string | null
+          group_id?: string
+          homework?: string | null
+          id?: string
+          note?: string | null
+          recitation?: string | null
+          sheet?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_next_session_reminders_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           created_at: string
@@ -239,6 +283,8 @@ export type Database = {
           id: string
           name: string
           time: string
+          time_from: string | null
+          time_to: string | null
           updated_at: string
         }
         Insert: {
@@ -248,6 +294,8 @@ export type Database = {
           id?: string
           name: string
           time: string
+          time_from?: string | null
+          time_to?: string | null
           updated_at?: string
         }
         Update: {
@@ -257,6 +305,8 @@ export type Database = {
           id?: string
           name?: string
           time?: string
+          time_from?: string | null
+          time_to?: string | null
           updated_at?: string
         }
         Relationships: [
