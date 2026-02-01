@@ -41,7 +41,7 @@ import {
   createLateMessageForParent,
   createLateMessageForStudent,
 } from '@/utils/whatsapp';
-import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine, XCircle } from 'lucide-react';
+import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useLessons } from '@/hooks/useLessons';
@@ -166,6 +166,36 @@ export default function Attendance() {
     return diffMinutes;
   };
 
+  // Check if session has ended based on group's time_to
+  const isSessionEnded = (studentId: string): { ended: boolean; endTime: string | null; groupName: string | null } => {
+    const student = students.find((s) => s.id === studentId);
+    if (!student?.group_id) return { ended: false, endTime: null, groupName: null };
+    
+    const group = getGroupById(student.group_id);
+    // Use time_to from the DB row (cast as extended group)
+    const groupData = groups.find(g => g.id === student.group_id) as any;
+    const timeTo = groupData?.time_to;
+    
+    if (!timeTo) return { ended: false, endTime: null, groupName: group?.name || null };
+    
+    const now = new Date();
+    const endTimeDate = parseTimeToDate(selectedDate, timeTo);
+    
+    // Session ends when current time is after time_to (0 minutes tolerance)
+    if (now > endTimeDate) {
+      return { ended: true, endTime: timeTo, groupName: group?.name || null };
+    }
+    
+    return { ended: false, endTime: timeTo, groupName: group?.name || null };
+  };
+
+  const [sessionEndedDialogOpen, setSessionEndedDialogOpen] = useState(false);
+  const [sessionEndedContext, setSessionEndedContext] = useState<{
+    studentName: string;
+    groupName: string;
+    endTime: string;
+  } | null>(null);
+
   const getDayNameForDate = (dateIso: string) => {
     const d = new Date(`${dateIso}T00:00:00`);
     return DAYS_AR[d.getDay()];
@@ -224,6 +254,20 @@ export default function Attendance() {
     if (present && existing?.present) {
       toast.error('تم تحضير الطالب بالفعل');
       return;
+    }
+
+    // Rule: prevent attendance after session has ended (0 minutes tolerance)
+    if (present) {
+      const sessionCheck = isSessionEnded(studentId);
+      if (sessionCheck.ended && sessionCheck.endTime && sessionCheck.groupName) {
+        setSessionEndedContext({
+          studentName: student.name,
+          groupName: sessionCheck.groupName,
+          endTime: sessionCheck.endTime,
+        });
+        setSessionEndedDialogOpen(true);
+        return;
+      }
     }
 
     if (present) {
@@ -1008,6 +1052,39 @@ export default function Attendance() {
               <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
                 {blockedContext
                   ? `الطالب: ${blockedContext.studentName}\nغير مسموح بدخول الحصة.\n\nالسبب: ${blockedContext.reason}`
+                  : ''}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="sm:justify-center">
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                حسناً
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Session Ended Dialog */}
+        <AlertDialog
+          open={sessionEndedDialogOpen}
+          onOpenChange={(open) => {
+            setSessionEndedDialogOpen(open);
+            if (!open) {
+              setSessionEndedContext(null);
+              setPending(null);
+            }
+          }}
+        >
+          <AlertDialogContent className="border-destructive/40 bg-card">
+            <AlertDialogHeader>
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Clock className="h-10 w-10 text-destructive" />
+                </div>
+                <AlertDialogTitle className="text-destructive">انتهى وقت الحصة</AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
+                {sessionEndedContext
+                  ? `الطالب: ${sessionEndedContext.studentName}\nالمجموعة: ${sessionEndedContext.groupName}\n\nانتهى وقت الحصة (${sessionEndedContext.endTime})\nلا يمكن تسجيل الحضور بعد انتهاء الحصة.`
                   : ''}
               </AlertDialogDescription>
             </AlertDialogHeader>
