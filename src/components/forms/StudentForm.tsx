@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Contact } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -12,6 +12,27 @@ import {
 import { Group } from '@/types';
 import { z } from 'zod';
 import { toast } from 'sonner';
+
+// Type for Contact Picker API
+interface ContactAddress {
+  phoneNumber?: string;
+}
+
+interface ContactInfo {
+  name?: string[];
+  tel?: string[];
+}
+
+declare global {
+  interface Navigator {
+    contacts?: {
+      select: (
+        properties: string[],
+        options?: { multiple?: boolean }
+      ) => Promise<ContactInfo[]>;
+    };
+  }
+}
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 
 type StudentFormData = {
@@ -62,8 +83,48 @@ export function StudentForm({
   const [monthlyFee, setMonthlyFee] = useState(initialData?.monthly_fee || 0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactsSupported, setContactsSupported] = useState(false);
 
   const availableGroups = getGroupsByGrade(grade);
+
+  // Check if Contact Picker API is supported
+  useEffect(() => {
+    setContactsSupported('contacts' in navigator && 'ContactsManager' in window);
+  }, []);
+
+  // Function to pick contact from device
+  const pickContact = async (field: 'parent' | 'student') => {
+    if (!navigator.contacts) {
+      toast.error('اختيار جهات الاتصال غير مدعوم على هذا الجهاز');
+      return;
+    }
+
+    try {
+      const contacts = await navigator.contacts.select(['tel'], { multiple: false });
+      if (contacts && contacts.length > 0 && contacts[0].tel && contacts[0].tel.length > 0) {
+        let phone = contacts[0].tel[0];
+        // Clean up the phone number - remove spaces, dashes, and country code
+        phone = phone.replace(/[\s\-\(\)]/g, '');
+        // Handle Egyptian numbers with country code
+        if (phone.startsWith('+20')) {
+          phone = '0' + phone.slice(3);
+        } else if (phone.startsWith('20') && phone.length === 12) {
+          phone = '0' + phone.slice(2);
+        }
+        
+        if (field === 'parent') {
+          setParentPhone(phone);
+          if (errors.parent_phone) setErrors((p) => ({ ...p, parent_phone: '' }));
+        } else {
+          setStudentPhone(phone);
+          if (errors.student_phone) setErrors((p) => ({ ...p, student_phone: '' }));
+        }
+      }
+    } catch (err) {
+      // User cancelled or error occurred
+      console.log('Contact picker cancelled or error:', err);
+    }
+  };
 
   const schema = z.object({
     name: z
@@ -204,29 +265,57 @@ export function StudentForm({
 
       <div className="space-y-2">
         <label className="text-sm font-medium">رقم واتساب ولي الأمر</label>
-        <Input
-          value={parentPhone}
-          onChange={(e) => {
-            setParentPhone(e.target.value);
-            if (errors.parent_phone) setErrors((p) => ({ ...p, parent_phone: '' }));
-          }}
-          placeholder="01xxxxxxxxx"
-          dir="ltr"
-        />
+        <div className="flex gap-2">
+          <Input
+            value={parentPhone}
+            onChange={(e) => {
+              setParentPhone(e.target.value);
+              if (errors.parent_phone) setErrors((p) => ({ ...p, parent_phone: '' }));
+            }}
+            placeholder="01xxxxxxxxx"
+            dir="ltr"
+            className="flex-1"
+          />
+          {contactsSupported && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => pickContact('parent')}
+              title="اختر من جهات الاتصال"
+            >
+              <Contact className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         {!!errors.parent_phone && <p className="text-xs text-destructive">{errors.parent_phone}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium">رقم هاتف الطالب (اختياري)</label>
-        <Input
-          value={studentPhone}
-          onChange={(e) => {
-            setStudentPhone(e.target.value);
-            if (errors.student_phone) setErrors((p) => ({ ...p, student_phone: '' }));
-          }}
-          placeholder="01xxxxxxxxx"
-          dir="ltr"
-        />
+        <div className="flex gap-2">
+          <Input
+            value={studentPhone}
+            onChange={(e) => {
+              setStudentPhone(e.target.value);
+              if (errors.student_phone) setErrors((p) => ({ ...p, student_phone: '' }));
+            }}
+            placeholder="01xxxxxxxxx"
+            dir="ltr"
+            className="flex-1"
+          />
+          {contactsSupported && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => pickContact('student')}
+              title="اختر من جهات الاتصال"
+            >
+              <Contact className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         {!!errors.student_phone && <p className="text-xs text-destructive">{errors.student_phone}</p>}
       </div>
 
