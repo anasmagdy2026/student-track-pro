@@ -20,10 +20,12 @@ import {
 } from '@/components/ui/dialog';
 import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
+import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
 import { GroupForm } from '@/components/forms/GroupForm';
+import { NextSessionReminderDialog } from '@/components/NextSessionReminderDialog';
 import { DAYS_AR, Group } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
-import { Users, Plus, Pencil, Trash2, Clock, Calendar } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Clock, Calendar, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
@@ -32,11 +34,19 @@ export default function Groups() {
   const { groups, loading: groupsLoading, addGroup, updateGroup, deleteGroup, getTodayGroups } = useGroups();
   const { loading: studentsLoading, getStudentsByGroup } = useStudents();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { 
+    loading: remindersLoading, 
+    getReminderByGroupId, 
+    upsertReminder, 
+    clearReminder, 
+    hasReminder 
+  } = useNextSessionReminders();
 
-  const isLoading = groupsLoading || studentsLoading || gradesLoading;
+  const isLoading = groupsLoading || studentsLoading || gradesLoading || remindersLoading;
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [reminderGroup, setReminderGroup] = useState<Group | null>(null);
   const [filterDay, setFilterDay] = useState<string>('all');
 
   const todayGroups = getTodayGroups();
@@ -52,6 +62,8 @@ export default function Groups() {
     grade: string;
     days: string[];
     time: string;
+    time_from: string | null;
+    time_to: string | null;
   }) => {
     if (!data.name) {
       toast.error('برجاء إدخال اسم المجموعة');
@@ -71,6 +83,8 @@ export default function Groups() {
     grade: string;
     days: string[];
     time: string;
+    time_from: string | null;
+    time_to: string | null;
   }) => {
     if (!editingGroup) return;
     try {
@@ -205,7 +219,11 @@ export default function Groups() {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span>{group.time}</span>
+                        <span>
+                          {(group as any).time_from && (group as any).time_to
+                            ? `${(group as any).time_from} - ${(group as any).time_to}`
+                            : group.time}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
@@ -213,12 +231,20 @@ export default function Groups() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Link to={`/attendance?group=${encodeURIComponent(group.id)}`} className="flex-1">
                         <Button variant="outline" className="w-full">
                           تسجيل الحضور
                         </Button>
                       </Link>
+                      <Button
+                        size="icon"
+                        variant={hasReminder(group.id) ? 'default' : 'ghost'}
+                        onClick={() => setReminderGroup(group)}
+                        title="المطلوب الحصة الجاية"
+                      >
+                        <ClipboardList className="h-4 w-4" />
+                      </Button>
                       <Dialog
                         open={editingGroup?.id === group.id}
                         onOpenChange={(open) => {
@@ -246,6 +272,8 @@ export default function Groups() {
                                 grade: editingGroup.grade,
                                 days: editingGroup.days,
                                 time: editingGroup.time,
+                                time_from: (editingGroup as any).time_from,
+                                time_to: (editingGroup as any).time_to,
                               }}
                               onSubmit={handleUpdateGroup}
                               isEdit
@@ -280,6 +308,34 @@ export default function Groups() {
             </Card>
           )}
         </div>
+
+        {/* Next Session Reminder Dialog */}
+        <NextSessionReminderDialog
+          open={!!reminderGroup}
+          onOpenChange={(open) => {
+            if (!open) setReminderGroup(null);
+          }}
+          groupName={reminderGroup?.name || ''}
+          reminder={reminderGroup ? getReminderByGroupId(reminderGroup.id) : undefined}
+          onSave={async (data) => {
+            if (!reminderGroup) return;
+            try {
+              await upsertReminder(reminderGroup.id, data);
+              toast.success('تم حفظ المطلوب للحصة الجاية');
+            } catch {
+              toast.error('حدث خطأ أثناء الحفظ');
+            }
+          }}
+          onClear={async () => {
+            if (!reminderGroup) return;
+            try {
+              await clearReminder(reminderGroup.id);
+              toast.success('تم مسح المطلوب');
+            } catch {
+              toast.error('حدث خطأ أثناء المسح');
+            }
+          }}
+        />
         </div>
       )}
     </Layout>

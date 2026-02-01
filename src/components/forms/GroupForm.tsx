@@ -19,12 +19,16 @@ interface GroupFormProps {
     grade: string;
     days: string[];
     time: string;
+    time_from?: string | null;
+    time_to?: string | null;
   };
   onSubmit: (data: {
     name: string;
     grade: string;
     days: string[];
     time: string;
+    time_from: string | null;
+    time_to: string | null;
   }) => void;
   isEdit?: boolean;
 }
@@ -38,6 +42,8 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
     initialData?.days || ['السبت', 'الإثنين', 'الأربعاء']
   );
   const [time, setTime] = useState(initialData?.time || '10:00');
+  const [timeFrom, setTimeFrom] = useState(initialData?.time_from || '');
+  const [timeTo, setTimeTo] = useState(initialData?.time_to || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getPatternLabel = (valueDays: string[]) => {
@@ -66,7 +72,14 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await onSubmit({ name, grade, days, time });
+      await onSubmit({
+        name,
+        grade,
+        days,
+        time,
+        time_from: timeFrom || null,
+        time_to: timeTo || null,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +180,7 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">وقت الحصة</label>
+        <label className="text-sm font-medium">وقت الحصة (للعرض)</label>
         <Input
           type="time"
           value={time}
@@ -175,6 +188,32 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
           dir="ltr"
         />
       </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">وقت البداية (من)</label>
+          <Input
+            type="time"
+            value={timeFrom}
+            onChange={(e) => setTimeFrom(e.target.value)}
+            dir="ltr"
+            placeholder="مثال: 10:00"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">وقت النهاية (إلى)</label>
+          <Input
+            type="time"
+            value={timeTo}
+            onChange={(e) => setTimeTo(e.target.value)}
+            dir="ltr"
+            placeholder="مثال: 11:30"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        يُستخدم وقت النهاية لمنع تسجيل الحضور بعد انتهاء الحصة
+      </p>
 
       <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
