@@ -16,12 +16,13 @@ interface QRScannerProps {
   onScan: (data: string) => void;
   onClose: () => void;
   title?: string;
+  inline?: boolean;
 }
 
 type CameraFacing = 'environment' | 'user';
 type ScanMode = 'camera' | 'manual';
 
-export function QRScanner({ onScan, onClose, title = 'مسح رمز QR' }: QRScannerProps) {
+export function QRScanner({ onScan, onClose, title = 'مسح رمز QR', inline = false }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -149,20 +150,21 @@ export function QRScanner({ onScan, onClose, title = 'مسح رمز QR' }: QRSca
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <ScanLine className="h-5 w-5 text-primary" />
-              {title}
-            </CardTitle>
+  const content = (
+    <Card className={inline ? 'w-full' : 'w-full max-w-lg'}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <ScanLine className="h-5 w-5 text-primary" />
+            {title}
+          </CardTitle>
+          {!inline && (
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-5 w-5" />
             </Button>
-          </div>
-        </CardHeader>
+          )}
+        </div>
+      </CardHeader>
 
         <CardContent className="space-y-4">
           {/* Mode Switch */}
@@ -273,6 +275,15 @@ export function QRScanner({ onScan, onClose, title = 'مسح رمز QR' }: QRSca
           </p>
         </CardContent>
       </Card>
+  );
+
+  if (inline) {
+    return content;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur flex items-center justify-center p-4">
+      {content}
     </div>
   );
 }

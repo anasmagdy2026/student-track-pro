@@ -57,6 +57,15 @@ export default function Payments() {
   const currentDate = new Date();
   const currentMonth = currentDate.toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  
+  // Calculate previous month
+  const getPreviousMonth = (month: string) => {
+    const [year, m] = month.split('-').map(Number);
+    const prevDate = new Date(year, m - 2, 1);
+    return prevDate.toISOString().slice(0, 7);
+  };
+  
+  const previousMonth = getPreviousMonth(currentMonth);
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [studentCode, setStudentCode] = useState('');
@@ -188,6 +197,12 @@ export default function Payments() {
 
   const paidStudents = filteredStudents.filter((s) => isMonthPaid(s.id, selectedMonth));
   const unpaidStudents = filteredStudents.filter((s) => !isMonthPaid(s.id, selectedMonth));
+  
+  // Check for students who didn't pay last month (only show when viewing current month)
+  const unpaidLastMonth = selectedMonth === currentMonth 
+    ? filteredStudents.filter((s) => !isMonthPaid(s.id, previousMonth))
+    : [];
+  
   const totalExpected = filteredStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
   const totalReceived = paidStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
 
@@ -216,6 +231,27 @@ export default function Payments() {
             متابعة دفع مصاريف الشهر
           </p>
         </div>
+
+        {/* Alert for unpaid previous month */}
+        {unpaidLastMonth.length > 0 && selectedMonth === currentMonth && (
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-destructive/10 rounded-full flex items-center justify-center">
+                  <XCircle className="h-5 w-5 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-destructive">
+                    تنبيه: {unpaidLastMonth.length} طالب لم يدفع الشهر السابق
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    يُنصح بمتابعة تحصيل المتأخرات قبل الشهر الجديد
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Code Entry */}
         <Card className="border-secondary/30">
