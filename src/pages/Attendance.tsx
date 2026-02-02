@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -35,6 +36,8 @@ import { useAlertEvents } from '@/hooks/useAlertEvents';
 import { useAlertRules } from '@/hooks/useAlertRules';
 import { buildAttendanceAlerts } from '@/lib/alertRules';
 import { AlertDecisionDialog } from '@/components/AlertDecisionDialog';
+import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
+import { NextSessionReminderCard } from '@/components/NextSessionReminderCard';
 import {
   sendWhatsAppMessage,
   createAbsenceMessage,
@@ -65,6 +68,7 @@ export default function Attendance() {
   const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
   const { rules, loading: rulesLoading } = useAlertRules();
+  const { reminders, loading: remindersLoading, hasReminder, getReminderByGroupId } = useNextSessionReminders();
 
   const isLoading =
     studentsLoading ||
@@ -75,7 +79,8 @@ export default function Attendance() {
     lessonsLoading ||
     gradesLoading ||
     blocksLoading ||
-    rulesLoading;
+    rulesLoading ||
+    remindersLoading;
 
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
@@ -115,6 +120,13 @@ export default function Attendance() {
 
   const todayGroups = getTodayGroups();
   const todayAttendance = getAttendanceByDate(selectedDate);
+
+  // Check for reminders for the selected group or today's groups
+  const activeGroupReminder = selectedGroup !== 'all' && hasReminder(selectedGroup)
+    ? { group: getGroupById(selectedGroup)!, reminder: getReminderByGroupId(selectedGroup)! }
+    : null;
+
+  const [reminderDismissed, setReminderDismissed] = useState(false);
 
   const [alertDecisionOpen, setAlertDecisionOpen] = useState(false);
   const [pendingAlert, setPendingAlert] = useState<{
@@ -194,6 +206,7 @@ export default function Attendance() {
     studentName: string;
     groupName: string;
     endTime: string;
+    studentId?: string;
   } | null>(null);
 
   const getDayNameForDate = (dateIso: string) => {
@@ -257,13 +270,16 @@ export default function Attendance() {
     }
 
     // Rule: prevent attendance after session has ended (0 minutes tolerance)
+    // But allow attendance in a different group
     if (present) {
       const sessionCheck = isSessionEnded(studentId);
       if (sessionCheck.ended && sessionCheck.endTime && sessionCheck.groupName) {
+        // Allow the user to choose: attend in another group or mark as absent
         setSessionEndedContext({
           studentName: student.name,
           groupName: sessionCheck.groupName,
           endTime: sessionCheck.endTime,
+          studentId: studentId,
         });
         setSessionEndedDialogOpen(true);
         return;
@@ -473,14 +489,16 @@ export default function Attendance() {
   const requestAttendance = (action: PendingAttendanceAction) => {
     setPending(action);
 
-    // always confirm present before recording
+    // التحضير بدون تأكيد - مباشرة
     if (action.present) {
-      setConfirmOpen(true);
+      performAttendance(action.studentId, true);
+      setPending(null);
       return;
     }
 
     // absent doesn't need confirmation
     performAttendance(action.studentId, false);
+    setPending(null);
   };
 
   const handleMarkAllPresent = () => {
@@ -652,6 +670,31 @@ export default function Attendance() {
                   className="shrink-0"
                 >
                   إخفاء التنبيه
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Next Session Reminder Alert */}
+        {activeGroupReminder && !reminderDismissed && (
+          <Card className="border-warning/50 bg-warning/5">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex-1">
+                  <NextSessionReminderCard 
+                    group={activeGroupReminder.group} 
+                    reminder={activeGroupReminder.reminder} 
+                    compact 
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setReminderDismissed(true)}
+                  className="shrink-0"
+                >
+                  إخفاء
                 </Button>
               </div>
             </CardContent>
@@ -1063,7 +1106,7 @@ export default function Attendance() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Session Ended Dialog */}
+        {/* Session Ended Dialog - Allow attendance in different group or reject */}
         <AlertDialog
           open={sessionEndedDialogOpen}
           onOpenChange={(open) => {
@@ -1074,23 +1117,51 @@ export default function Attendance() {
             }
           }}
         >
-          <AlertDialogContent className="border-destructive/40 bg-card">
+          <AlertDialogContent className="border-warning/40 bg-card">
             <AlertDialogHeader>
               <div className="flex flex-col items-center text-center gap-3">
-                <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
-                  <Clock className="h-10 w-10 text-destructive" />
+                <div className="h-16 w-16 rounded-full bg-warning/10 flex items-center justify-center">
+                  <Clock className="h-10 w-10 text-warning" />
                 </div>
-                <AlertDialogTitle className="text-destructive">انتهى وقت الحصة</AlertDialogTitle>
+                <AlertDialogTitle className="text-warning">انتهى وقت الحصة</AlertDialogTitle>
               </div>
               <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
                 {sessionEndedContext
-                  ? `الطالب: ${sessionEndedContext.studentName}\nالمجموعة: ${sessionEndedContext.groupName}\n\nانتهى وقت الحصة (${sessionEndedContext.endTime})\nلا يمكن تسجيل الحضور بعد انتهاء الحصة.`
+                  ? `الطالب: ${sessionEndedContext.studentName}\nالمجموعة: ${sessionEndedContext.groupName}\n\nانتهى وقت الحصة (${sessionEndedContext.endTime})\n\nيمكنك السماح بالحضور استثنائياً (في مجموعة أخرى) أو رفض الحضور وتسجيله غائباً.`
                   : ''}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="sm:justify-center">
-              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                حسناً
+            <AlertDialogFooter className="sm:justify-center gap-2">
+              <AlertDialogCancel
+                onClick={async () => {
+                  // السماح بالحضور استثنائياً
+                  if (sessionEndedContext?.studentId) {
+                    const res = await markAttendance(sessionEndedContext.studentId, selectedDate, true);
+                    if (res.status === 'already_present') {
+                      toast.error('تم تحضير الطالب بالفعل');
+                    } else {
+                      toast.success('تم تسجيل الحضور (استثناء - مجموعة أخرى)');
+                    }
+                  }
+                  setSessionEndedContext(null);
+                  setPending(null);
+                }}
+              >
+                السماح بالحضور
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                  // رفض الحضور وتسجيله غائباً
+                  if (sessionEndedContext?.studentId) {
+                    await markAttendance(sessionEndedContext.studentId, selectedDate, false);
+                    toast.error('تم رفض الحضور وتسجيل الغياب');
+                  }
+                  setSessionEndedContext(null);
+                  setPending(null);
+                }}
+              >
+                رفض (تسجيل غياب)
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

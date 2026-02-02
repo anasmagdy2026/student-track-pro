@@ -23,6 +23,8 @@ import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
 import { useLessons } from '@/hooks/useLessons';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
+import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
+import { NextSessionReminderCard } from '@/components/NextSessionReminderCard';
 import { Lesson } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { 
@@ -35,6 +37,7 @@ import {
   Users,
   Search,
   Loader2,
+  ClipboardList,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
@@ -55,8 +58,17 @@ export default function Lessons() {
 
   const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { reminders, loading: remindersLoading, hasReminder, getReminderByGroupId } = useNextSessionReminders();
 
-  const isLoading = groupsLoading || studentsLoading || lessonsLoading || blocksLoading || gradesLoading;
+  const isLoading = groupsLoading || studentsLoading || lessonsLoading || blocksLoading || gradesLoading || remindersLoading;
+
+  // Get groups with reminders for today's lessons
+  const todayLessons = lessons.filter(l => l.date === new Date().toISOString().split('T')[0]);
+  const todayGroupIds = [...new Set(todayLessons.map(l => l.group_id).filter(Boolean))] as string[];
+  const todayReminders = todayGroupIds
+    .filter(gid => hasReminder(gid))
+    .map(gid => ({ group: getGroupById(gid)!, reminder: getReminderByGroupId(gid)! }))
+    .filter(r => r.group && r.reminder);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -303,6 +315,19 @@ export default function Lessons() {
         </div>
       )}
       <div className="space-y-6 animate-fade-in">
+        {/* Today's Reminders */}
+        {todayReminders.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-warning" />
+              المطلوب لحصص اليوم
+            </h2>
+            {todayReminders.map(({ group, reminder }) => (
+              <NextSessionReminderCard key={group.id} group={group} reminder={reminder} compact />
+            ))}
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>

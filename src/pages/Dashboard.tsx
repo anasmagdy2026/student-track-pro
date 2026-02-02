@@ -5,6 +5,9 @@ import { useAttendance } from '@/hooks/useAttendance';
 import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
+import { useGroups } from '@/hooks/useGroups';
+import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
+import { NextSessionReminderCard } from '@/components/NextSessionReminderCard';
 import {
   Users,
   UserCheck,
@@ -14,6 +17,7 @@ import {
   Calendar,
   FileText,
   AlertTriangle,
+  ClipboardList,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,8 +29,15 @@ export default function Dashboard() {
   const { loading: paymentsLoading, getPaymentStats } = usePayments();
   const { exams, loading: examsLoading } = useExams();
   const { activeGradeLevels, loading: gradesLoading } = useGradeLevels();
+  const { groups, loading: groupsLoading, getTodayGroups } = useGroups();
+  const { reminders, loading: remindersLoading, hasReminder, getReminderByGroupId } = useNextSessionReminders();
 
-  const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading || gradesLoading;
+  const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading || gradesLoading || groupsLoading || remindersLoading;
+
+  const todayGroups = getTodayGroups();
+  const todayReminders = todayGroups
+    .filter(g => hasReminder(g.id))
+    .map(g => ({ group: g, reminder: getReminderByGroupId(g.id)! }));
 
   const today = new Date().toISOString().split('T')[0];
   const todayAbsent = getAbsentStudents(today);
@@ -189,6 +200,19 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Next Session Reminders */}
+        {todayReminders.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-warning" />
+              المطلوب لحصص اليوم
+            </h2>
+            {todayReminders.map(({ group, reminder }) => (
+              <NextSessionReminderCard key={group.id} group={group} reminder={reminder} />
+            ))}
+          </div>
+        )}
 
         {/* Alerts Section */}
         {(todayAbsent.length > 0 || paymentStats.unpaid > 0) && (

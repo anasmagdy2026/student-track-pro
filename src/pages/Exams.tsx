@@ -25,6 +25,8 @@ import { useExams } from '@/hooks/useExams';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { Exam } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
+import { ExamQRPrintDialog } from '@/components/ExamQRPrintDialog';
+import { ExamQRScoreDialog } from '@/components/ExamQRScoreDialog';
 import {
   sendWhatsAppMessage,
   createExamResultMessage,
@@ -38,6 +40,8 @@ import {
   QrCode,
   Save,
   Loader2,
+  Printer,
+  ScanLine,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
@@ -68,6 +72,10 @@ export default function Exams() {
   const [codeScore, setCodeScore] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // QR Print and Score dialogs
+  const [qrPrintExam, setQrPrintExam] = useState<Exam | null>(null);
+  const [qrScoreExam, setQrScoreExam] = useState<Exam | null>(null);
 
   // Form state
   const [examName, setExamName] = useState('');
@@ -354,10 +362,28 @@ export default function Exams() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <Badge className="bg-primary/10 text-primary">
                           {results.length} / {gradeStudents.length} طالب
                         </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setQrPrintExam(exam)}
+                          className="gap-1"
+                        >
+                          <Printer className="h-4 w-4" />
+                          طباعة QR
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setQrScoreExam(exam)}
+                          className="gap-1"
+                        >
+                          <ScanLine className="h-4 w-4" />
+                          درجات بـ QR
+                        </Button>
                         <Button
                           variant="outline"
                           onClick={() => openResults(exam)}
@@ -541,6 +567,27 @@ export default function Exams() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* QR Print Dialog */}
+        {qrPrintExam && (
+          <ExamQRPrintDialog
+            open={!!qrPrintExam}
+            onOpenChange={(open) => !open && setQrPrintExam(null)}
+            exam={qrPrintExam}
+          />
+        )}
+
+        {/* QR Score Dialog */}
+        {qrScoreExam && (
+          <ExamQRScoreDialog
+            open={!!qrScoreExam}
+            onOpenChange={(open) => !open && setQrScoreExam(null)}
+            exam={qrScoreExam}
+            onScoreAdded={(studentId, score) => {
+              setScores(prev => ({ ...prev, [studentId]: score }));
+            }}
+          />
+        )}
         </div>
       )}
     </Layout>
