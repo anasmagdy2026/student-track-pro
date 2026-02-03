@@ -166,16 +166,22 @@ export default function Attendance() {
     return d;
   };
 
+  // Calculate late minutes - only count as late if more than 10 minutes after session start
   const getLateMinutes = (studentId: string) => {
     const student = students.find((s) => s.id === studentId);
     if (!student?.group_id) return null;
     const group = getGroupById(student.group_id);
     if (!group?.time) return null;
 
-    const now = new Date();
+    // Get attendance record to find check-in time
+    const attendance = getStudentAttendance(studentId);
+    const checkInTime = attendance?.checked_in_at ? new Date(attendance.checked_in_at) : new Date();
+    
     const scheduled = parseTimeToDate(selectedDate, group.time);
-    const diffMinutes = Math.floor((now.getTime() - scheduled.getTime()) / 60000);
-    return diffMinutes;
+    const diffMinutes = Math.floor((checkInTime.getTime() - scheduled.getTime()) / 60000);
+    
+    // Only return late minutes if more than 10 minutes late
+    return diffMinutes > 10 ? diffMinutes : 0;
   };
 
   // Check if session has ended based on group's time_to
@@ -437,12 +443,15 @@ export default function Attendance() {
         }
       }
 
-      // Existing rule: late more than 10 minutes
-      const lateMinutes = getLateMinutes(studentId);
-      if (lateMinutes !== null && lateMinutes > 10 && studentGroup) {
+      // Existing rule: late more than 10 minutes (checking against current time for initial decision)
+      const now = new Date();
+      const scheduled = studentGroup?.time ? parseTimeToDate(selectedDate, studentGroup.time) : null;
+      const currentLateMinutes = scheduled ? Math.floor((now.getTime() - scheduled.getTime()) / 60000) : null;
+      
+      if (currentLateMinutes !== null && currentLateMinutes > 10 && studentGroup) {
         setLateContext({
           studentId,
-          lateMinutes,
+          lateMinutes: currentLateMinutes,
           groupName: studentGroup.name,
           groupTime: studentGroup.time,
         });

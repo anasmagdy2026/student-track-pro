@@ -17,6 +17,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { MonthlyUnpaidReport } from '@/components/MonthlyUnpaidReport';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ import {
   Search,
   ScanLine,
   RotateCcw,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
@@ -55,7 +57,10 @@ export default function Payments() {
   const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading;
 
   const currentDate = new Date();
-  const currentMonth = currentDate.toISOString().slice(0, 7);
+  // Get actual current month correctly (toISOString uses UTC, we need local)
+  const currentYear = currentDate.getFullYear();
+  const currentMonthNum = currentDate.getMonth() + 1; // 0-indexed
+  const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   
   // Calculate previous month
@@ -70,6 +75,7 @@ export default function Payments() {
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [studentCode, setStudentCode] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showUnpaidReport, setShowUnpaidReport] = useState(false);
   
   // تأكيد الدفع
   const [confirmPayment, setConfirmPayment] = useState<{
@@ -225,11 +231,17 @@ export default function Payments() {
       ) : (
         <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">المدفوعات</h1>
-          <p className="text-muted-foreground mt-1">
-            متابعة دفع مصاريف الشهر
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">المدفوعات</h1>
+            <p className="text-muted-foreground mt-1">
+              متابعة دفع مصاريف الشهر
+            </p>
+          </div>
+          <Button onClick={() => setShowUnpaidReport(true)} variant="outline" className="gap-2">
+            <FileText className="h-4 w-4" />
+            تقرير المتأخرين
+          </Button>
         </div>
 
         {/* Alert for unpaid previous month */}
@@ -549,6 +561,12 @@ export default function Payments() {
             title="مسح QR لتسجيل الدفع"
           />
         )}
+
+        {/* Monthly Unpaid Report */}
+        <MonthlyUnpaidReport 
+          open={showUnpaidReport} 
+          onOpenChange={setShowUnpaidReport} 
+        />
         </div>
       )}
     </Layout>

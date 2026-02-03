@@ -48,6 +48,12 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
     setShowPreview(true);
   };
 
+  // Split students into groups of 4 for each page
+  const chunkedStudents: typeof groupStudents[] = [];
+  for (let i = 0; i < groupStudents.length; i += 4) {
+    chunkedStudents.push(groupStudents.slice(i, i + 4));
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -84,6 +90,9 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
                   <span>عدد الطلاب: {groupStudents.length}</span>
+                  <span className="text-muted-foreground">
+                    ({Math.ceil(groupStudents.length / 4)} صفحة)
+                  </span>
                 </div>
               </div>
             )}
@@ -109,91 +118,100 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
               </Button>
             </div>
 
-            {/* Print Preview - Each student on a page */}
+            {/* Print Preview - 4 students per page */}
             <div className="print-area">
-              {groupStudents.map((student, index) => (
+              {chunkedStudents.map((pageStudents, pageIndex) => (
                 <div 
-                  key={student.id} 
+                  key={pageIndex} 
                   className="exam-qr-page"
                   style={{
-                    pageBreakAfter: index < groupStudents.length - 1 ? 'always' : 'auto',
-                    minHeight: '100vh',
-                    padding: '20mm',
-                    position: 'relative',
+                    pageBreakAfter: pageIndex < chunkedStudents.length - 1 ? 'always' : 'auto',
+                    minHeight: '297mm',
+                    width: '210mm',
+                    padding: '10mm',
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5mm',
                   }}
                 >
-                  {/* QR Code - Small, top-left */}
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '15mm',
-                      left: '15mm',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <QRCodeSVG
-                      value={`STUDENT:${student.code}:${student.id}`}
-                      size={80}
-                      level="H"
-                      includeMargin={false}
-                    />
-                    <div style={{ textAlign: 'center' }}>
-                      <p style={{ 
-                        fontSize: '12px', 
-                        fontWeight: 'bold',
-                        margin: 0,
-                      }}>
-                        {student.name}
-                      </p>
-                      <p style={{ 
-                        fontSize: '10px', 
-                        fontFamily: 'monospace',
-                        margin: 0,
-                        color: '#666',
-                      }}>
-                        {student.code}
-                      </p>
+                  {pageStudents.map((student, studentIndex) => (
+                    <div 
+                      key={student.id}
+                      style={{
+                        flex: 1,
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '8mm',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10mm',
+                        backgroundColor: '#fff',
+                        minHeight: '65mm',
+                      }}
+                    >
+                      {/* QR Code - Top Left */}
+                      <div 
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <QRCodeSVG
+                          value={`STUDENT:${student.code}:${student.id}`}
+                          size={60}
+                          level="H"
+                          includeMargin={false}
+                        />
+                        <p style={{ 
+                          fontSize: '9px', 
+                          fontFamily: 'monospace',
+                          margin: 0,
+                          color: '#666',
+                        }}>
+                          {student.code}
+                        </p>
+                      </div>
+
+                      {/* Student Info */}
+                      <div style={{ flex: 1 }}>
+                        <p style={{ 
+                          fontSize: '14px', 
+                          fontWeight: 'bold',
+                          margin: 0,
+                          marginBottom: '4px',
+                        }}>
+                          {student.name}
+                        </p>
+                        <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>
+                          {selectedGroupData?.name} - {getGradeLabel(exam.grade)}
+                        </p>
+                      </div>
+
+                      {/* Exam Info - Right Side */}
+                      <div style={{ textAlign: 'left' }}>
+                        <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0 }}>
+                          {exam.name}
+                        </p>
+                        <p style={{ fontSize: '10px', color: '#888', margin: 0 }}>
+                          {new Date(exam.date).toLocaleDateString('ar-EG')}
+                        </p>
+                        <div
+                          style={{
+                            marginTop: '8px',
+                            border: '2px solid #000',
+                            padding: '6px 12px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                          }}
+                        >
+                          الدرجة: _______ / {exam.max_score}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Exam Info - Top right */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '15mm',
-                      right: '15mm',
-                      textAlign: 'right',
-                    }}
-                  >
-                    <p style={{ fontSize: '14px', fontWeight: 'bold', margin: 0 }}>
-                      {exam.name}
-                    </p>
-                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                      {selectedGroupData?.name} - {getGradeLabel(exam.grade)}
-                    </p>
-                    <p style={{ fontSize: '11px', color: '#888', margin: 0 }}>
-                      {new Date(exam.date).toLocaleDateString('ar-EG')}
-                    </p>
-                  </div>
-
-                  {/* Score Area */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '60mm',
-                      right: '15mm',
-                      border: '2px solid #000',
-                      padding: '10px 20px',
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <p style={{ fontSize: '14px', margin: 0 }}>
-                      الدرجة: _______ / {exam.max_score}
-                    </p>
-                  </div>
+                  ))}
                 </div>
               ))}
             </div>
@@ -203,10 +221,19 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
                 .no-print { display: none !important; }
                 body * { visibility: hidden; }
                 .print-area, .print-area * { visibility: visible; }
-                .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+                .print-area { 
+                  position: absolute; 
+                  left: 0; 
+                  top: 0; 
+                  width: 100%; 
+                }
                 .exam-qr-page {
                   page-break-after: always;
                   page-break-inside: avoid;
+                }
+                @page {
+                  size: A4;
+                  margin: 0;
                 }
               }
             `}</style>

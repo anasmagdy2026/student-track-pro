@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { QRScanner } from '@/components/QRScanner';
 import { useStudents } from '@/hooks/useStudents';
-import { useExams } from '@/hooks/useExams';
-import { Exam } from '@/types';
+import { Exam, ExamResult } from '@/types';
 import { ScanLine, CheckCircle, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ExamQRScoreDialogProps {
   open: boolean;
@@ -24,7 +24,6 @@ interface ExamQRScoreDialogProps {
 
 export function ExamQRScoreDialog({ open, onOpenChange, exam, onScoreAdded }: ExamQRScoreDialogProps) {
   const { getStudentByCode, students } = useStudents();
-  const { addResult, getExamResults } = useExams();
 
   const [showScanner, setShowScanner] = useState(false);
   const [scannedStudent, setScannedStudent] = useState<{
@@ -35,15 +34,27 @@ export function ExamQRScoreDialog({ open, onOpenChange, exam, onScoreAdded }: Ex
   } | null>(null);
   const [score, setScore] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localResults, setLocalResults] = useState<ExamResult[]>([]);
 
-  // Reset state when dialog opens
+  // Fetch exam results when dialog opens
   useEffect(() => {
     if (open) {
       setScannedStudent(null);
       setScore('');
       setShowScanner(true);
+      
+      // Fetch latest results for this exam
+      supabase
+        .from('exam_results')
+        .select('*')
+        .eq('exam_id', exam.id)
+        .then(({ data }) => {
+          if (data) {
+            setLocalResults(data as ExamResult[]);
+          }
+        });
     }
-  }, [open]);
+  }, [open, exam.id]);
 
   const handleScan = (code: string) => {
     setShowScanner(false);
@@ -61,9 +72,8 @@ export function ExamQRScoreDialog({ open, onOpenChange, exam, onScoreAdded }: Ex
       return;
     }
 
-    // Check for existing score
-    const results = getExamResults(exam.id);
-    const existingResult = results.find(r => r.student_id === student.id);
+    // Check for existing score from local results
+    const existingResult = localResults.find(r => r.student_id === student.id);
 
     setScannedStudent({
       id: student.id,
@@ -90,7 +100,41 @@ export function ExamQRScoreDialog({ open, onOpenChange, exam, onScoreAdded }: Ex
 
     setIsSubmitting(true);
     try {
-      await addResult(exam.id, scannedStudent.id, numScore);
+      // Check if result already exists
+      const existingResult = localResults.find(r => r.student_id === scannedStudent.id);
+      
+      if (existingResult) {
+        // Update existing result
+        const { error } = await supabase
+          .from('exam_results')
+          .update({ score: numScore, notified: false })
+          .eq('id', existingResult.id);
+        
+        if (error) throw error;
+        
+        // Update local state
+        setLocalResults(prev => 
+          prev.map(r => r.id === existingResult.id ? { ...r, score: numScore, notified: false } : r)
+        );
+      } else {
+        // Insert new result
+        const { data, error } = await supabase
+          .from('exam_results')
+          .insert([{
+            exam_id: exam.id,
+            student_id: scannedStudent.id,
+            score: numScore,
+            notified: false,
+          }])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        // Add to local state
+        setLocalResults(prev => [...prev, data as ExamResult]);
+      }
+      
       onScoreAdded(scannedStudent.id, numScore);
       toast.success(`✅ تم حفظ درجة ${scannedStudent.name}: ${numScore}/${exam.max_score}`);
       
