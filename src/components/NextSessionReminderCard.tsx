@@ -2,20 +2,65 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { NextSessionReminder } from '@/hooks/useNextSessionReminders';
-import { Group } from '@/types';
-import { BookOpen, ClipboardList, FileText, Mic, StickyNote } from 'lucide-react';
+import { Group, Student } from '@/types';
+import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { sendWhatsAppMessage, createNextSessionReminderMessage } from '@/utils/whatsapp';
+import { toast } from 'sonner';
 
 interface NextSessionReminderCardProps {
   reminder: NextSessionReminder;
   group: Group;
   compact?: boolean;
+  students?: Student[]; // Optional: students in the group for WhatsApp
+  onSendWhatsApp?: () => void;
 }
 
-export function NextSessionReminderCard({ reminder, group, compact = false }: NextSessionReminderCardProps) {
+export function NextSessionReminderCard({ 
+  reminder, 
+  group, 
+  compact = false,
+  students = [],
+  onSendWhatsApp 
+}: NextSessionReminderCardProps) {
   const hasContent = reminder.homework || reminder.recitation || reminder.exam || reminder.sheet || reminder.note;
   
   if (!hasContent) return null;
+
+  const handleSendWhatsAppToAll = () => {
+    if (students.length === 0) {
+      toast.error('لا يوجد طلاب في هذه المجموعة');
+      return;
+    }
+
+    // Open WhatsApp for each student
+    let sentCount = 0;
+    for (const student of students) {
+      const message = createNextSessionReminderMessage(student.name, group.name, {
+        homework: reminder.homework,
+        recitation: reminder.recitation,
+        exam: reminder.exam,
+        sheet: reminder.sheet,
+        note: reminder.note,
+      });
+      
+      // We'll open the first one in a new tab, then show a toast for the rest
+      if (sentCount === 0) {
+        sendWhatsAppMessage(student.parent_phone, message);
+      }
+      sentCount++;
+    }
+
+    if (sentCount > 1) {
+      toast.info(`تم فتح رسالة للطالب الأول. للباقين (${sentCount - 1} طالب)، استخدم نفس الرسالة.`);
+    } else {
+      toast.success('تم فتح الواتساب');
+    }
+
+    if (onSendWhatsApp) {
+      onSendWhatsApp();
+    }
+  };
 
   if (compact) {
     return (
@@ -57,6 +102,19 @@ export function NextSessionReminderCard({ reminder, group, compact = false }: Ne
             </Badge>
           )}
         </div>
+        {students.length > 0 && (
+          <div className="mt-2 flex justify-end">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={handleSendWhatsAppToAll}
+              className="gap-1 text-xs"
+            >
+              <MessageCircle className="h-3 w-3" />
+              إرسال واتساب
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -110,7 +168,18 @@ export function NextSessionReminderCard({ reminder, group, compact = false }: Ne
             <span className="text-muted-foreground">{reminder.note}</span>
           </div>
         )}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-2 gap-2">
+          {students.length > 0 && (
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={handleSendWhatsAppToAll}
+              className="gap-2"
+            >
+              <MessageCircle className="h-4 w-4" />
+              إرسال واتساب للطلاب
+            </Button>
+          )}
           <Link to={`/attendance?group=${group.id}`}>
             <Button size="sm" variant="outline">
               فتح الحضور
