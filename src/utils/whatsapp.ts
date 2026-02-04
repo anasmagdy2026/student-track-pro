@@ -141,3 +141,44 @@ ${groupLine}
 
 مع تحيات مستر/ محمد مجدي`;
 };
+
+// رسالة المطلوب للحصة الجاية
+export const createNextSessionReminderMessage = (
+  studentName: string,
+  groupName: string,
+  reminder: {
+    homework?: string | null;
+    recitation?: string | null;
+    exam?: string | null;
+    sheet?: string | null;
+    note?: string | null;
+  }
+) => {
+  let content = '';
+  
+  if (reminder.homework) {
+    content += `الواجب: ${reminder.homework}\n`;
+  }
+  if (reminder.recitation) {
+    content += `التسميع: ${reminder.recitation}\n`;
+  }
+  if (reminder.exam) {
+    content += `الامتحان: ${reminder.exam}\n`;
+  }
+  if (reminder.sheet) {
+    content += `الشيت: ${reminder.sheet}\n`;
+  }
+  if (reminder.note) {
+    content += `ملاحظة: ${reminder.note}\n`;
+  }
+
+  return `السلام عليكم ورحمة الله وبركاته
+
+يا ${studentName}، تذكير بالمطلوب للحصة الجاية
+مجموعة: ${groupName}
+
+${content}
+برجاء الاستعداد جيداً.
+
+مع تحيات مستر/ محمد مجدي`;
+};

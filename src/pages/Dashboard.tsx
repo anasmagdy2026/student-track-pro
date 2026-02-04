@@ -209,7 +209,12 @@ export default function Dashboard() {
               المطلوب لحصص اليوم
             </h2>
             {todayReminders.map(({ group, reminder }) => (
-              <NextSessionReminderCard key={group.id} group={group} reminder={reminder} />
+              <NextSessionReminderCard 
+                key={group.id} 
+                group={group} 
+                reminder={reminder} 
+                students={students.filter(s => s.group_id === group.id)}
+              />
             ))}
           </div>
         )}

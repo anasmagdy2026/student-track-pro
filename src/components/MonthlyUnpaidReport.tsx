@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
 import { usePayments } from '@/hooks/usePayments';
@@ -31,7 +30,7 @@ export function MonthlyUnpaidReport({ open, onOpenChange }: MonthlyUnpaidReportP
   const { students } = useStudents();
   const { groups, getGroupById } = useGroups();
   const { isMonthPaid } = usePayments();
-  const { getGradeLabel } = useGradeLevels();
+  const { activeGradeLevels, getGradeLabel } = useGradeLevels();
 
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
@@ -43,6 +42,13 @@ export function MonthlyUnpaidReport({ open, onOpenChange }: MonthlyUnpaidReportP
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
 
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to check if student was registered before or in the selected month
+  const wasStudentRegisteredInMonth = (student: { registered_at?: string }, month: string) => {
+    if (!student.registered_at) return true;
+    const registeredMonth = student.registered_at.slice(0, 7);
+    return registeredMonth <= month;
+  };
 
   // Generate month options
   const monthOptions = [];
@@ -57,11 +63,12 @@ export function MonthlyUnpaidReport({ open, onOpenChange }: MonthlyUnpaidReportP
     });
   }
 
-  // Filter students
+  // Filter students - also by registration date
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
     const matchesGroup = selectedGroup === 'all' || student.group_id === selectedGroup;
-    return matchesGrade && matchesGroup;
+    const wasRegistered = wasStudentRegisteredInMonth(student, selectedMonth);
+    return matchesGrade && matchesGroup && wasRegistered;
   });
 
   // Get unpaid students
@@ -193,9 +200,11 @@ export function MonthlyUnpaidReport({ open, onOpenChange }: MonthlyUnpaidReportP
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">كل السنوات</SelectItem>
-                <SelectItem value="sec1">أولى ثانوي</SelectItem>
-                <SelectItem value="sec2">تانية ثانوي</SelectItem>
-                <SelectItem value="sec3">تالتة ثانوي</SelectItem>
+                {activeGradeLevels.map((g) => (
+                  <SelectItem key={g.code} value={g.code}>
+                    {g.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

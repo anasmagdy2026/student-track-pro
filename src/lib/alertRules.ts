@@ -1,4 +1,4 @@
-import type { Attendance, Student } from '@/types';
+import type { Attendance, Student, Group } from '@/types';
 import type { Exam } from '@/types';
 
 export type TriggeredAlert = {
@@ -18,21 +18,59 @@ export type TriggeredAlert = {
 
 const isoMonth = (dateIso: string) => dateIso.slice(0, 7);
 
-export function getConsecutiveAbsenceCount(attendanceForStudent: Attendance[], upToDateIso: string) {
-  const sorted = [...attendanceForStudent]
+// Get the day name in Arabic for a given ISO date
+const getDayName = (dateIso: string): string => {
+  const d = new Date(`${dateIso}T00:00:00`);
+  const dayIndex = d.getDay();
+  const DAYS_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  return DAYS_AR[dayIndex];
+};
+
+// Check if a date falls on one of the group's days
+const isGroupDay = (dateIso: string, groupDays: string[]): boolean => {
+  const dayName = getDayName(dateIso);
+  return groupDays.includes(dayName);
+};
+
+// Get consecutive absences based on group's actual session days
+// A "consecutive absence" means missing consecutive GROUP SESSIONS, not calendar days
+export function getConsecutiveAbsenceCount(
+  attendanceForStudent: Attendance[], 
+  upToDateIso: string,
+  groupDays?: string[]
+) {
+  // Filter attendance records before the selected date
+  let records = [...attendanceForStudent]
     .filter((a) => a.date < upToDateIso)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // If group days are provided, only consider records that fall on group days
+  if (groupDays && groupDays.length > 0) {
+    records = records.filter(a => isGroupDay(a.date, groupDays));
+  }
+
   let count = 0;
-  for (const rec of sorted) {
+  for (const rec of records) {
     if (rec.present) break;
     count += 1;
   }
   return count;
 }
 
-export function getMonthlyAbsenceCount(attendanceForStudent: Attendance[], month: string) {
-  return attendanceForStudent.filter((a) => a.date.startsWith(month) && !a.present).length;
+// Get monthly absence count (scattered absences)
+export function getMonthlyAbsenceCount(
+  attendanceForStudent: Attendance[], 
+  month: string,
+  groupDays?: string[]
+) {
+  let records = attendanceForStudent.filter((a) => a.date.startsWith(month) && !a.present);
+  
+  // If group days are provided, only count absences on actual group days
+  if (groupDays && groupDays.length > 0) {
+    records = records.filter(a => isGroupDay(a.date, groupDays));
+  }
+  
+  return records.length;
 }
 
 export function shouldWarnPayment1to5(now: Date, isMonthPaid: boolean) {
@@ -53,10 +91,17 @@ export function buildAttendanceAlerts(params: {
   exams: Exam[];
   homeworkStatus?: 'done' | 'not_done' | null;
   performanceBelow50?: boolean;
+  groupDays?: string[]; // The student's group session days
 }) {
   const alerts: TriggeredAlert[] = [];
 
-  const consecutiveAbsences = getConsecutiveAbsenceCount(params.studentAttendance, params.selectedDate);
+  // Pass group days to get accurate consecutive absence count
+  const consecutiveAbsences = getConsecutiveAbsenceCount(
+    params.studentAttendance, 
+    params.selectedDate,
+    params.groupDays
+  );
+  
   if (consecutiveAbsences >= 2) {
     alerts.push({
       ruleCode: 'absent_2_consecutive',
@@ -67,8 +112,14 @@ export function buildAttendanceAlerts(params: {
     });
   }
 
+  // Pass group days to get accurate monthly absence count (scattered absences)
   const month = isoMonth(params.selectedDate);
-  const monthAbsences = getMonthlyAbsenceCount(params.studentAttendance, month);
+  const monthAbsences = getMonthlyAbsenceCount(
+    params.studentAttendance, 
+    month,
+    params.groupDays
+  );
+  
   if (monthAbsences >= 3) {
     alerts.push({
       ruleCode: 'absent_3_month',

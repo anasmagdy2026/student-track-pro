@@ -323,7 +323,13 @@ export default function Lessons() {
               المطلوب لحصص اليوم
             </h2>
             {todayReminders.map(({ group, reminder }) => (
-              <NextSessionReminderCard key={group.id} group={group} reminder={reminder} compact />
+              <NextSessionReminderCard 
+                key={group.id} 
+                group={group} 
+                reminder={reminder} 
+                compact 
+                students={getStudentsByGroup(group.id)}
+              />
             ))}
           </div>
         )}

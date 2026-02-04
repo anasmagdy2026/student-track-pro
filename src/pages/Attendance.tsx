@@ -363,6 +363,10 @@ export default function Attendance() {
       const avg = allItems.length ? allItems.reduce((a, b) => a + b, 0) / allItems.length : null;
       const performanceBelow50 = avg !== null && avg < 0.5;
 
+       // Get student's group days for accurate consecutive/scattered absence calculations
+       const studentGroupData = student.group_id ? getGroupById(student.group_id) : null;
+       const groupDays = studentGroupData?.days || [];
+       
        const alertsRaw = buildAttendanceAlerts({
         student,
         selectedDate,
@@ -372,6 +376,7 @@ export default function Attendance() {
         exams,
         homeworkStatus,
         performanceBelow50,
+        groupDays, // Pass group days for accurate absence tracking
       });
 
        // Apply activation toggles from alert_rules (if a rule exists and is disabled, skip it)
@@ -695,6 +700,7 @@ export default function Attendance() {
                     group={activeGroupReminder.group} 
                     reminder={activeGroupReminder.reminder} 
                     compact 
+                    students={filteredStudents}
                   />
                 </div>
                 <Button

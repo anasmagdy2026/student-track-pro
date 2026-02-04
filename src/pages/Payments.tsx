@@ -56,18 +56,19 @@ export default function Payments() {
 
   const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading;
 
-  const currentDate = new Date();
-  // Get actual current month correctly (toISOString uses UTC, we need local)
-  const currentYear = currentDate.getFullYear();
-  const currentMonthNum = currentDate.getMonth() + 1; // 0-indexed
+  // Get current month using local time
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonthNum = now.getMonth() + 1; // 1-indexed
   const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
+  
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   
   // Calculate previous month
   const getPreviousMonth = (month: string) => {
     const [year, m] = month.split('-').map(Number);
     const prevDate = new Date(year, m - 2, 1);
-    return prevDate.toISOString().slice(0, 7);
+    return `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
   };
   
   const previousMonth = getPreviousMonth(currentMonth);
@@ -99,10 +100,19 @@ export default function Payments() {
     actionLabel: string;
   } | null>(null);
 
+  // Helper function to check if student was registered before or in the selected month
+  const wasStudentRegisteredInMonth = (student: { registered_at?: string }, month: string) => {
+    if (!student.registered_at) return true; // If no registration date, assume always registered
+    const registeredMonth = student.registered_at.slice(0, 7); // YYYY-MM
+    return registeredMonth <= month;
+  };
+
+  // Filter students - also filter by registration date for the selected month
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
     const matchesGroup = selectedGroup === 'all' || student.group_id === selectedGroup;
-    return matchesGrade && matchesGroup;
+    const wasRegistered = wasStudentRegisteredInMonth(student, selectedMonth);
+    return matchesGrade && matchesGroup && wasRegistered;
   });
 
   const showBlockedDialog = (studentId: string, actionLabel: string, fallbackReason: string) => {
@@ -205,17 +215,22 @@ export default function Payments() {
   const unpaidStudents = filteredStudents.filter((s) => !isMonthPaid(s.id, selectedMonth));
   
   // Check for students who didn't pay last month (only show when viewing current month)
+  // Also filter by registration date
   const unpaidLastMonth = selectedMonth === currentMonth 
-    ? filteredStudents.filter((s) => !isMonthPaid(s.id, previousMonth))
+    ? filteredStudents.filter((s) => {
+        const wasRegistered = wasStudentRegisteredInMonth(s, previousMonth);
+        return wasRegistered && !isMonthPaid(s.id, previousMonth);
+      })
     : [];
   
   const totalExpected = filteredStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
   const totalReceived = paidStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
 
+  // Generate month options centered on current month
   const monthOptions = [];
   for (let i = -6; i <= 6; i++) {
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
-    const value = date.toISOString().slice(0, 7);
+    const date = new Date(currentYear, currentMonthNum - 1 + i, 1);
+    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     const monthIndex = date.getMonth();
     const year = date.getFullYear();
     monthOptions.push({

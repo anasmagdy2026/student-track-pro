@@ -27,12 +27,15 @@ interface ExamQRPrintDialogProps {
   exam: Exam;
 }
 
+type CardsPerPage = '4' | '8' | '16' | 'all';
+
 export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialogProps) {
   const { groups } = useGroups();
   const { students, getStudentsByGroup } = useStudents();
   const { getGradeLabel } = useGradeLevels();
   
   const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const [cardsPerPage, setCardsPerPage] = useState<CardsPerPage>('16');
   const [showPreview, setShowPreview] = useState(false);
 
   const gradeGroups = groups.filter(g => g.grade === exam.grade);
@@ -40,7 +43,116 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
   const selectedGroupData = groups.find(g => g.id === selectedGroup);
 
   const handlePrint = () => {
-    window.print();
+    const printContent = document.getElementById('exam-qr-print-content');
+    if (!printContent) return;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const cardsNum = cardsPerPage === 'all' ? groupStudents.length : parseInt(cardsPerPage);
+    const cardHeight = cardsPerPage === 'all' 
+      ? `${Math.floor(277 / groupStudents.length)}mm` 
+      : `${Math.floor(277 / cardsNum)}mm`;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <title>طباعة QR - ${exam.name}</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            direction: rtl;
+          }
+          .page {
+            page-break-after: always;
+            width: 190mm;
+            height: 277mm;
+            display: flex;
+            flex-direction: column;
+            gap: 2mm;
+          }
+          .page:last-child {
+            page-break-after: auto;
+          }
+          .card {
+            flex: 1;
+            border: 2px solid #dc2626;
+            border-radius: 6px;
+            padding: 3mm;
+            display: flex;
+            align-items: flex-start;
+            gap: 4mm;
+            background: #fff;
+            min-height: ${cardHeight};
+            max-height: ${cardHeight};
+          }
+          .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1mm;
+          }
+          .qr-section svg {
+            width: ${cardsPerPage === '4' ? '50px' : cardsPerPage === '8' ? '40px' : '30px'};
+            height: ${cardsPerPage === '4' ? '50px' : cardsPerPage === '8' ? '40px' : '30px'};
+          }
+          .student-code {
+            font-size: ${cardsPerPage === '4' ? '9px' : '7px'};
+            font-family: monospace;
+            color: #666;
+          }
+          .student-info {
+            flex: 1;
+          }
+          .student-name {
+            font-size: ${cardsPerPage === '4' ? '14px' : cardsPerPage === '8' ? '11px' : '10px'};
+            font-weight: bold;
+            margin-bottom: 2px;
+          }
+          .student-details {
+            font-size: ${cardsPerPage === '4' ? '10px' : '8px'};
+            color: #666;
+          }
+          .exam-info {
+            text-align: left;
+          }
+          .exam-name {
+            font-size: ${cardsPerPage === '4' ? '11px' : '9px'};
+            font-weight: bold;
+          }
+          .exam-date {
+            font-size: ${cardsPerPage === '4' ? '9px' : '7px'};
+            color: #888;
+          }
+          .score-box {
+            margin-top: 4px;
+            border: 2px solid #000;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: ${cardsPerPage === '4' ? '11px' : '9px'};
+          }
+        </style>
+      </head>
+      <body>
+        ${printContent.innerHTML}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
   };
 
   const handleGeneratePreview = () => {
@@ -48,11 +160,54 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
     setShowPreview(true);
   };
 
-  // Split students into groups of 4 for each page
+  // Calculate cards per page
+  const cardsNum = cardsPerPage === 'all' ? groupStudents.length : parseInt(cardsPerPage);
+  
+  // Split students into groups based on cards per page
   const chunkedStudents: typeof groupStudents[] = [];
-  for (let i = 0; i < groupStudents.length; i += 4) {
-    chunkedStudents.push(groupStudents.slice(i, i + 4));
+  for (let i = 0; i < groupStudents.length; i += cardsNum) {
+    chunkedStudents.push(groupStudents.slice(i, i + cardsNum));
   }
+
+  // Calculate card dimensions based on cards per page
+  const getCardStyle = () => {
+    const baseHeight = 277; // A4 height in mm minus margins
+    const gap = 2; // gap between cards
+    const cardHeight = (baseHeight - (gap * (cardsNum - 1))) / cardsNum;
+    
+    return {
+      flex: '1',
+      border: '2px solid #dc2626', // Red border
+      borderRadius: '6px',
+      padding: '3mm',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '4mm',
+      backgroundColor: '#fff',
+      minHeight: `${cardHeight}mm`,
+      maxHeight: `${cardHeight}mm`,
+    };
+  };
+
+  const getQRSize = () => {
+    switch (cardsPerPage) {
+      case '4': return 50;
+      case '8': return 40;
+      case '16': return 30;
+      case 'all': return Math.max(20, Math.floor(60 / groupStudents.length * 4));
+      default: return 30;
+    }
+  };
+
+  const getFontSize = () => {
+    switch (cardsPerPage) {
+      case '4': return { name: '14px', details: '11px', code: '9px' };
+      case '8': return { name: '11px', details: '9px', code: '8px' };
+      case '16': return { name: '10px', details: '8px', code: '7px' };
+      case 'all': return { name: '9px', details: '7px', code: '6px' };
+      default: return { name: '10px', details: '8px', code: '7px' };
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -85,13 +240,28 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-medium">عدد الكروت في الصفحة</label>
+              <Select value={cardsPerPage} onValueChange={(v) => setCardsPerPage(v as CardsPerPage)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="4">4 كروت</SelectItem>
+                  <SelectItem value="8">8 كروت</SelectItem>
+                  <SelectItem value="16">16 كارت</SelectItem>
+                  <SelectItem value="all">كل الكروت في صفحة واحدة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {selectedGroup && (
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
                   <span>عدد الطلاب: {groupStudents.length}</span>
                   <span className="text-muted-foreground">
-                    ({Math.ceil(groupStudents.length / 4)} صفحة)
+                    ({cardsPerPage === 'all' ? '1' : Math.ceil(groupStudents.length / parseInt(cardsPerPage))} صفحة)
                   </span>
                 </div>
               </div>
@@ -108,7 +278,7 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex justify-between items-center no-print">
+            <div className="flex justify-between items-center">
               <Button variant="outline" onClick={() => setShowPreview(false)}>
                 رجوع
               </Button>
@@ -118,12 +288,15 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
               </Button>
             </div>
 
-            {/* Print Preview - 4 students per page */}
-            <div className="print-area">
+            {/* Print Preview */}
+            <div 
+              id="exam-qr-print-content"
+              className="bg-white p-4 border rounded-lg overflow-auto max-h-[60vh]"
+            >
               {chunkedStudents.map((pageStudents, pageIndex) => (
                 <div 
                   key={pageIndex} 
-                  className="exam-qr-page"
+                  className="page"
                   style={{
                     pageBreakAfter: pageIndex < chunkedStudents.length - 1 ? 'always' : 'auto',
                     minHeight: '297mm',
@@ -132,41 +305,34 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
                     boxSizing: 'border-box',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '5mm',
+                    gap: '2mm',
+                    marginBottom: pageIndex < chunkedStudents.length - 1 ? '20px' : '0',
+                    backgroundColor: '#f9f9f9',
                   }}
                 >
-                  {pageStudents.map((student, studentIndex) => (
+                  {pageStudents.map((student) => (
                     <div 
                       key={student.id}
-                      style={{
-                        flex: 1,
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        padding: '8mm',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '10mm',
-                        backgroundColor: '#fff',
-                        minHeight: '65mm',
-                      }}
+                      style={getCardStyle()}
                     >
-                      {/* QR Code - Top Left */}
+                      {/* QR Code */}
                       <div 
+                        className="qr-section"
                         style={{
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          gap: '4px',
+                          gap: '1mm',
                         }}
                       >
                         <QRCodeSVG
                           value={`STUDENT:${student.code}:${student.id}`}
-                          size={60}
+                          size={getQRSize()}
                           level="H"
                           includeMargin={false}
                         />
-                        <p style={{ 
-                          fontSize: '9px', 
+                        <p className="student-code" style={{ 
+                          fontSize: getFontSize().code, 
                           fontFamily: 'monospace',
                           margin: 0,
                           color: '#666',
@@ -176,38 +342,51 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
                       </div>
 
                       {/* Student Info */}
-                      <div style={{ flex: 1 }}>
-                        <p style={{ 
-                          fontSize: '14px', 
+                      <div className="student-info" style={{ flex: 1 }}>
+                        <p className="student-name" style={{ 
+                          fontSize: getFontSize().name, 
                           fontWeight: 'bold',
                           margin: 0,
-                          marginBottom: '4px',
+                          marginBottom: '2px',
                         }}>
                           {student.name}
                         </p>
-                        <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>
+                        <p className="student-details" style={{ 
+                          fontSize: getFontSize().details, 
+                          color: '#666', 
+                          margin: 0 
+                        }}>
                           {selectedGroupData?.name} - {getGradeLabel(exam.grade)}
                         </p>
                       </div>
 
-                      {/* Exam Info - Right Side */}
-                      <div style={{ textAlign: 'left' }}>
-                        <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0 }}>
+                      {/* Exam Info */}
+                      <div className="exam-info" style={{ textAlign: 'left' }}>
+                        <p className="exam-name" style={{ 
+                          fontSize: getFontSize().details, 
+                          fontWeight: 'bold', 
+                          margin: 0 
+                        }}>
                           {exam.name}
                         </p>
-                        <p style={{ fontSize: '10px', color: '#888', margin: 0 }}>
+                        <p className="exam-date" style={{ 
+                          fontSize: getFontSize().code, 
+                          color: '#888', 
+                          margin: 0 
+                        }}>
                           {new Date(exam.date).toLocaleDateString('ar-EG')}
                         </p>
                         <div
+                          className="score-box"
                           style={{
-                            marginTop: '8px',
+                            marginTop: '4px',
                             border: '2px solid #000',
-                            padding: '6px 12px',
+                            padding: '3px 8px',
                             borderRadius: '4px',
-                            fontSize: '12px',
+                            fontSize: getFontSize().details,
                           }}
                         >
-                          الدرجة: _______ / {exam.max_score}
+                          الدرجة: ___ / {exam.max_score}
                         </div>
                       </div>
                     </div>
@@ -215,28 +394,6 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
                 </div>
               ))}
             </div>
-
-            <style>{`
-              @media print {
-                .no-print { display: none !important; }
-                body * { visibility: hidden; }
-                .print-area, .print-area * { visibility: visible; }
-                .print-area { 
-                  position: absolute; 
-                  left: 0; 
-                  top: 0; 
-                  width: 100%; 
-                }
-                .exam-qr-page {
-                  page-break-after: always;
-                  page-break-inside: avoid;
-                }
-                @page {
-                  size: A4;
-                  margin: 0;
-                }
-              }
-            `}</style>
           </div>
         )}
       </DialogContent>
