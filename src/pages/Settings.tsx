@@ -25,9 +25,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminUsers, type UserProfile } from '@/hooks/useAdminUsers';
-import { Settings as SettingsIcon, User, Lock, Eye, EyeOff, Users, Shield, Key, UserX } from 'lucide-react';
+import { Settings as SettingsIcon, User, Lock, Eye, EyeOff, Users, Shield, Key, UserX, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { WhatsAppTemplatesSettings } from '@/components/WhatsAppTemplatesSettings';
 
 export default function Settings() {
   const { user, updatePassword } = useAuth();
@@ -156,9 +157,10 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="account">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3' : 'grid-cols-1'}`}>
             <TabsTrigger value="account">حسابي</TabsTrigger>
             {isAdmin && <TabsTrigger value="users">إدارة المستخدمين</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="whatsapp">رسائل الواتساب</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="account" className="space-y-6 mt-6">
@@ -308,6 +310,12 @@ export default function Settings() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="whatsapp" className="space-y-6 mt-6">
+              <WhatsAppTemplatesSettings />
             </TabsContent>
           )}
         </Tabs>
