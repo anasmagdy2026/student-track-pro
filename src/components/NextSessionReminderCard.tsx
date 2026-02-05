@@ -8,6 +8,25 @@ import { Link } from 'react-router-dom';
 import { sendWhatsAppMessage, createNextSessionReminderMessage } from '@/utils/whatsapp';
 import { toast } from 'sonner';
 
+// Helper to send WhatsApp to multiple students in sequence with slight delay
+const sendWhatsAppToMultiple = async (
+  students: Student[],
+  messageCreator: (student: Student) => string
+) => {
+  // Open first one immediately
+  for (let i = 0; i < students.length; i++) {
+    const student = students[i];
+    // Use student_phone if available, otherwise fall back to parent_phone
+    const phone = student.student_phone || student.parent_phone;
+    const message = messageCreator(student);
+    
+    // Open WhatsApp with a small delay between each to avoid browser blocking
+    setTimeout(() => {
+      sendWhatsAppMessage(phone, message);
+    }, i * 500); // 500ms delay between each
+  }
+};
+
 interface NextSessionReminderCardProps {
   reminder: NextSessionReminder;
   group: Group;
@@ -33,29 +52,21 @@ export function NextSessionReminderCard({
       return;
     }
 
-    // Open WhatsApp for each student
-    let sentCount = 0;
-    for (const student of students) {
-      const message = createNextSessionReminderMessage(student.name, group.name, {
+    // Create message for each student and send to their phone (not parent)
+    const messageCreator = (student: Student) => {
+      return createNextSessionReminderMessage(student.name, group.name, {
         homework: reminder.homework,
         recitation: reminder.recitation,
         exam: reminder.exam,
         sheet: reminder.sheet,
         note: reminder.note,
       });
-      
-      // We'll open the first one in a new tab, then show a toast for the rest
-      if (sentCount === 0) {
-        sendWhatsAppMessage(student.parent_phone, message);
-      }
-      sentCount++;
-    }
+    };
 
-    if (sentCount > 1) {
-      toast.info(`تم فتح رسالة للطالب الأول. للباقين (${sentCount - 1} طالب)، استخدم نفس الرسالة.`);
-    } else {
-      toast.success('تم فتح الواتساب');
-    }
+    // Send to all students
+    sendWhatsAppToMultiple(students, messageCreator);
+
+    toast.success(`جاري فتح الواتساب لـ ${students.length} طالب...`);
 
     if (onSendWhatsApp) {
       onSendWhatsApp();
