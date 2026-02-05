@@ -50,9 +50,11 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
     if (!printWindow) return;
 
     const cardsNum = cardsPerPage === 'all' ? groupStudents.length : parseInt(cardsPerPage);
-    const cardHeight = cardsPerPage === 'all' 
-      ? `${Math.floor(277 / groupStudents.length)}mm` 
-      : `${Math.floor(277 / cardsNum)}mm`;
+    // Calculate proper card height based on available space (277mm - gaps)
+    const gapMM = 2;
+    const totalGap = gapMM * (cardsNum - 1);
+    const availableHeight = 277 - totalGap;
+    const cardHeight = `${Math.floor(availableHeight / cardsNum)}mm`;
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -65,22 +67,26 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           @page {
             size: A4;
-            margin: 10mm;
+            margin: 5mm;
           }
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             direction: rtl;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .page {
             page-break-after: always;
-            width: 190mm;
-            height: 277mm;
+            width: 200mm;
+            min-height: 287mm;
             display: flex;
             flex-direction: column;
-            gap: 2mm;
+            gap: ${gapMM}mm;
           }
           .page:last-child {
             page-break-after: auto;
@@ -89,58 +95,66 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
             flex: 1;
             border: 2px solid #dc2626;
             border-radius: 6px;
-            padding: 3mm;
+            padding: 2mm 3mm;
             display: flex;
             align-items: flex-start;
-            gap: 4mm;
+            gap: 3mm;
             background: #fff;
             min-height: ${cardHeight};
             max-height: ${cardHeight};
+            overflow: hidden;
           }
           .qr-section {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1mm;
+            gap: 0.5mm;
+            flex-shrink: 0;
           }
           .qr-section svg {
-            width: ${cardsPerPage === '4' ? '50px' : cardsPerPage === '8' ? '40px' : '30px'};
-            height: ${cardsPerPage === '4' ? '50px' : cardsPerPage === '8' ? '40px' : '30px'};
+            width: ${cardsPerPage === '4' ? '45px' : cardsPerPage === '8' ? '35px' : '25px'} !important;
+            height: ${cardsPerPage === '4' ? '45px' : cardsPerPage === '8' ? '35px' : '25px'} !important;
           }
           .student-code {
-            font-size: ${cardsPerPage === '4' ? '9px' : '7px'};
+            font-size: ${cardsPerPage === '4' ? '8px' : '6px'};
             font-family: monospace;
             color: #666;
           }
           .student-info {
             flex: 1;
+            min-width: 0;
+            overflow: hidden;
           }
           .student-name {
-            font-size: ${cardsPerPage === '4' ? '14px' : cardsPerPage === '8' ? '11px' : '10px'};
+            font-size: ${cardsPerPage === '4' ? '12px' : cardsPerPage === '8' ? '10px' : '9px'};
             font-weight: bold;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
           .student-details {
-            font-size: ${cardsPerPage === '4' ? '10px' : '8px'};
+            font-size: ${cardsPerPage === '4' ? '9px' : '7px'};
             color: #666;
           }
           .exam-info {
             text-align: left;
+            flex-shrink: 0;
           }
           .exam-name {
-            font-size: ${cardsPerPage === '4' ? '11px' : '9px'};
+            font-size: ${cardsPerPage === '4' ? '9px' : '7px'};
             font-weight: bold;
           }
           .exam-date {
-            font-size: ${cardsPerPage === '4' ? '9px' : '7px'};
+            font-size: ${cardsPerPage === '4' ? '8px' : '6px'};
             color: #888;
           }
           .score-box {
-            margin-top: 4px;
-            border: 2px solid #000;
-            padding: 3px 8px;
+            margin-top: 2px;
+            border: 1px solid #000;
+            padding: 2px 6px;
             border-radius: 4px;
-            font-size: ${cardsPerPage === '4' ? '11px' : '9px'};
+            font-size: ${cardsPerPage === '4' ? '9px' : '7px'};
           }
         </style>
       </head>
