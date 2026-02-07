@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { OfflineStatusIndicator } from '@/components/OfflineStatusIndicator';
 
 interface LayoutProps {
   children: ReactNode;
@@ -73,7 +74,7 @@ export function Layout({ children }: LayoutProps) {
           <GraduationCap className="h-6 w-6 text-primary" />
           <span className="font-bold text-lg">مستر محمد مجدي</span>
         </div>
-        <div className="w-10" />
+        <OfflineStatusIndicator />
       </header>
 
       {/* Sidebar Overlay */}
