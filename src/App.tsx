@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import PrintCards from "./pages/PrintCards";
 import Alerts from "./pages/Alerts";
 import SetupAdmin from "./pages/SetupAdmin";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
           <Route path="/exams" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
           <Route path="/print-cards" element={<ProtectedRoute><PrintCards /></ProtectedRoute>} />
+          <Route path="/install" element={<Install />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
