@@ -28,6 +28,7 @@ import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Printer, UserX, ArrowRight, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 export default function DailyAbsence() {
   const [searchParams] = useSearchParams();
@@ -35,6 +36,8 @@ export default function DailyAbsence() {
   const { groups, loading: groupsLoading, getTodayGroups, getGroupById } = useGroups();
   const { loading: attendanceLoading, getAttendanceByDate, markAttendance } = useAttendance();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { teacherName, teacherPhone } = useAppSettings();
+  const displayFooter = `${teacherName || 'مستر محمد مجدي'} للتواصل ${teacherPhone || '01060744547'}`;
 
   const isLoading = studentsLoading || groupsLoading || attendanceLoading || gradesLoading;
 
@@ -262,7 +265,7 @@ export default function DailyAbsence() {
           )}
 
           <div className="pt-3 border-t text-xs text-muted-foreground text-center">
-            مستر محمد مجدي للتواصل 01060744547
+            {displayFooter}
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Badge } from '@/components/ui/badge';
 import { Student, Group } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { User } from 'lucide-react';
 
 interface PrintableStudentCardProps {
@@ -14,6 +15,10 @@ interface PrintableStudentCardProps {
  */
 export function PrintableStudentCard({ student, group }: PrintableStudentCardProps) {
   const { getGradeLabel } = useGradeLevels();
+  const { teacherName, teacherPhone } = useAppSettings();
+  const displayName = teacherName || 'مستر محمد مجدي';
+  const displayPhone = teacherPhone || '01060744547';
+
   return (
     <div className="print-card" dir="rtl">
       <div className="print-card__inner">
@@ -47,7 +52,7 @@ export function PrintableStudentCard({ student, group }: PrintableStudentCardPro
             </div>
           )}
 
-          <div className="print-card__footer">مستر محمد مجدي للتواصل 01060744547</div>
+          <div className="print-card__footer">{displayName} للتواصل {displayPhone}</div>
         </div>
       </div>
     </div>

@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { OfflineStatusIndicator } from '@/components/OfflineStatusIndicator';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 interface LayoutProps {
   children: ReactNode;
@@ -48,6 +49,9 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { teacherName: settingsTeacherName, systemName } = useAppSettings();
+  const displayName = settingsTeacherName || 'مستر محمد مجدي';
+  const displaySystem = systemName || 'نظام متابعة الطلاب';
 
   const handleLogout = async () => {
     await signOut();
@@ -72,7 +76,7 @@ export function Layout({ children }: LayoutProps) {
         </Button>
         <div className="flex items-center gap-2">
           <GraduationCap className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">مستر محمد مجدي</span>
+          <span className="font-bold text-lg">{displayName}</span>
         </div>
         <OfflineStatusIndicator />
       </header>
@@ -100,8 +104,8 @@ export function Layout({ children }: LayoutProps) {
               </div>
               {!isCollapsed && (
                 <div>
-                  <h1 className="font-bold text-lg">مستر محمد مجدي</h1>
-                  <p className="text-sm text-sidebar-foreground/70">نظام متابعة الطلاب</p>
+                  <h1 className="font-bold text-lg">{displayName}</h1>
+                  <p className="text-sm text-sidebar-foreground/70">{displaySystem}</p>
                 </div>
               )}
             </div>
