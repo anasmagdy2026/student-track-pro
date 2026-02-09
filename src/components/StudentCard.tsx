@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Student, Group } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { Download, User, Printer } from 'lucide-react';
 import { useRef } from 'react';
 
@@ -16,6 +17,9 @@ interface StudentCardProps {
 export function StudentCard({ student, group, showDownload = true }: StudentCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { getGradeLabel } = useGradeLevels();
+  const { teacherName, teacherPhone } = useAppSettings();
+  const displayName = teacherName || 'مستر محمد مجدي';
+  const displayPhone = teacherPhone || '01060744547';
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -161,7 +165,7 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
               )}
 
               <div className="pt-3 border-t text-xs text-muted-foreground">
-                مستر محمد مجدي للتواصل 01060744547
+                {displayName} للتواصل {displayPhone}
               </div>
             </div>
           </div>

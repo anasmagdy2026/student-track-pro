@@ -27,7 +27,7 @@ const formatArabicDateWithDay = (input: string) => {
   return `${dayName} - ${dateStr}`;
 };
 
-export const createAbsenceMessage = (studentName: string, date: string) => {
+export const createAbsenceMessage = (studentName: string, date: string, teacherName = 'مستر/ محمد مجدي') => {
   const dateWithDay = formatArabicDateWithDay(date);
   return `السلام عليكم ورحمة الله وبركاته
 
@@ -36,10 +36,10 @@ export const createAbsenceMessage = (studentName: string, date: string) => {
 
 برجاء الاهتمام بالحضور المنتظم.
 
-مع تحيات مستر/ محمد مجدي`;
+مع تحيات ${teacherName}`;
 };
 
-export const createPaymentReminderMessage = (studentName: string, month: string, amount: number) => {
+export const createPaymentReminderMessage = (studentName: string, month: string, amount: number, teacherName = 'مستر/ محمد مجدي') => {
   return `السلام عليكم ورحمة الله وبركاته
 
 تذكير بسداد مصاريف شهر: ${month}
@@ -48,10 +48,10 @@ export const createPaymentReminderMessage = (studentName: string, month: string,
 
 برجاء السداد في أقرب وقت.
 
-مع تحيات مستر/ محمد مجدي`;
+مع تحيات ${teacherName}`;
 };
 
-export const createExamResultMessage = (studentName: string, examName: string, score: number, maxScore: number) => {
+export const createExamResultMessage = (studentName: string, examName: string, score: number, maxScore: number, teacherName = 'مستر/ محمد مجدي') => {
   const percentage = Math.round((score / maxScore) * 100);
   let label = '';
   if (percentage >= 90) label = 'ممتاز';
@@ -66,7 +66,7 @@ export const createExamResultMessage = (studentName: string, examName: string, s
 الدرجة: ${score} من ${maxScore}${label ? ` (${label})` : ''}
 النسبة المئوية: ${percentage}%
 
-مع تحيات مستر/ محمد مجدي`;
+مع تحيات ${teacherName}`;
 };
 
 export const createLateMessageForParent = (
@@ -75,6 +75,7 @@ export const createLateMessageForParent = (
   groupName: string,
   groupTime: string,
   lateMinutes: number,
+  teacherName = 'مستر/ محمد مجدي',
 ) => {
   const dateWithDay = formatArabicDateWithDay(date);
   return `السلام عليكم ورحمة الله وبركاته
@@ -87,7 +88,7 @@ export const createLateMessageForParent = (
 
 برجاء الالتزام بمواعيد الحضور.
 
-مع تحيات مستر/ محمد مجدي`;
+مع تحيات ${teacherName}`;
 };
 
 export const createLateMessageForStudent = (
@@ -96,6 +97,7 @@ export const createLateMessageForStudent = (
   groupName: string,
   groupTime: string,
   lateMinutes: number,
+  teacherName = 'مستر/ محمد مجدي',
 ) => {
   const dateWithDay = formatArabicDateWithDay(date);
   return `السلام عليكم
@@ -108,7 +110,7 @@ export const createLateMessageForStudent = (
 
 حاول الالتزام بالميعاد من فضلك.
 
-مستر/ محمد مجدي`;
+${teacherName}`;
 };
 
 export const createMonthlyReportMessageForParent = (params: {
@@ -120,9 +122,11 @@ export const createMonthlyReportMessageForParent = (params: {
   exams: { total: number; absent: number; averagePercentage: number };
   lessons: { counted: number; averagePercentage: number };
   overallPercentage: number;
+  teacherName?: string;
 }) => {
   const groupLine = params.groupName ? `المجموعة: ${params.groupName}\n` : '';
   const paidText = params.payment.paid ? 'مدفوع' : 'غير مدفوع';
+  const teacher = params.teacherName || 'مستر/ محمد مجدي';
 
   return `السلام عليكم ورحمة الله وبركاته
 
@@ -139,7 +143,7 @@ ${groupLine}
 
 التقييم العام: ${params.overallPercentage}%
 
-مع تحيات مستر/ محمد مجدي`;
+مع تحيات ${teacher}`;
 };
 
 // رسالة المطلوب للحصة الجاية
@@ -152,7 +156,8 @@ export const createNextSessionReminderMessage = (
     exam?: string | null;
     sheet?: string | null;
     note?: string | null;
-  }
+  },
+  teacherName = 'مستر/ محمد مجدي',
 ) => {
   let content = '';
   
@@ -180,5 +185,5 @@ export const createNextSessionReminderMessage = (
 ${content}
 برجاء الاستعداد جيداً.
 
-مع تحيات مستر/ محمد مجدي`;
+مع تحيات ${teacherName}`;
 };

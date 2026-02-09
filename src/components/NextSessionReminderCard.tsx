@@ -58,14 +58,25 @@ export function NextSessionReminderCard({
     return parts.join('\n');
   };
 
-  // Template for preview
-  const messageTemplate = `السلام عليكم {studentName}
+  // Use the same function for both preview and send to ensure consistency
+  const buildMessage = (student: Student) => {
+    return createNextSessionReminderMessage(student.name, group.name, {
+      homework: reminder.homework,
+      recitation: reminder.recitation,
+      exam: reminder.exam,
+      sheet: reminder.sheet,
+      note: reminder.note,
+    });
+  };
 
-المطلوب للحصة الجاية - ${group.name}:
-
-${buildContentText()}
-
-وفقكم الله`;
+  // Template for preview - uses same function as actual send
+  const messageTemplate = createNextSessionReminderMessage('{studentName}', group.name, {
+    homework: reminder.homework,
+    recitation: reminder.recitation,
+    exam: reminder.exam,
+    sheet: reminder.sheet,
+    note: reminder.note,
+  });
 
   const handleOpenPreview = () => {
     if (students.length === 0) {
@@ -76,17 +87,7 @@ ${buildContentText()}
   };
 
   const handleConfirmSend = () => {
-    const messageCreator = (student: Student) => {
-      return createNextSessionReminderMessage(student.name, group.name, {
-        homework: reminder.homework,
-        recitation: reminder.recitation,
-        exam: reminder.exam,
-        sheet: reminder.sheet,
-        note: reminder.note,
-      });
-    };
-
-    sendWhatsAppToMultiple(students, messageCreator);
+    sendWhatsAppToMultiple(students, buildMessage);
     toast.success(`جاري فتح الواتساب لـ ${students.length} طالب...`);
     setShowPreview(false);
 
@@ -159,6 +160,7 @@ ${buildContentText()}
           variables={{}}
           title="معاينة رسالة المطلوب للحصة الجاية"
           onConfirmSend={handleConfirmSend}
+          messageBuilder={buildMessage}
         />
       </>
     );
@@ -243,6 +245,7 @@ ${buildContentText()}
         variables={{}}
         title="معاينة رسالة المطلوب للحصة الجاية"
         onConfirmSend={handleConfirmSend}
+        messageBuilder={buildMessage}
       />
     </>
   );
