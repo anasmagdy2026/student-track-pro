@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { WhatsAppTemplatesSettings } from '@/components/WhatsAppTemplatesSettings';
 import { AppSettingsCard } from '@/components/AppSettingsCard';
+import { NotificationSettingsCard } from '@/components/NotificationSettingsCard';
 
 export default function Settings() {
   const { user, updatePassword } = useAuth();
@@ -158,9 +159,10 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="account">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-1'}`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-1'}`}>
             <TabsTrigger value="account">حسابي</TabsTrigger>
             {isAdmin && <TabsTrigger value="general">إعدادات عامة</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="notifications">الإشعارات</TabsTrigger>}
             {isAdmin && <TabsTrigger value="users">إدارة المستخدمين</TabsTrigger>}
             {isAdmin && <TabsTrigger value="whatsapp">رسائل الواتساب</TabsTrigger>}
           </TabsList>
@@ -241,6 +243,12 @@ export default function Settings() {
           {isAdmin && (
             <TabsContent value="general" className="space-y-6 mt-6">
               <AppSettingsCard />
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="notifications" className="space-y-6 mt-6">
+              <NotificationSettingsCard />
             </TabsContent>
           )}
 

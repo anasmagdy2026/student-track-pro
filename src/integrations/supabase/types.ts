@@ -231,6 +231,33 @@ export type Database = {
           },
         ]
       }
+      fcm_tokens: {
+        Row: {
+          created_at: string
+          device_info: string | null
+          id: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       grade_levels: {
         Row: {
           code: string
@@ -501,6 +528,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_log: {
+        Row: {
+          body: string
+          created_at: string
+          failure_count: number
+          id: string
+          success_count: number
+          target_tokens: string[]
+          title: string
+          type: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          failure_count?: number
+          id?: string
+          success_count?: number
+          target_tokens?: string[]
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          failure_count?: number
+          id?: string
+          success_count?: number
+          target_tokens?: string[]
+          title?: string
+          type?: string
+        }
+        Relationships: []
       }
       payments: {
         Row: {
