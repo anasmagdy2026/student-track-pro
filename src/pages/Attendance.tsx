@@ -49,6 +49,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useLessons } from '@/hooks/useLessons';
 import { PageLoading } from '@/components/PageLoading';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 type PendingAttendanceAction = {
   studentId: string;
@@ -69,6 +71,8 @@ export default function Attendance() {
   const { createEvent } = useAlertEvents();
   const { rules, loading: rulesLoading } = useAlertRules();
   const { reminders, loading: remindersLoading, hasReminder, getReminderByGroupId } = useNextSessionReminders();
+  const { getSetting } = useAppSettings();
+  const { sendNotification } = usePushNotifications();
 
   const isLoading =
     studentsLoading ||
@@ -471,6 +475,26 @@ export default function Attendance() {
       return;
     }
     toast.success(present ? 'تم تسجيل الحضور' : 'تم تسجيل الغياب');
+
+    // Auto notifications
+    try {
+      if (!present && getSetting('notify_absence_enabled') === 'true') {
+        await sendNotification(
+          '⚠️ تنبيه غياب',
+          `الطالب ${student.name} (${student.code}) تم تسجيله غائباً`,
+          'absence'
+        );
+      }
+      if (present && getSetting('notify_attendance_enabled') === 'true') {
+        await sendNotification(
+          '✅ تسجيل حضور',
+          `الطالب ${student.name} (${student.code}) تم تسجيل حضوره`,
+          'attendance'
+        );
+      }
+    } catch {
+      // Notification errors are non-blocking
+    }
   };
 
   const handleAlertAllow = async () => {
@@ -565,11 +589,22 @@ export default function Attendance() {
   const handleLateAllow = async () => {
     if (!lateContext) return;
     setLateDecisionOpen(false);
+    const student = students.find((s) => s.id === lateContext.studentId);
     const res = await markAttendance(lateContext.studentId, selectedDate, true);
     if (res.status === 'already_present') {
       toast.error('تم تحضير الطالب بالفعل');
     } else {
       toast.success(`تم تسجيل حضور متأخر (${lateContext.lateMinutes} دقيقة)`);
+      // Send late notification
+      if (getSetting('notify_late_enabled') === 'true' && student) {
+        try {
+          await sendNotification(
+            '⏰ تنبيه تأخير',
+            `الطالب ${student.name} (${student.code}) تأخر ${lateContext.lateMinutes} دقيقة عن مجموعة ${lateContext.groupName}`,
+            'late'
+          );
+        } catch { /* non-blocking */ }
+      }
     }
     setLateContext(null);
     setPending(null);

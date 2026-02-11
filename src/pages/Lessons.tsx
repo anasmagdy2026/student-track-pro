@@ -49,6 +49,7 @@ export default function Lessons() {
     lessons,
     loading: lessonsLoading,
     addLesson,
+    updateLesson,
     deleteLesson,
     addSheet,
     addRecitation,
@@ -71,6 +72,12 @@ export default function Lessons() {
     .filter(r => r.group && r.reminder);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editSheetMax, setEditSheetMax] = useState(10);
+  const [editRecitationMax, setEditRecitationMax] = useState(10);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isGradesOpen, setIsGradesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sheet');
@@ -180,6 +187,39 @@ export default function Lessons() {
       setIsSubmitting(false);
       // keep it visible briefly to avoid a flash on fast operations
       setTimeout(() => setBulkProgress({ active: false, done: 0, total: 0 }), 450);
+    }
+  };
+
+  const openEditDialog = (lesson: Lesson) => {
+    setEditingLesson(lesson);
+    setEditName(lesson.name);
+    setEditDate(lesson.date);
+    setEditSheetMax(lesson.sheet_max_score);
+    setEditRecitationMax(lesson.recitation_max_score);
+    setIsEditOpen(true);
+  };
+
+  const handleEditLesson = async () => {
+    if (!editingLesson || !editName) {
+      toast.error('برجاء إدخال عنوان الحصة');
+      return;
+    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await updateLesson(editingLesson.id, {
+        name: editName,
+        date: editDate,
+        sheet_max_score: editSheetMax,
+        recitation_max_score: editRecitationMax,
+      });
+      toast.success('تم تعديل الحصة بنجاح');
+      setIsEditOpen(false);
+      setEditingLesson(null);
+    } catch {
+      toast.error('حدث خطأ أثناء تعديل الحصة');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -598,6 +638,13 @@ export default function Lessons() {
                           إدخال الدرجات
                         </Button>
                         <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openEditDialog(lesson)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
@@ -625,6 +672,60 @@ export default function Lessons() {
             </Card>
           )}
         </div>
+
+        {/* Edit Lesson Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) setEditingLesson(null);
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>تعديل الحصة</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">عنوان الحصة</label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="عنوان الحصة"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">تاريخ الحصة</label>
+                <Input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">درجة الشيت النهائية</label>
+                  <Input
+                    type="number"
+                    value={editSheetMax}
+                    onChange={(e) => setEditSheetMax(Number(e.target.value))}
+                    dir="ltr"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">درجة التسميع النهائية</label>
+                  <Input
+                    type="number"
+                    value={editRecitationMax}
+                    onChange={(e) => setEditRecitationMax(Number(e.target.value))}
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleEditLesson} className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Grades Dialog */}
         <Dialog open={isGradesOpen} onOpenChange={setIsGradesOpen}>
