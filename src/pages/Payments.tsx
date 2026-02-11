@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function Payments() {
   const { students, loading: studentsLoading, getStudentByCode } = useStudents();
@@ -55,6 +57,9 @@ export default function Payments() {
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
 
   const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading;
+  const { getSetting } = useAppSettings();
+  const { sendNotification } = usePushNotifications();
+  const paymentNotifSent = useRef(false);
 
   // Get current month using local time
   const now = new Date();
@@ -222,7 +227,20 @@ export default function Payments() {
         return wasRegistered && !isMonthPaid(s.id, previousMonth);
       })
     : [];
-  
+
+  // Send payment overdue notification once per session
+  useEffect(() => {
+    if (paymentNotifSent.current || isLoading) return;
+    if (unpaidLastMonth.length > 0 && getSetting('notify_payment_enabled') === 'true') {
+      paymentNotifSent.current = true;
+      sendNotification(
+        '💰 تنبيه مدفوعات متأخرة',
+        `يوجد ${unpaidLastMonth.length} طالب لم يدفع الشهر السابق`,
+        'payment'
+      ).catch(() => { /* non-blocking */ });
+    }
+  }, [unpaidLastMonth.length, isLoading]);
+
   const totalExpected = filteredStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
   const totalReceived = paidStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
 
