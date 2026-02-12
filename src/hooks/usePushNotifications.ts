@@ -12,22 +12,27 @@ export function usePushNotifications() {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Play notification sound helper
+  const playNotificationSound = useCallback(() => {
+    try {
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.8;
+      audio.play().catch(() => {});
+    } catch {}
+  }, []);
+
   // Listen for foreground messages
   useEffect(() => {
     onForegroundMessage((payload: any) => {
-      const title = payload.notification?.title || payload.data?.title;
-      const body = payload.notification?.body || payload.data?.body;
+      const data = payload.data || {};
+      const title = payload.notification?.title || data.title;
+      const body = payload.notification?.body || data.body;
       if (title) {
-        // Play notification sound
-        try {
-          const audio = new Audio('/notification-sound.mp3');
-          audio.volume = 0.7;
-          audio.play().catch(() => {});
-        } catch {}
-        toast.info(title, { description: body });
+        playNotificationSound();
+        toast.info(title, { description: body, duration: 8000 });
       }
     });
-  }, []);
+  }, [playNotificationSound]);
 
   const registerToken = useCallback(async (token: string) => {
     if (!user) return;

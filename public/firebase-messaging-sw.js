@@ -13,42 +13,95 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Handle data-only messages (no "notification" field from server)
+// This gives us FULL control over notification appearance
 messaging.onBackgroundMessage((payload) => {
-  // Prevent default notification if one is already shown by webpush
-  const notifTitle = payload.notification?.title || payload.data?.title || "إشعار جديد";
-  const notifBody = payload.notification?.body || payload.data?.body || "";
-  const type = payload.data?.type || "general";
+  console.log("[SW] Background message received:", payload);
 
-  self.registration.showNotification(notifTitle, {
+  const data = payload.data || {};
+  const notifTitle = data.title || "إشعار جديد";
+  const notifBody = data.body || "";
+  const type = data.type || "general";
+  const iconUrl = data.icon || "https://mrmagdy.lovable.app/pwa-192x192.png";
+  const clickUrl = data.click_url || "https://mrmagdy.lovable.app/";
+
+  const options = {
     body: notifBody,
-    icon: "https://mrmagdy.lovable.app/pwa-192x192.png",
-    badge: "https://mrmagdy.lovable.app/pwa-192x192.png",
+    icon: iconUrl,
+    badge: iconUrl,
+    image: iconUrl,
     dir: "rtl",
     lang: "ar",
-    tag: type,
+    tag: type + "-" + Date.now(),
+    renotify: true,
     requireInteraction: true,
-    vibrate: [200, 100, 200],
-    sound: "/notification-sound.mp3",
+    vibrate: [300, 100, 300, 100, 300],
     data: {
-      url: "https://mrmagdy.lovable.app/",
+      url: clickUrl,
     },
     actions: [
       { action: "open", title: "فتح التطبيق" },
+      { action: "dismiss", title: "تجاهل" },
     ],
-  });
+  };
+
+  // Show the notification
+  self.registration.showNotification(notifTitle, options);
 });
 
+// Handle notification click
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
+  const action = event.action;
+  if (action === "dismiss") return;
+
   const url = event.notification.data?.url || "https://mrmagdy.lovable.app/";
+
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes("mrmagdy.lovable.app") && "focus" in client) {
-          return client.focus();
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        // Focus existing window if found
+        for (const client of clientList) {
+          if (client.url.includes("mrmagdy") && "focus" in client) {
+            return client.focus();
+          }
         }
-      }
-      return self.clients.openWindow(url);
-    })
+        // Otherwise open new window
+        return self.clients.openWindow(url);
+      })
   );
+});
+
+// Handle push event directly as fallback
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  try {
+    const payload = event.data.json();
+    // If there's already a notification field, FCM SDK handles it
+    // We only need to handle data-only messages that FCM SDK might miss
+    if (payload.notification) return;
+
+    const data = payload.data || {};
+    if (!data.title) return;
+
+    const options = {
+      body: data.body || "",
+      icon: data.icon || "https://mrmagdy.lovable.app/pwa-192x192.png",
+      badge: data.icon || "https://mrmagdy.lovable.app/pwa-192x192.png",
+      dir: "rtl",
+      lang: "ar",
+      tag: (data.type || "general") + "-" + Date.now(),
+      renotify: true,
+      requireInteraction: true,
+      vibrate: [300, 100, 300, 100, 300],
+      data: { url: data.click_url || "https://mrmagdy.lovable.app/" },
+    };
+
+    event.waitUntil(self.registration.showNotification(data.title, options));
+  } catch (e) {
+    console.error("[SW] Push parse error:", e);
+  }
 });
