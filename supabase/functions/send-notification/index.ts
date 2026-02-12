@@ -150,24 +150,21 @@ serve(async (req) => {
             body: JSON.stringify({
               message: {
                 token,
-                notification: { title, body },
+                // DATA-ONLY message: no "notification" field!
+                // This ensures the service worker ALWAYS handles display
+                // (when "notification" is present, browser auto-displays a basic one)
+                data: { 
+                  type, 
+                  title, 
+                  body,
+                  icon: "https://mrmagdy.lovable.app/pwa-192x192.png",
+                  click_url: "https://mrmagdy.lovable.app/",
+                },
                 webpush: {
-                  notification: {
-                    title,
-                    body,
-                    icon: "https://mrmagdy.lovable.app/pwa-192x192.png",
-                    badge: "https://mrmagdy.lovable.app/pwa-192x192.png",
-                    dir: "rtl",
-                    lang: "ar",
-                    requireInteraction: true,
-                    vibrate: [200, 100, 200],
-                    tag: type,
-                  },
-                  fcm_options: {
-                    link: "https://mrmagdy.lovable.app/",
+                  headers: {
+                    Urgency: "high",
                   },
                 },
-                data: { type, title, body },
               },
             }),
           }
