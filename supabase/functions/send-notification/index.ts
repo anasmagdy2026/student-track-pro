@@ -111,7 +111,24 @@ serve(async (req) => {
     if (!serviceAccountStr) {
       throw new Error("FIREBASE_SERVICE_ACCOUNT is not configured");
     }
-    const serviceAccount = JSON.parse(serviceAccountStr);
+    
+    let serviceAccount: any;
+    try {
+      serviceAccount = JSON.parse(serviceAccountStr);
+    } catch (parseErr) {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:", parseErr);
+      console.error("First 100 chars:", serviceAccountStr.substring(0, 100));
+      throw new Error("FIREBASE_SERVICE_ACCOUNT is not valid JSON");
+    }
+    
+    if (!serviceAccount.private_key) {
+      console.error("Service account keys present:", Object.keys(serviceAccount));
+      throw new Error("FIREBASE_SERVICE_ACCOUNT is missing private_key field. Available keys: " + Object.keys(serviceAccount).join(", "));
+    }
+    if (!serviceAccount.client_email) {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT is missing client_email field");
+    }
+    
     const accessToken = await getAccessToken(serviceAccount);
     const projectId = serviceAccount.project_id;
 
