@@ -153,13 +153,21 @@ serve(async (req) => {
                 notification: { title, body },
                 webpush: {
                   notification: {
-                    icon: "/pwa-192x192.png",
-                    badge: "/pwa-192x192.png",
+                    title,
+                    body,
+                    icon: "https://mrmagdy.lovable.app/pwa-192x192.png",
+                    badge: "https://mrmagdy.lovable.app/pwa-192x192.png",
                     dir: "rtl",
                     lang: "ar",
+                    requireInteraction: true,
+                    vibrate: [200, 100, 200],
+                    tag: type,
+                  },
+                  fcm_options: {
+                    link: "https://mrmagdy.lovable.app/",
                   },
                 },
-                data: { type },
+                data: { type, title, body },
               },
             }),
           }

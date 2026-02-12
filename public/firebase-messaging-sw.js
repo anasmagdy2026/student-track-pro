@@ -14,14 +14,37 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification || {};
-  if (title) {
-    self.registration.showNotification(title, {
-      body: body || "",
-      icon: "/pwa-192x192.png",
-      badge: "/pwa-192x192.png",
-      dir: "rtl",
-      lang: "ar",
-    });
-  }
+  // Prevent default notification if one is already shown by webpush
+  const notifTitle = payload.notification?.title || payload.data?.title || "إشعار جديد";
+  const notifBody = payload.notification?.body || payload.data?.body || "";
+  const type = payload.data?.type || "general";
+
+  self.registration.showNotification(notifTitle, {
+    body: notifBody,
+    icon: "https://mrmagdy.lovable.app/pwa-192x192.png",
+    badge: "https://mrmagdy.lovable.app/pwa-192x192.png",
+    dir: "rtl",
+    lang: "ar",
+    tag: type,
+    requireInteraction: true,
+    vibrate: [200, 100, 200],
+    data: {
+      url: "https://mrmagdy.lovable.app/",
+    },
+  });
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "https://mrmagdy.lovable.app/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes("mrmagdy.lovable.app") && "focus" in client) {
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });
