@@ -28,9 +28,13 @@ messaging.onBackgroundMessage((payload) => {
     tag: type,
     requireInteraction: true,
     vibrate: [200, 100, 200],
+    sound: "/notification-sound.mp3",
     data: {
       url: "https://mrmagdy.lovable.app/",
     },
+    actions: [
+      { action: "open", title: "فتح التطبيق" },
+    ],
   });
 });
 

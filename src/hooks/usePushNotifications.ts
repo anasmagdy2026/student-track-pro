@@ -15,8 +15,15 @@ export function usePushNotifications() {
   // Listen for foreground messages
   useEffect(() => {
     onForegroundMessage((payload: any) => {
-      const { title, body } = payload.notification || {};
+      const title = payload.notification?.title || payload.data?.title;
+      const body = payload.notification?.body || payload.data?.body;
       if (title) {
+        // Play notification sound
+        try {
+          const audio = new Audio('/notification-sound.mp3');
+          audio.volume = 0.7;
+          audio.play().catch(() => {});
+        } catch {}
         toast.info(title, { description: body });
       }
     });
