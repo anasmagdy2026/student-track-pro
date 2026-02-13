@@ -64,6 +64,8 @@ export default function Groups() {
     time: string;
     time_from: string | null;
     time_to: string | null;
+    has_friday_session: boolean;
+    friday_time: string | null;
   }) => {
     if (!data.name) {
       toast.error('برجاء إدخال اسم المجموعة');
@@ -85,6 +87,8 @@ export default function Groups() {
     time: string;
     time_from: string | null;
     time_to: string | null;
+    has_friday_session: boolean;
+    friday_time: string | null;
   }) => {
     if (!editingGroup) return;
     try {
@@ -220,8 +224,8 @@ export default function Groups() {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
                         <span>
-                          {(group as any).time_from && (group as any).time_to
-                            ? `${(group as any).time_from} - ${(group as any).time_to}`
+                          {group.time_from && group.time_to
+                            ? `${group.time_from} - ${group.time_to}`
                             : group.time}
                         </span>
                       </div>
@@ -229,6 +233,12 @@ export default function Groups() {
                         <Users className="h-4 w-4" />
                         <span>{studentsCount} طالب</span>
                       </div>
+                      {group.has_friday_session && (
+                        <div className="flex items-center gap-2 text-sm text-success">
+                          <Calendar className="h-4 w-4" />
+                          <span>حصة الجمعة: {group.friday_time || '-'}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
@@ -272,8 +282,10 @@ export default function Groups() {
                                 grade: editingGroup.grade,
                                 days: editingGroup.days,
                                 time: editingGroup.time,
-                                time_from: (editingGroup as any).time_from,
-                                time_to: (editingGroup as any).time_to,
+                                time_from: editingGroup.time_from,
+                                time_to: editingGroup.time_to,
+                                has_friday_session: editingGroup.has_friday_session,
+                                friday_time: editingGroup.friday_time,
                               }}
                               onSubmit={handleUpdateGroup}
                               isEdit

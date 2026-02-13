@@ -18,6 +18,20 @@ export interface Group {
   grade: string;
   days: string[]; // مجموعة الأيام مثل ['السبت', 'الإثنين', 'الأربعاء']
   time: string; // وقت المجموعة
+  time_from?: string | null;
+  time_to?: string | null;
+  has_friday_session?: boolean;
+  friday_time?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LessonHomework {
+  id: string;
+  lesson_id: string;
+  student_id: string;
+  status: 'done' | 'not_done';
+  note?: string | null;
   created_at?: string;
   updated_at?: string;
 }

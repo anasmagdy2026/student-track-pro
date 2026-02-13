@@ -62,6 +62,7 @@ import {
   Snowflake,
   Undo2,
   Bell,
+  ClipboardCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -73,7 +74,7 @@ export default function StudentProfile() {
   const { getStudentPayments, markAsNotified: markPaymentNotified, isMonthPaid, getPaymentByMonth } = usePayments();
   const { exams, getStudentResultsWithExams, markResultAsNotified } = useExams();
   const { getGroupById } = useGroups();
-  const { lessons, getStudentSheets, getStudentRecitations, getLessonById } = useLessons();
+  const { lessons, getStudentSheets, getStudentRecitations, getStudentHomework, getLessonById } = useLessons();
   const { getGradeLabel } = useGradeLevels();
   const { blocks, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent, refetch: refetchBlocks } = useStudentBlocks();
   const { events, createEvent } = useAlertEvents();
@@ -113,9 +114,10 @@ export default function StudentProfile() {
       .slice(0, 50);
   }, [events, student]);
 
-  // Get lesson sheets and recitations for this student
+  // Get lesson sheets, recitations, and homework for this student
   const studentSheets = getStudentSheets(id || '');
   const studentRecitations = getStudentRecitations(id || '');
+  const studentHomework = getStudentHomework(id || '');
 
   // Get available months from lessons
   const availableMonths = Array.from(
@@ -160,6 +162,13 @@ export default function StudentProfile() {
     ? studentRecitations
     : studentRecitations.filter((r) => {
         const lesson = getLessonById(r.lesson_id);
+        return lesson?.date.startsWith(filterMonth);
+      });
+
+  const filteredHomework = filterMonth === 'all'
+    ? studentHomework
+    : studentHomework.filter((h) => {
+        const lesson = getLessonById(h.lesson_id);
         return lesson?.date.startsWith(filterMonth);
       });
 
@@ -217,12 +226,14 @@ export default function StudentProfile() {
       .map((lesson) => {
         const sheet = studentSheets.find((s) => s.lesson_id === lesson.id);
         const recitation = studentRecitations.find((r) => r.lesson_id === lesson.id);
+        const hw = studentHomework.find((h) => h.lesson_id === lesson.id);
         return {
           lessonName: lesson.name,
           sheetScore: sheet?.score ?? null,
           recitationScore: recitation?.score ?? null,
           sheetMax: lesson.sheet_max_score,
           recitationMax: lesson.recitation_max_score,
+          homeworkDone: hw ? hw.status === 'done' : null,
         };
       })
       .sort((a, b) => a.lessonName.localeCompare(b.lessonName, 'ar'));
@@ -814,6 +825,47 @@ export default function StudentProfile() {
                 )}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Homework */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5 text-success" />
+              سجل الواجبات
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredHomework.length > 0 ? (
+              <div className="space-y-2">
+                {filteredHomework.map((hw) => {
+                  const lesson = getLessonById(hw.lesson_id);
+                  if (!lesson) return null;
+                  const isDone = hw.status === 'done';
+                  return (
+                    <div
+                      key={hw.id}
+                      className={`flex items-center justify-between p-3 rounded-xl ${isDone ? 'bg-success/10' : 'bg-destructive/10'}`}
+                    >
+                      <div>
+                        <p className="font-medium">{lesson.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(lesson.date).toLocaleDateString('ar-EG')}
+                        </p>
+                      </div>
+                      <Badge className={isDone ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}>
+                        {isDone ? 'حل الواجب' : 'لم يحل'}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">
+                لا توجد بيانات واجبات
+              </p>
+            )}
           </CardContent>
         </Card>
 

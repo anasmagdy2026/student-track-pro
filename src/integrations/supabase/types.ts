@@ -333,7 +333,9 @@ export type Database = {
         Row: {
           created_at: string
           days: string[]
+          friday_time: string | null
           grade: string
+          has_friday_session: boolean
           id: string
           name: string
           time: string
@@ -344,7 +346,9 @@ export type Database = {
         Insert: {
           created_at?: string
           days?: string[]
+          friday_time?: string | null
           grade: string
+          has_friday_session?: boolean
           id?: string
           name: string
           time: string
@@ -355,7 +359,9 @@ export type Database = {
         Update: {
           created_at?: string
           days?: string[]
+          friday_time?: string | null
           grade?: string
+          has_friday_session?: boolean
           id?: string
           name?: string
           time?: string
