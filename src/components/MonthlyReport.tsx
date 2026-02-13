@@ -23,7 +23,7 @@ interface MonthlyReportProps {
   month: string;
   attendanceRecords: { date: string; present: boolean }[];
   paymentStatus: { paid: boolean; amount: number };
-  lessonScores: { lessonName: string; sheetScore: number | null; recitationScore: number | null; sheetMax: number; recitationMax: number }[];
+  lessonScores: { lessonName: string; sheetScore: number | null; recitationScore: number | null; sheetMax: number; recitationMax: number; homeworkDone: boolean | null }[];
   examResults: { examName: string; score: number | null; maxScore: number; absent: boolean }[];
 }
 
@@ -537,6 +537,7 @@ export function MonthlyReport({
                     <th className="text-right">الحصة</th>
                     <th className="text-center">درجة الشيت</th>
                     <th className="text-center">درجة التسميع</th>
+                    <th className="text-center">الواجب</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -551,6 +552,11 @@ export function MonthlyReport({
                       <td className="text-center">
                         <span className="print-badge bg-secondary/10 text-secondary">
                           {lesson.recitationScore !== null ? `${lesson.recitationScore}/${lesson.recitationMax}` : '-'}
+                        </span>
+                      </td>
+                      <td className="text-center">
+                        <span className={`print-badge ${lesson.homeworkDone === true ? 'bg-success/10 text-success' : lesson.homeworkDone === false ? 'bg-destructive/10 text-destructive' : ''}`}>
+                          {lesson.homeworkDone === true ? '✓ حل' : lesson.homeworkDone === false ? '✗ لم يحل' : '-'}
                         </span>
                       </td>
                     </tr>

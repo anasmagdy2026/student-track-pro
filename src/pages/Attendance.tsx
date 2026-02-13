@@ -65,7 +65,7 @@ export default function Attendance() {
   const { groups, loading: groupsLoading, getTodayGroups, getGroupById } = useGroups();
   const { loading: paymentsLoading, isMonthPaid } = usePayments();
   const { exams, results, loading: examsLoading } = useExams();
-  const { lessons, sheets, recitations, loading: lessonsLoading } = useLessons();
+  const { lessons, sheets, recitations, loading: lessonsLoading, toggleHomework, getHomeworkStatus } = useLessons();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
   const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
@@ -163,6 +163,19 @@ export default function Attendance() {
     return todayAttendance.find((a) => a.student_id === studentId);
   };
 
+  // Find today's lesson for a student (to link homework)
+  const getTodayLessonForStudent = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) return null;
+    return lessons
+      .filter(l => l.date === selectedDate && l.grade === student.grade)
+      .find(l => {
+        if (!l.group_id) return false;
+        if (student.group_id) return l.group_id === student.group_id;
+        return selectedGroup !== 'all' ? l.group_id === selectedGroup : false;
+      }) || null;
+  };
+
   const parseTimeToDate = (dateIso: string, timeHHmm: string) => {
     const [h, m] = timeHHmm.split(':').map(Number);
     const d = new Date(`${dateIso}T00:00:00`);
@@ -194,9 +207,7 @@ export default function Attendance() {
     if (!student?.group_id) return { ended: false, endTime: null, groupName: null };
     
     const group = getGroupById(student.group_id);
-    // Use time_to from the DB row (cast as extended group)
-    const groupData = groups.find(g => g.id === student.group_id) as any;
-    const timeTo = groupData?.time_to;
+    const timeTo = group?.time_to;
     
     if (!timeTo) return { ended: false, endTime: null, groupName: group?.name || null };
     
@@ -934,25 +945,51 @@ export default function Attendance() {
                       }`}
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={`present-${student.id}`}
-                            checked={isPresent}
-                            onCheckedChange={(checked) =>
-                              requestAttendance({
-                                studentId: student.id,
-                                present: checked === true,
-                                source: 'checkbox',
-                              })
-                            }
-                            className="h-6 w-6"
-                          />
-                          <label
-                            htmlFor={`present-${student.id}`}
-                            className="text-sm font-medium cursor-pointer"
-                          >
-                            حاضر
-                          </label>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id={`present-${student.id}`}
+                              checked={isPresent}
+                              onCheckedChange={(checked) =>
+                                requestAttendance({
+                                  studentId: student.id,
+                                  present: checked === true,
+                                  source: 'checkbox',
+                                })
+                              }
+                              className="h-6 w-6"
+                            />
+                            <label
+                              htmlFor={`present-${student.id}`}
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              حاضر
+                            </label>
+                          </div>
+                          {(() => {
+                            const todayLesson = getTodayLessonForStudent(student.id);
+                            if (!todayLesson) return null;
+                            const hwStatus = getHomeworkStatus(todayLesson.id, student.id);
+                            const isDone = hwStatus === 'done';
+                            return (
+                              <div className="flex items-center gap-2">
+                                <Checkbox
+                                  id={`hw-${student.id}`}
+                                  checked={isDone}
+                                  onCheckedChange={(checked) => {
+                                    toggleHomework(todayLesson.id, student.id, checked === true);
+                                  }}
+                                  className="h-5 w-5"
+                                />
+                                <label
+                                  htmlFor={`hw-${student.id}`}
+                                  className={`text-xs cursor-pointer ${isDone ? 'text-success font-bold' : 'text-muted-foreground'}`}
+                                >
+                                  الواجب
+                                </label>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">

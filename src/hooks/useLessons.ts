@@ -1,29 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Lesson, LessonSheet, LessonRecitation } from '@/types';
+import { Lesson, LessonSheet, LessonRecitation, LessonHomework } from '@/types';
 
 export function useLessons() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [sheets, setSheets] = useState<LessonSheet[]>([]);
   const [recitations, setRecitations] = useState<LessonRecitation[]>([]);
+  const [homework, setHomework] = useState<LessonHomework[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     
-    const [lessonsRes, sheetsRes, recitationsRes] = await Promise.all([
+    const [lessonsRes, sheetsRes, recitationsRes, homeworkRes] = await Promise.all([
       supabase.from('lessons').select('*').order('date', { ascending: false }),
       supabase.from('lesson_sheets').select('*'),
       supabase.from('lesson_recitations').select('*'),
+      supabase.from('lesson_homework').select('*'),
     ]);
     
     if (lessonsRes.error) console.error('Error fetching lessons:', lessonsRes.error);
     if (sheetsRes.error) console.error('Error fetching sheets:', sheetsRes.error);
     if (recitationsRes.error) console.error('Error fetching recitations:', recitationsRes.error);
+    if (homeworkRes.error) console.error('Error fetching homework:', homeworkRes.error);
     
     setLessons(lessonsRes.data as Lesson[] || []);
     setSheets(sheetsRes.data as LessonSheet[] || []);
     setRecitations(recitationsRes.data as LessonRecitation[] || []);
+    setHomework(homeworkRes.data as LessonHomework[] || []);
     setLoading(false);
   }, []);
 
@@ -182,10 +186,52 @@ export function useLessons() {
     return lessons.filter(lesson => lesson.date.startsWith(month));
   };
 
+  // Homework (واجب)
+  const toggleHomework = async (lessonId: string, studentId: string, done: boolean) => {
+    const existing = homework.find(
+      h => h.lesson_id === lessonId && h.student_id === studentId
+    );
+
+    const status = done ? 'done' : 'not_done';
+
+    if (existing) {
+      const { error } = await supabase
+        .from('lesson_homework')
+        .update({ status })
+        .eq('id', existing.id);
+      if (error) throw error;
+      setHomework(prev =>
+        prev.map(h => h.id === existing.id ? { ...h, status: status as 'done' | 'not_done' } : h)
+      );
+    } else {
+      const { data, error } = await supabase
+        .from('lesson_homework')
+        .insert([{ lesson_id: lessonId, student_id: studentId, status }])
+        .select()
+        .single();
+      if (error) throw error;
+      setHomework(prev => [...prev, data as LessonHomework]);
+    }
+  };
+
+  const getHomeworkStatus = (lessonId: string, studentId: string): 'done' | 'not_done' | null => {
+    const hw = homework.find(h => h.lesson_id === lessonId && h.student_id === studentId);
+    return hw ? hw.status as 'done' | 'not_done' : null;
+  };
+
+  const getStudentHomework = (studentId: string) => {
+    return homework.filter(h => h.student_id === studentId);
+  };
+
+  const getLessonHomework = (lessonId: string) => {
+    return homework.filter(h => h.lesson_id === lessonId);
+  };
+
   return {
     lessons,
     sheets,
     recitations,
+    homework,
     loading,
     addLesson,
     updateLesson,
@@ -200,6 +246,10 @@ export function useLessons() {
     addRecitation,
     getLessonRecitations,
     getStudentRecitations,
+    toggleHomework,
+    getHomeworkStatus,
+    getStudentHomework,
+    getLessonHomework,
     refetch: fetchData,
   };
 }

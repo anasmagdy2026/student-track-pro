@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
 import {
   Select,
@@ -21,6 +22,8 @@ interface GroupFormProps {
     time: string;
     time_from?: string | null;
     time_to?: string | null;
+    has_friday_session?: boolean;
+    friday_time?: string | null;
   };
   onSubmit: (data: {
     name: string;
@@ -29,6 +32,8 @@ interface GroupFormProps {
     time: string;
     time_from: string | null;
     time_to: string | null;
+    has_friday_session: boolean;
+    friday_time: string | null;
   }) => void;
   isEdit?: boolean;
 }
@@ -44,6 +49,8 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
   const [time, setTime] = useState(initialData?.time || '10:00');
   const [timeFrom, setTimeFrom] = useState(initialData?.time_from || '');
   const [timeTo, setTimeTo] = useState(initialData?.time_to || '');
+  const [hasFridaySession, setHasFridaySession] = useState(initialData?.has_friday_session || false);
+  const [fridayTime, setFridayTime] = useState(initialData?.friday_time || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getPatternLabel = (valueDays: string[]) => {
@@ -79,6 +86,8 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         time,
         time_from: timeFrom || null,
         time_to: timeTo || null,
+        has_friday_session: hasFridaySession,
+        friday_time: fridayTime || null,
       });
     } finally {
       setIsSubmitting(false);
@@ -214,6 +223,29 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
       <p className="text-xs text-muted-foreground">
         يُستخدم وقت النهاية لمنع تسجيل الحضور بعد انتهاء الحصة
       </p>
+
+      {/* Friday Session */}
+      <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">حصة يوم الجمعة</label>
+          <Switch
+            checked={hasFridaySession}
+            onCheckedChange={setHasFridaySession}
+          />
+        </div>
+        {hasFridaySession && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">ميعاد حصة الجمعة</label>
+            <Input
+              type="time"
+              value={fridayTime}
+              onChange={(e) => setFridayTime(e.target.value)}
+              dir="ltr"
+              placeholder="مثال: 14:00"
+            />
+          </div>
+        )}
+      </div>
 
       <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
