@@ -42,10 +42,12 @@ import { MONTHS_AR } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
   sendWhatsAppMessage,
+  buildFromTemplate,
   createAbsenceMessage,
   createPaymentReminderMessage,
   createExamResultMessage,
 } from '@/utils/whatsapp';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import {
   ArrowRight,
   User,
@@ -78,6 +80,7 @@ export default function StudentProfile() {
   const { getGradeLabel } = useGradeLevels();
   const { blocks, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent, refetch: refetchBlocks } = useStudentBlocks();
   const { events, createEvent } = useAlertEvents();
+  const { getTemplateByCode } = useWhatsAppTemplates();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
@@ -271,8 +274,18 @@ export default function StudentProfile() {
     );
   }
 
+  const formatDateWithDay = (dateIso: string) => {
+    const d = new Date(`${dateIso}T00:00:00`);
+    const dayName = d.toLocaleDateString('ar-EG', { weekday: 'long' });
+    const dateStr = d.toLocaleDateString('ar-EG');
+    return `${dayName} - ${dateStr}`;
+  };
+
   const handleSendAbsenceMessage = (date: string, attendanceId: string) => {
-    const message = createAbsenceMessage(student.name, date);
+    const tpl = getTemplateByCode('absence');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: student.name, date: formatDateWithDay(date) })
+      : createAbsenceMessage(student.name, date);
     sendWhatsAppMessage(student.parent_phone, message);
     markAsNotified(attendanceId);
     toast.success('تم فتح الواتساب');
@@ -281,14 +294,26 @@ export default function StudentProfile() {
   const handleSendPaymentReminder = (month: string, paymentId: string) => {
     const monthIndex = parseInt(month.split('-')[1]) - 1;
     const monthName = MONTHS_AR[monthIndex];
-    const message = createPaymentReminderMessage(student.name, monthName, student.monthly_fee);
+    const tpl = getTemplateByCode('payment_reminder');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: student.name, month: monthName, amount: String(student.monthly_fee) })
+      : createPaymentReminderMessage(student.name, monthName, student.monthly_fee);
     sendWhatsAppMessage(student.parent_phone, message);
     markPaymentNotified(paymentId);
     toast.success('تم فتح الواتساب');
   };
 
   const handleSendExamResult = (resultId: string, examName: string, score: number, maxScore: number) => {
-    const message = createExamResultMessage(student.name, examName, score, maxScore);
+    const percentage = Math.round((score / maxScore) * 100);
+    let label = '';
+    if (percentage >= 90) label = 'ممتاز';
+    else if (percentage >= 75) label = 'جيد جداً';
+    else if (percentage >= 60) label = 'جيد';
+    else if (percentage < 50) label = 'يحتاج متابعة';
+    const tpl = getTemplateByCode('exam_result');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: student.name, examName, score: String(score), maxScore: String(maxScore), percentage: String(percentage), label })
+      : createExamResultMessage(student.name, examName, score, maxScore);
     sendWhatsAppMessage(student.parent_phone, message);
     markResultAsNotified(resultId);
     toast.success('تم فتح الواتساب');

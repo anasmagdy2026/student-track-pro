@@ -285,6 +285,41 @@ export type Database = {
         }
         Relationships: []
       }
+      group_lesson_log: {
+        Row: {
+          created_at: string
+          date: string
+          group_id: string
+          id: string
+          note: string | null
+          topic: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          group_id: string
+          id?: string
+          note?: string | null
+          topic: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          group_id?: string
+          id?: string
+          note?: string | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_lesson_log_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_next_session_reminders: {
         Row: {
           created_at: string

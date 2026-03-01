@@ -40,10 +40,12 @@ import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
 import { NextSessionReminderCard } from '@/components/NextSessionReminderCard';
 import {
   sendWhatsAppMessage,
+  buildFromTemplate,
   createAbsenceMessage,
   createLateMessageForParent,
   createLateMessageForStudent,
 } from '@/utils/whatsapp';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -73,6 +75,7 @@ export default function Attendance() {
   const { reminders, loading: remindersLoading, hasReminder, getReminderByGroupId } = useNextSessionReminders();
   const { getSetting } = useAppSettings();
   const { sendNotification } = usePushNotifications();
+  const { getTemplateByCode } = useWhatsAppTemplates();
 
   const isLoading =
     studentsLoading ||
@@ -652,6 +655,13 @@ export default function Attendance() {
     setPending(null);
   };
 
+  const formatDateWithDay = (dateIso: string) => {
+    const d = new Date(`${dateIso}T00:00:00`);
+    const dayName = d.toLocaleDateString('ar-EG', { weekday: 'long' });
+    const dateStr = d.toLocaleDateString('ar-EG');
+    return `${dayName} - ${dateStr}`;
+  };
+
   const handleSendLateMessage = (studentId: string, target: 'parent' | 'student') => {
     const student = students.find((s) => s.id === studentId);
     if (!student?.group_id) return;
@@ -665,8 +675,17 @@ export default function Attendance() {
       return;
     }
 
+    const vars = {
+      studentName: student.name,
+      date: formatDateWithDay(selectedDate),
+      groupName: group.name,
+      groupTime: group.time,
+      lateMinutes: String(late),
+    };
+
     if (target === 'parent') {
-      const msg = createLateMessageForParent(student.name, selectedDate, group.name, group.time, late);
+      const tpl = getTemplateByCode('late_parent');
+      const msg = tpl ? buildFromTemplate(tpl.template, vars) : createLateMessageForParent(student.name, selectedDate, group.name, group.time, late);
       sendWhatsAppMessage(student.parent_phone, msg);
       toast.success('تم فتح الواتساب');
       return;
@@ -676,7 +695,8 @@ export default function Attendance() {
       toast.error('رقم هاتف الطالب غير مسجل');
       return;
     }
-    const msg = createLateMessageForStudent(student.name, selectedDate, group.name, group.time, late);
+    const tpl = getTemplateByCode('late_student');
+    const msg = tpl ? buildFromTemplate(tpl.template, vars) : createLateMessageForStudent(student.name, selectedDate, group.name, group.time, late);
     sendWhatsAppMessage(student.student_phone, msg);
     toast.success('تم فتح الواتساب');
   };
@@ -686,7 +706,10 @@ export default function Attendance() {
     const attendance = getStudentAttendance(studentId);
     if (!student || !attendance) return;
 
-    const message = createAbsenceMessage(student.name, selectedDate);
+    const tpl = getTemplateByCode('absence');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: student.name, date: formatDateWithDay(selectedDate) })
+      : createAbsenceMessage(student.name, selectedDate);
     sendWhatsAppMessage(student.parent_phone, message);
     markAsNotified(attendance.id);
     toast.success('تم فتح الواتساب');
