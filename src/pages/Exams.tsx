@@ -29,8 +29,10 @@ import { ExamQRPrintDialog } from '@/components/ExamQRPrintDialog';
 import { ExamQRScoreDialog } from '@/components/ExamQRScoreDialog';
 import {
   sendWhatsAppMessage,
+  buildFromTemplate,
   createExamResultMessage,
 } from '@/utils/whatsapp';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import {
   FileText,
   Plus,
@@ -62,6 +64,7 @@ export default function Exams() {
 
   const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { getTemplateByCode } = useWhatsAppTemplates();
 
   const isLoading = studentsLoading || groupsLoading || examsLoading || blocksLoading || gradesLoading;
 
@@ -218,12 +221,16 @@ export default function Exams() {
     const results = getExamResults(selectedExam.id);
     const result = results.find((r) => r.student_id === studentId);
 
-    const message = createExamResultMessage(
-      student.name,
-      selectedExam.name,
-      score,
-      selectedExam.max_score
-    );
+    const percentage = Math.round((score / selectedExam.max_score) * 100);
+    let label = '';
+    if (percentage >= 90) label = 'ممتاز';
+    else if (percentage >= 75) label = 'جيد جداً';
+    else if (percentage >= 60) label = 'جيد';
+    else if (percentage < 50) label = 'يحتاج متابعة';
+    const tpl = getTemplateByCode('exam_result');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: student.name, examName: selectedExam.name, score: String(score), maxScore: String(selectedExam.max_score), percentage: String(percentage), label })
+      : createExamResultMessage(student.name, selectedExam.name, score, selectedExam.max_score);
     sendWhatsAppMessage(student.parent_phone, message);
 
     if (result) {

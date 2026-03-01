@@ -16,6 +16,15 @@ export const sendWhatsAppMessage = (phone: string, message: string) => {
   window.open(whatsappUrl, '_blank');
 };
 
+// Build message from a DB template string by replacing {variable} placeholders
+export const buildFromTemplate = (template: string, vars: Record<string, string>): string => {
+  let result = template;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.split(`{${key}}`).join(value);
+  }
+  return result;
+};
+
 const formatArabicDateWithDay = (input: string) => {
   // input may be ISO date (YYYY-MM-DD) or already formatted.
   const isIso = /^\d{4}-\d{2}-\d{2}$/.test(input);

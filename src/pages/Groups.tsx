@@ -25,10 +25,12 @@ import { GroupForm } from '@/components/forms/GroupForm';
 import { NextSessionReminderDialog } from '@/components/NextSessionReminderDialog';
 import { DAYS_AR, Group } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
-import { Users, Plus, Pencil, Trash2, Clock, Calendar, ClipboardList } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Clock, Calendar, ClipboardList, Merge, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
+import { MergeGroupsDialog } from '@/components/MergeGroupsDialog';
+import { GroupLessonLogDialog } from '@/components/GroupLessonLogDialog';
 
 export default function Groups() {
   const { groups, loading: groupsLoading, addGroup, updateGroup, deleteGroup, getTodayGroups } = useGroups();
@@ -48,6 +50,8 @@ export default function Groups() {
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [reminderGroup, setReminderGroup] = useState<Group | null>(null);
   const [filterDay, setFilterDay] = useState<string>('all');
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [lessonLogGroup, setLessonLogGroup] = useState<Group | null>(null);
 
   const todayGroups = getTodayGroups();
   
@@ -129,21 +133,27 @@ export default function Groups() {
               إدارة المجموعات وجدول الحصص
             </p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-5 w-5" />
-                إضافة مجموعة جديدة
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>إضافة مجموعة جديدة</DialogTitle>
-                <DialogDescription>أدخل بيانات المجموعة الجديدة</DialogDescription>
-              </DialogHeader>
-              <GroupForm onSubmit={handleAddGroup} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setMergeOpen(true)}>
+              <Merge className="h-5 w-5" />
+              دمج مجموعات
+            </Button>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-5 w-5" />
+                  إضافة مجموعة جديدة
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>إضافة مجموعة جديدة</DialogTitle>
+                  <DialogDescription>أدخل بيانات المجموعة الجديدة</DialogDescription>
+                </DialogHeader>
+                <GroupForm onSubmit={handleAddGroup} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Today's Groups Alert */}
@@ -249,6 +259,14 @@ export default function Groups() {
                       </Link>
                       <Button
                         size="icon"
+                        variant="ghost"
+                        onClick={() => setLessonLogGroup(group)}
+                        title="سجل المطلوب بالتاريخ"
+                      >
+                        <BookOpen className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
                         variant={hasReminder(group.id) ? 'default' : 'ghost'}
                         onClick={() => setReminderGroup(group)}
                         title="المطلوب الحصة الجاية"
@@ -348,6 +366,28 @@ export default function Groups() {
             }
           }}
         />
+
+        {/* Merge Groups Dialog */}
+        <MergeGroupsDialog
+          open={mergeOpen}
+          onOpenChange={setMergeOpen}
+          groups={groups}
+          getStudentCount={(gId) => getStudentsByGroup(gId).length}
+          onMerged={() => {
+            // Refetch data after merge
+            window.location.reload();
+          }}
+        />
+
+        {/* Lesson Log Dialog */}
+        {lessonLogGroup && (
+          <GroupLessonLogDialog
+            open={!!lessonLogGroup}
+            onOpenChange={(open) => { if (!open) setLessonLogGroup(null); }}
+            groupId={lessonLogGroup.id}
+            groupName={lessonLogGroup.name}
+          />
+        )}
         </div>
       )}
     </Layout>

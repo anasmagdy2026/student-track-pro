@@ -31,8 +31,10 @@ import { QRScanner } from '@/components/QRScanner';
 import { MONTHS_AR } from '@/types';
 import {
   sendWhatsAppMessage,
+  buildFromTemplate,
   createPaymentReminderMessage,
 } from '@/utils/whatsapp';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import {
   CreditCard,
   CheckCircle,
@@ -53,6 +55,7 @@ export default function Payments() {
   const { students, loading: studentsLoading, getStudentByCode } = useStudents();
   const { groups, loading: groupsLoading, getGroupById } = useGroups();
   const { loading: paymentsLoading, addPayment, isMonthPaid, payments, markAsNotified, markAsUnpaid } = usePayments();
+  const { getTemplateByCode } = useWhatsAppTemplates();
   const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
 
@@ -204,7 +207,10 @@ export default function Payments() {
 
     const monthIndex = parseInt(selectedMonth.split('-')[1]) - 1;
     const monthName = MONTHS_AR[monthIndex];
-    const message = createPaymentReminderMessage(student.name, monthName, student.monthly_fee);
+    const tpl = getTemplateByCode('payment_reminder');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: student.name, month: monthName, amount: String(student.monthly_fee) })
+      : createPaymentReminderMessage(student.name, monthName, student.monthly_fee);
     sendWhatsAppMessage(student.parent_phone, message);
 
     const payment = payments.find(
