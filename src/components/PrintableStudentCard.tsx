@@ -30,7 +30,7 @@ export function PrintableStudentCard({ student, group }: PrintableStudentCardPro
         <div className="print-card__qr">
           <QRCodeSVG
             value={`STUDENT:${student.code}:${student.id}`}
-            size={120}
+            size={60}
             level="H"
             includeMargin={false}
           />

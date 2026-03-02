@@ -41,7 +41,9 @@ export default function Groups() {
     getReminderByGroupId, 
     upsertReminder, 
     clearReminder, 
-    hasReminder 
+    hasReminder,
+    fetchReminderLog,
+    restoreFromLog,
   } = useNextSessionReminders();
 
   const isLoading = groupsLoading || studentsLoading || gradesLoading || remindersLoading;
@@ -346,6 +348,7 @@ export default function Groups() {
             if (!open) setReminderGroup(null);
           }}
           groupName={reminderGroup?.name || ''}
+          groupId={reminderGroup?.id || ''}
           reminder={reminderGroup ? getReminderByGroupId(reminderGroup.id) : undefined}
           onSave={async (data) => {
             if (!reminderGroup) return;
@@ -365,6 +368,8 @@ export default function Groups() {
               toast.error('حدث خطأ أثناء المسح');
             }
           }}
+          onFetchLog={fetchReminderLog}
+          onRestoreLog={restoreFromLog}
         />
 
         {/* Merge Groups Dialog */}

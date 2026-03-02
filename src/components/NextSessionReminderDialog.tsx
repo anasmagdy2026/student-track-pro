@@ -10,13 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, BookOpen, FileText, ClipboardList, PenTool, StickyNote, Trash2 } from 'lucide-react';
-import { NextSessionReminder } from '@/hooks/useNextSessionReminders';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, BookOpen, FileText, ClipboardList, PenTool, StickyNote, Trash2, History, RotateCcw } from 'lucide-react';
+import { NextSessionReminder, ReminderLogEntry } from '@/hooks/useNextSessionReminders';
 
 interface NextSessionReminderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   groupName: string;
+  groupId: string;
   reminder: NextSessionReminder | undefined;
   onSave: (data: {
     homework?: string | null;
@@ -26,15 +29,20 @@ interface NextSessionReminderDialogProps {
     note?: string | null;
   }) => Promise<void>;
   onClear: () => Promise<void>;
+  onFetchLog: (groupId: string) => Promise<ReminderLogEntry[]>;
+  onRestoreLog: (groupId: string, entry: ReminderLogEntry) => Promise<void>;
 }
 
 export function NextSessionReminderDialog({
   open,
   onOpenChange,
   groupName,
+  groupId,
   reminder,
   onSave,
   onClear,
+  onFetchLog,
+  onRestoreLog,
 }: NextSessionReminderDialogProps) {
   const [homework, setHomework] = useState('');
   const [recitation, setRecitation] = useState('');
@@ -43,6 +51,9 @@ export function NextSessionReminderDialog({
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [logEntries, setLogEntries] = useState<ReminderLogEntry[]>([]);
+  const [loadingLog, setLoadingLog] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -51,6 +62,7 @@ export function NextSessionReminderDialog({
       setExam(reminder?.exam || '');
       setSheet(reminder?.sheet || '');
       setNote(reminder?.note || '');
+      setShowHistory(false);
     }
   }, [open, reminder]);
 
@@ -85,11 +97,32 @@ export function NextSessionReminderDialog({
     }
   };
 
+  const handleShowHistory = async () => {
+    if (showHistory) {
+      setShowHistory(false);
+      return;
+    }
+    setLoadingLog(true);
+    const entries = await onFetchLog(groupId);
+    setLogEntries(entries);
+    setLoadingLog(false);
+    setShowHistory(true);
+  };
+
+  const handleRestore = async (entry: ReminderLogEntry) => {
+    setHomework(entry.homework || '');
+    setRecitation(entry.recitation || '');
+    setExam(entry.exam || '');
+    setSheet(entry.sheet || '');
+    setNote(entry.note || '');
+    setShowHistory(false);
+  };
+
   const hasContent = homework || recitation || exam || sheet || note;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-primary" />
@@ -174,6 +207,14 @@ export function NextSessionReminderDialog({
               'حفظ'
             )}
           </Button>
+          <Button
+            variant="outline"
+            onClick={handleShowHistory}
+            disabled={loadingLog}
+            className="gap-1"
+          >
+            {loadingLog ? <Loader2 className="h-4 w-4 animate-spin" /> : <History className="h-4 w-4" />}
+          </Button>
           {hasContent && (
             <Button 
               variant="outline" 
@@ -189,6 +230,55 @@ export function NextSessionReminderDialog({
             </Button>
           )}
         </div>
+
+        {/* History */}
+        {showHistory && (
+          <div className="mt-4 border-t pt-4">
+            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+              <History className="h-4 w-4" />
+              السجل السابق
+            </h4>
+            {logEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">لا يوجد سجل سابق</p>
+            ) : (
+              <ScrollArea className="max-h-60">
+                <div className="space-y-2">
+                  {logEntries.map((entry) => (
+                    <div key={entry.id} className="border rounded-lg p-3 text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                          {new Date(entry.created_at).toLocaleDateString('ar-EG', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRestore(entry)}
+                          className="h-7 gap-1 text-xs"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          استعادة
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {entry.homework && <Badge variant="secondary" className="text-xs">واجب: {entry.homework}</Badge>}
+                        {entry.recitation && <Badge variant="secondary" className="text-xs">تسميع: {entry.recitation}</Badge>}
+                        {entry.exam && <Badge variant="secondary" className="text-xs">امتحان: {entry.exam}</Badge>}
+                        {entry.sheet && <Badge variant="secondary" className="text-xs">شيت: {entry.sheet}</Badge>}
+                        {entry.note && <Badge variant="outline" className="text-xs">ملاحظة: {entry.note}</Badge>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

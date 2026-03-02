@@ -13,6 +13,17 @@ export interface NextSessionReminder {
   updated_at: string;
 }
 
+export interface ReminderLogEntry {
+  id: string;
+  group_id: string;
+  homework: string | null;
+  recitation: string | null;
+  exam: string | null;
+  sheet: string | null;
+  note: string | null;
+  created_at: string;
+}
+
 export function useNextSessionReminders() {
   const [reminders, setReminders] = useState<NextSessionReminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +60,6 @@ export function useNextSessionReminders() {
     const existing = reminders.find(r => r.group_id === groupId);
     
     if (existing) {
-      // Update existing
       const { error } = await supabase
         .from('group_next_session_reminders')
         .update({
@@ -64,7 +74,6 @@ export function useNextSessionReminders() {
         prev.map(r => r.id === existing.id ? { ...r, ...data, updated_at: new Date().toISOString() } : r)
       );
     } else {
-      // Insert new
       const { data: newReminder, error } = await supabase
         .from('group_next_session_reminders')
         .insert([{
@@ -77,6 +86,21 @@ export function useNextSessionReminders() {
       if (error) throw error;
       
       setReminders(prev => [...prev, newReminder as NextSessionReminder]);
+    }
+
+    // Also save to log for history
+    const hasContent = data.homework || data.recitation || data.exam || data.sheet || data.note;
+    if (hasContent) {
+      await supabase
+        .from('next_session_reminder_log')
+        .insert([{
+          group_id: groupId,
+          homework: data.homework || null,
+          recitation: data.recitation || null,
+          exam: data.exam || null,
+          sheet: data.sheet || null,
+          note: data.note || null,
+        }]);
     }
   };
 
@@ -117,6 +141,33 @@ export function useNextSessionReminders() {
     return !!(reminder.homework || reminder.recitation || reminder.exam || reminder.sheet || reminder.note);
   };
 
+  // Fetch history log for a group
+  const fetchReminderLog = async (groupId: string): Promise<ReminderLogEntry[]> => {
+    const { data, error } = await supabase
+      .from('next_session_reminder_log')
+      .select('*')
+      .eq('group_id', groupId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    
+    if (error) {
+      console.error('Error fetching reminder log:', error);
+      return [];
+    }
+    return (data as ReminderLogEntry[]) || [];
+  };
+
+  // Load a specific log entry back into the current reminder
+  const restoreFromLog = async (groupId: string, logEntry: ReminderLogEntry) => {
+    await upsertReminder(groupId, {
+      homework: logEntry.homework,
+      recitation: logEntry.recitation,
+      exam: logEntry.exam,
+      sheet: logEntry.sheet,
+      note: logEntry.note,
+    });
+  };
+
   return {
     reminders,
     loading,
@@ -124,6 +175,8 @@ export function useNextSessionReminders() {
     upsertReminder,
     clearReminder,
     hasReminder,
+    fetchReminderLog,
+    restoreFromLog,
     refetch: fetchReminders,
   };
 }
