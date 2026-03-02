@@ -570,6 +570,47 @@ export type Database = {
           },
         ]
       }
+      next_session_reminder_log: {
+        Row: {
+          created_at: string
+          exam: string | null
+          group_id: string
+          homework: string | null
+          id: string
+          note: string | null
+          recitation: string | null
+          sheet: string | null
+        }
+        Insert: {
+          created_at?: string
+          exam?: string | null
+          group_id: string
+          homework?: string | null
+          id?: string
+          note?: string | null
+          recitation?: string | null
+          sheet?: string | null
+        }
+        Update: {
+          created_at?: string
+          exam?: string | null
+          group_id?: string
+          homework?: string | null
+          id?: string
+          note?: string | null
+          recitation?: string | null
+          sheet?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "next_session_reminder_log_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_log: {
         Row: {
           body: string

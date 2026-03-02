@@ -67,7 +67,7 @@ export default function Attendance() {
   const { groups, loading: groupsLoading, getTodayGroups, getGroupById } = useGroups();
   const { loading: paymentsLoading, isMonthPaid } = usePayments();
   const { exams, results, loading: examsLoading } = useExams();
-  const { lessons, sheets, recitations, loading: lessonsLoading, toggleHomework, getHomeworkStatus } = useLessons();
+  const { lessons, sheets, recitations, loading: lessonsLoading, toggleHomework, getHomeworkStatus, addLesson } = useLessons();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
   const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
@@ -177,6 +177,29 @@ export default function Attendance() {
         if (student.group_id) return l.group_id === student.group_id;
         return selectedGroup !== 'all' ? l.group_id === selectedGroup : false;
       }) || null;
+  };
+
+  // Auto-create lesson for homework if none exists
+  const getOrCreateLessonForHomework = async (studentId: string) => {
+    const existing = getTodayLessonForStudent(studentId);
+    if (existing) return existing;
+    const student = students.find(s => s.id === studentId);
+    if (!student) return null;
+    const groupId = student.group_id || (selectedGroup !== 'all' ? selectedGroup : null);
+    if (!groupId) return null;
+    try {
+      const lesson = await addLesson({
+        name: `حصة ${selectedDate}`,
+        date: selectedDate,
+        grade: student.grade,
+        group_id: groupId,
+        sheet_max_score: 10,
+        recitation_max_score: 10,
+      });
+      return lesson;
+    } catch {
+      return null;
+    }
   };
 
   const parseTimeToDate = (dateIso: string, timeHHmm: string) => {
@@ -991,16 +1014,20 @@ export default function Attendance() {
                           </div>
                           {(() => {
                             const todayLesson = getTodayLessonForStudent(student.id);
-                            if (!todayLesson) return null;
-                            const hwStatus = getHomeworkStatus(todayLesson.id, student.id);
+                            const hwStatus = todayLesson ? getHomeworkStatus(todayLesson.id, student.id) : null;
                             const isDone = hwStatus === 'done';
                             return (
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   id={`hw-${student.id}`}
                                   checked={isDone}
-                                  onCheckedChange={(checked) => {
-                                    toggleHomework(todayLesson.id, student.id, checked === true);
+                                  onCheckedChange={async (checked) => {
+                                    const lesson = todayLesson || await getOrCreateLessonForHomework(student.id);
+                                    if (!lesson) {
+                                      toast.error('تعذر إنشاء الحصة لتسجيل الواجب');
+                                      return;
+                                    }
+                                    toggleHomework(lesson.id, student.id, checked === true);
                                   }}
                                   className="h-5 w-5"
                                 />

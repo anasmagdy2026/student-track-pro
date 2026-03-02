@@ -21,6 +21,7 @@ import { MonthlyUnpaidReport } from '@/components/MonthlyUnpaidReport';
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -92,7 +93,9 @@ export default function Payments() {
     studentId: string;
     studentName: string;
     amount: number;
-  }>({ open: false, studentId: '', studentName: '', amount: 0 });
+    fullAmount: number;
+    fraction: 'full' | 'half' | 'quarter';
+  }>({ open: false, studentId: '', studentName: '', amount: 0, fullAmount: 0, fraction: 'full' });
 
   // تأكيد الاسترداد
   const [confirmRefund, setConfirmRefund] = useState<{
@@ -142,7 +145,7 @@ export default function Payments() {
       }
       await addPayment(studentId, selectedMonth, amount);
       toast.success('✅ تم تسجيل الدفع بنجاح! شكراً لك.');
-      setConfirmPayment({ open: false, studentId: '', studentName: '', amount: 0 });
+      setConfirmPayment({ open: false, studentId: '', studentName: '', amount: 0, fullAmount: 0, fraction: 'full' });
     } catch (error) {
       toast.error('حدث خطأ أثناء تسجيل الدفع');
     }
@@ -165,7 +168,16 @@ export default function Payments() {
   };
 
   const openPaymentConfirm = (studentId: string, studentName: string, amount: number) => {
-    setConfirmPayment({ open: true, studentId, studentName, amount });
+    setConfirmPayment({ open: true, studentId, studentName, amount, fullAmount: amount, fraction: 'full' });
+  };
+
+  const handleFractionChange = (fraction: 'full' | 'half' | 'quarter') => {
+    const multiplier = fraction === 'full' ? 1 : fraction === 'half' ? 0.5 : 0.25;
+    setConfirmPayment(prev => ({
+      ...prev,
+      fraction,
+      amount: Math.round(prev.fullAmount * multiplier),
+    }));
   };
 
   const openRefundConfirm = (paymentId: string, studentName: string) => {
@@ -541,15 +553,45 @@ export default function Payments() {
         </Card>
 
         {/* تأكيد الدفع */}
-        <ConfirmDialog
-          open={confirmPayment.open}
-          onOpenChange={(open) => setConfirmPayment({ ...confirmPayment, open })}
-          title="تأكيد الدفع"
-          description={`هل أنت متأكد من تسجيل دفع ${confirmPayment.amount} جنيه للطالب ${confirmPayment.studentName}؟`}
-          confirmText="نعم، سجل الدفع"
-          cancelText="إلغاء"
-          onConfirm={() => handlePayment(confirmPayment.studentId, confirmPayment.amount)}
-        />
+        <AlertDialog open={confirmPayment.open} onOpenChange={(open) => setConfirmPayment({ ...confirmPayment, open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>تأكيد الدفع</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-4">
+                  <p>تسجيل دفع للطالب {confirmPayment.studentName}</p>
+                  <div className="flex gap-2">
+                    {(['full', 'half', 'quarter'] as const).map((f) => {
+                      const label = f === 'full' ? 'شهر كامل' : f === 'half' ? 'نصف شهر' : 'ربع شهر';
+                      const multiplier = f === 'full' ? 1 : f === 'half' ? 0.5 : 0.25;
+                      const amt = Math.round(confirmPayment.fullAmount * multiplier);
+                      return (
+                        <Button
+                          key={f}
+                          size="sm"
+                          variant={confirmPayment.fraction === f ? 'default' : 'outline'}
+                          onClick={() => handleFractionChange(f)}
+                          className="flex-1"
+                        >
+                          {label}
+                          <br />
+                          <span className="text-xs">{amt} ج</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-center font-bold text-lg">المبلغ: {confirmPayment.amount} جنيه</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>إلغاء</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handlePayment(confirmPayment.studentId, confirmPayment.amount)}>
+                نعم، سجل الدفع
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* تأكيد الاسترداد */}
         <ConfirmDialog

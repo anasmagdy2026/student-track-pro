@@ -115,26 +115,32 @@ export default function PrintCards() {
         align-items: start;
       }
 
-      /* Card sizing: 86mm matches common ID card width */
+      /* Card sizing: 85mm x 50mm */
       .print-card {
-        width: 86mm;
+        width: 85mm;
+        height: 50mm;
         break-inside: avoid;
         page-break-inside: avoid;
+        overflow: hidden;
       }
       .print-card__inner {
         border: 2px solid rgba(0,0,0,0.08);
-        border-radius: 12px;
-        padding: 10mm;
+        border-radius: 10px;
+        padding: 3mm 5mm;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
-      .print-card__header { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8mm; }
-      .print-card__icon { width: 20px; height: 20px; }
-      .print-card__title { margin: 0; font-size: 16px; font-weight: 700; }
-      .print-card__qr { display: flex; justify-content: center; margin-bottom: 6mm; }
+      .print-card__header { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 2mm; }
+      .print-card__icon { width: 14px; height: 14px; }
+      .print-card__title { margin: 0; font-size: 11px; font-weight: 700; }
+      .print-card__qr { display: flex; justify-content: center; margin-bottom: 2mm; }
       .print-card__info { text-align: center; }
-      .print-card__name { font-size: 18px; font-weight: 800; margin-bottom: 3mm; }
-      .print-card__code { margin-bottom: 3mm; }
-      .print-card__group { font-size: 12px; color: #6b7280; margin-top: 2mm; }
-      .print-card__footer { margin-top: 6mm; padding-top: 3mm; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280; }
+      .print-card__name { font-size: 13px; font-weight: 800; margin-bottom: 1mm; }
+      .print-card__code { margin-bottom: 1mm; }
+      .print-card__group { font-size: 9px; color: #6b7280; margin-top: 1mm; }
+      .print-card__footer { margin-top: 2mm; padding-top: 1mm; border-top: 1px solid #e5e7eb; font-size: 8px; color: #6b7280; }
     </style>
   </head>
   <body>
