@@ -236,7 +236,7 @@ export default function StudentProfile() {
           recitationScore: recitation?.score ?? null,
           sheetMax: lesson.sheet_max_score,
           recitationMax: lesson.recitation_max_score,
-          homeworkDone: hw ? hw.status === 'done' : null,
+          homeworkDone: hw ? hw.status === 'done' : false,
         };
       })
       .sort((a, b) => a.lessonName.localeCompare(b.lessonName, 'ar'));
@@ -862,35 +862,55 @@ export default function StudentProfile() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {filteredHomework.length > 0 ? (
-              <div className="space-y-2">
-                {filteredHomework.map((hw) => {
-                  const lesson = getLessonById(hw.lesson_id);
-                  if (!lesson) return null;
-                  const isDone = hw.status === 'done';
-                  return (
+            {(() => {
+              // Build complete homework view: explicit records + lessons attended without homework record (treated as not_done)
+              const studentLessons = lessons
+                .filter(l => l.grade === student.grade)
+                .filter(l => !student.group_id || !l.group_id || l.group_id === student.group_id)
+                .filter(l => filterMonth === 'all' || l.date.startsWith(filterMonth));
+              
+              const hwMap = new Map(studentHomework.map(h => [h.lesson_id, h]));
+              
+              const allHomeworkEntries = studentLessons.map(lesson => {
+                const hw = hwMap.get(lesson.id);
+                return {
+                  lessonId: lesson.id,
+                  lessonName: lesson.name,
+                  lessonDate: lesson.date,
+                  isDone: hw ? hw.status === 'done' : false,
+                  hasRecord: !!hw,
+                };
+              }).sort((a, b) => b.lessonDate.localeCompare(a.lessonDate));
+
+              // Only show lessons where student had attendance
+              const attendedDates = new Set(attendance.filter(a => a.present).map(a => a.date));
+              const relevantEntries = allHomeworkEntries.filter(e => attendedDates.has(e.lessonDate));
+
+              if (relevantEntries.length === 0) {
+                return <p className="text-center text-muted-foreground py-4">لا توجد بيانات واجبات</p>;
+              }
+
+              return (
+                <div className="space-y-2">
+                  {relevantEntries.map((entry) => (
                     <div
-                      key={hw.id}
-                      className={`flex items-center justify-between p-3 rounded-xl ${isDone ? 'bg-success/10' : 'bg-destructive/10'}`}
+                      key={entry.lessonId}
+                      className={`flex items-center justify-between p-3 rounded-xl ${entry.isDone ? 'bg-success/10' : 'bg-destructive/10'}`}
                     >
                       <div>
-                        <p className="font-medium">{lesson.name}</p>
+                        <p className="font-medium">{entry.lessonName}</p>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(lesson.date).toLocaleDateString('ar-EG')}
+                          {new Date(entry.lessonDate).toLocaleDateString('ar-EG')}
                         </p>
                       </div>
-                      <Badge className={isDone ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}>
-                        {isDone ? 'حل الواجب' : 'لم يحل'}
+                      <Badge className={entry.isDone ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}>
+                        {entry.isDone ? 'حل الواجب' : 'لم يحل'}
                       </Badge>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-4">
-                لا توجد بيانات واجبات
-              </p>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
