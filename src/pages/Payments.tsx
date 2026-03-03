@@ -185,7 +185,17 @@ export default function Payments() {
   };
 
   const processStudentCode = (code: string) => {
-    const student = getStudentByCode(code);
+    // Search by code first, then by name
+    let student = getStudentByCode(code);
+    if (!student) {
+      const matches = students.filter(s => s.name.includes(code));
+      if (matches.length === 1) {
+        student = matches[0];
+      } else if (matches.length > 1) {
+        toast.info(`تم العثور على ${matches.length} طالب بنفس الاسم، حدد من القائمة`);
+        return;
+      }
+    }
     if (student) {
       if (isBlocked(student.id)) {
         showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بالدفع/الإجراءات أثناء التجميد.');
@@ -198,7 +208,7 @@ export default function Payments() {
       }
       setStudentCode('');
     } else {
-      toast.error('كود الطالب غير موجود');
+      toast.error('لم يتم العثور على طالب بهذا الكود أو الاسم');
     }
   };
 
@@ -332,7 +342,7 @@ export default function Payments() {
                   <Input
                     value={studentCode}
                     onChange={(e) => setStudentCode(e.target.value)}
-                    placeholder="أدخل كود الطالب..."
+                    placeholder="أدخل كود أو اسم الطالب..."
                     className="pr-10"
                     dir="ltr"
                   />

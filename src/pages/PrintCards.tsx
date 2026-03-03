@@ -115,10 +115,10 @@ export default function PrintCards() {
         align-items: start;
       }
 
-      /* Card sizing: 85mm x 50mm */
+      /* Card sizing: 3.37in x 2.125in */
       .print-card {
-        width: 85mm;
-        height: 50mm;
+        width: 3.37in;
+        height: 2.125in;
         break-inside: avoid;
         page-break-inside: avoid;
         overflow: hidden;

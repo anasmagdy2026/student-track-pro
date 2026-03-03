@@ -1055,17 +1055,27 @@ export default function Attendance() {
                       </div>
 
                       <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
-                        {isPresent && studentGroup?.time && (
+                        {isPresent && (
                           (() => {
+                            const checkInTime = attendance?.checked_in_at
+                              ? new Date(attendance.checked_in_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+                              : null;
                             const late = getLateMinutes(student.id);
-                            if (late !== null && late > 0) {
-                              return (
-                                <span className="text-xs px-2 py-1 rounded bg-warning/10 text-warning" dir="rtl">
-                                  متأخر {late} د
-                                </span>
-                              );
-                            }
-                            return null;
+                            return (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {checkInTime && (
+                                  <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {checkInTime}
+                                  </span>
+                                )}
+                                {late !== null && late > 0 && (
+                                  <span className="text-xs px-2 py-1 rounded bg-warning/10 text-warning" dir="rtl">
+                                    متأخر {late} د
+                                  </span>
+                                )}
+                              </div>
+                            );
                           })()
                         )}
 
