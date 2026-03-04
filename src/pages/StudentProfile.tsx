@@ -863,7 +863,6 @@ export default function StudentProfile() {
           </CardHeader>
           <CardContent>
             {(() => {
-              // Build complete homework view: explicit records + lessons attended without homework record (treated as not_done)
               const studentLessons = lessons
                 .filter(l => l.grade === student.grade)
                 .filter(l => !student.group_id || !l.group_id || l.group_id === student.group_id)
@@ -882,7 +881,6 @@ export default function StudentProfile() {
                 };
               }).sort((a, b) => b.lessonDate.localeCompare(a.lessonDate));
 
-              // Only show lessons where student had attendance
               const attendedDates = new Set(attendance.filter(a => a.present).map(a => a.date));
               const relevantEntries = allHomeworkEntries.filter(e => attendedDates.has(e.lessonDate));
 
@@ -891,23 +889,25 @@ export default function StudentProfile() {
               }
 
               return (
-                <div className="space-y-2">
-                  {relevantEntries.map((entry) => (
-                    <div
-                      key={entry.lessonId}
-                      className={`flex items-center justify-between p-3 rounded-xl ${entry.isDone ? 'bg-success/10' : 'bg-destructive/10'}`}
-                    >
-                      <div>
-                        <p className="font-medium">{entry.lessonName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(entry.lessonDate).toLocaleDateString('ar-EG')}
+                <div className="space-y-3">
+                  {relevantEntries.map((entry) => {
+                    const d = new Date(`${entry.lessonDate}T00:00:00`);
+                    const dayName = d.toLocaleDateString('ar-EG', { weekday: 'long' });
+                    const dayNum = d.getDate();
+                    const monthNum = d.getMonth() + 1;
+                    return (
+                      <div
+                        key={entry.lessonId}
+                        className={`p-4 rounded-xl border ${entry.isDone ? 'bg-success/10 border-success/30' : 'bg-destructive/10 border-destructive/30'}`}
+                      >
+                        <p className="text-sm font-medium">📌 التاريخ: {dayName} {dayNum}/{monthNum}</p>
+                        <p className="text-sm font-medium mt-1">📘 الواجب: {entry.lessonName}</p>
+                        <p className="text-sm font-bold mt-1">
+                          {entry.isDone ? '✅ الحالة: تم الحل' : '❌ الحالة: لم يحل'}
                         </p>
                       </div>
-                      <Badge className={entry.isDone ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}>
-                        {entry.isDone ? 'حل الواجب' : 'لم يحل'}
-                      </Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })()}

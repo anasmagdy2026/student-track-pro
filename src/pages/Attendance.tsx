@@ -44,6 +44,7 @@ import {
   createAbsenceMessage,
   createLateMessageForParent,
   createLateMessageForStudent,
+  createHomeworkMessage,
 } from '@/utils/whatsapp';
 import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine, XCircle, Clock } from 'lucide-react';
@@ -738,6 +739,37 @@ export default function Attendance() {
     toast.success('تم فتح الواتساب');
   };
 
+  // Homework WhatsApp send
+  const handleSendHomeworkMessage = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) return;
+    const todayLesson = getTodayLessonForStudent(studentId);
+    const hwStatus = todayLesson ? getHomeworkStatus(todayLesson.id, studentId) : null;
+    const isDone = hwStatus === 'done';
+    const lessonName = todayLesson?.name || `حصة ${selectedDate}`;
+    const message = createHomeworkMessage(student.name, lessonName, selectedDate, isDone);
+    sendWhatsAppMessage(student.parent_phone, message);
+    toast.success('تم فتح الواتساب');
+  };
+
+  const handleSendHomeworkToGroup = async () => {
+    if (selectedGroup === 'all') {
+      toast.error('اختر مجموعة أولاً');
+      return;
+    }
+    for (let i = 0; i < filteredStudents.length; i++) {
+      const student = filteredStudents[i];
+      const todayLesson = getTodayLessonForStudent(student.id);
+      const hwStatus = todayLesson ? getHomeworkStatus(todayLesson.id, student.id) : null;
+      const isDone = hwStatus === 'done';
+      const lessonName = todayLesson?.name || `حصة ${selectedDate}`;
+      const message = createHomeworkMessage(student.name, lessonName, selectedDate, isDone);
+      sendWhatsAppMessage(student.parent_phone, message);
+      if (i < filteredStudents.length - 1) await new Promise(r => setTimeout(r, 500));
+    }
+    toast.success(`تم إرسال ${filteredStudents.length} رسالة`);
+  };
+
   const presentCount = filteredStudents.filter((s) => {
     const att = getStudentAttendance(s.id);
     return att?.present;
@@ -822,6 +854,10 @@ export default function Attendance() {
                 عرض غياب اليوم
               </Button>
             </Link>
+            <Button onClick={handleSendHomeworkToGroup} variant="outline" className="gap-2">
+              <MessageCircle className="h-5 w-5" />
+              إرسال الواجب للمجموعة
+            </Button>
             <Button onClick={handleMarkAllPresent} className="gap-2">
               <UserCheck className="h-5 w-5" />
               تسجيل حضور الكل
@@ -1037,6 +1073,15 @@ export default function Attendance() {
                                 >
                                   الواجب
                                 </label>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  onClick={() => handleSendHomeworkMessage(student.id)}
+                                  title="إرسال حالة الواجب للولي"
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                </Button>
                               </div>
                             );
                           })()}
