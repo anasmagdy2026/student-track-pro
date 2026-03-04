@@ -155,6 +155,31 @@ ${groupLine}
 مع تحيات ${teacher}`;
 };
 
+// رسالة الواجب
+export const createHomeworkMessage = (
+  studentName: string,
+  lessonName: string,
+  date: string,
+  isDone: boolean,
+  teacherName = 'مستر/ محمد مجدي',
+) => {
+  const d = new Date(`${date}T00:00:00`);
+  const dayName = d.toLocaleDateString('ar-EG', { weekday: 'long' });
+  const dayNum = d.getDate();
+  const monthNum = d.getMonth() + 1;
+  const status = isDone ? 'تم الحل ✅' : 'لم يحل ❌';
+
+  return `السلام عليكم ورحمة الله وبركاته
+
+📌 التاريخ: ${dayName} ${dayNum}/${monthNum}
+📘 الواجب: ${lessonName}
+${isDone ? '✅' : '❌'} الحالة: ${status}
+
+الطالب/ة: ${studentName}
+
+مع تحيات ${teacherName}`;
+};
+
 // رسالة المطلوب للحصة الجاية
 export const createNextSessionReminderMessage = (
   studentName: string,
