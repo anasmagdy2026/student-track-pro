@@ -2,15 +2,21 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { NextSessionReminder } from '@/hooks/useNextSessionReminders';
 import { Group, Student } from '@/types';
-import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye } from 'lucide-react';
+import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye, Users, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { sendWhatsAppMessage, createNextSessionReminderMessage } from '@/utils/whatsapp';
 import { toast } from 'sonner';
 import { MessagePreviewDialog } from '@/components/MessagePreviewDialog';
 
-// Helper to send WhatsApp to multiple students in sequence with slight delay
 const sendWhatsAppToMultiple = async (
   students: Student[],
   messageCreator: (student: Student) => string
@@ -19,7 +25,6 @@ const sendWhatsAppToMultiple = async (
     const student = students[i];
     const phone = student.student_phone || student.parent_phone;
     const message = messageCreator(student);
-    
     setTimeout(() => {
       sendWhatsAppMessage(phone, message);
     }, i * 500);
@@ -42,23 +47,13 @@ export function NextSessionReminderCard({
   onSendWhatsApp 
 }: NextSessionReminderCardProps) {
   const [showPreview, setShowPreview] = useState(false);
+  const [sendMode, setSendMode] = useState<'individual' | 'group'>('group');
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   
   const hasContent = reminder.homework || reminder.recitation || reminder.exam || reminder.sheet || reminder.note;
   
   if (!hasContent) return null;
 
-  // Build content text for template
-  const buildContentText = () => {
-    const parts: string[] = [];
-    if (reminder.homework) parts.push(`الواجب: ${reminder.homework}`);
-    if (reminder.recitation) parts.push(`التسميع: ${reminder.recitation}`);
-    if (reminder.exam) parts.push(`الامتحان: ${reminder.exam}`);
-    if (reminder.sheet) parts.push(`الشيت: ${reminder.sheet}`);
-    if (reminder.note) parts.push(`ملاحظات: ${reminder.note}`);
-    return parts.join('\n');
-  };
-
-  // Use the same function for both preview and send to ensure consistency
   const buildMessage = (student: Student) => {
     return createNextSessionReminderMessage(student.name, group.name, {
       homework: reminder.homework,
@@ -69,7 +64,6 @@ export function NextSessionReminderCard({
     });
   };
 
-  // Template for preview - uses same function as actual send
   const messageTemplate = createNextSessionReminderMessage('{studentName}', group.name, {
     homework: reminder.homework,
     recitation: reminder.recitation,
@@ -78,7 +72,19 @@ export function NextSessionReminderCard({
     note: reminder.note,
   });
 
-  const handleOpenPreview = () => {
+  const handleSendIndividual = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) {
+      toast.error('اختر طالب أولاً');
+      return;
+    }
+    const phone = student.student_phone || student.parent_phone;
+    const message = buildMessage(student);
+    sendWhatsAppMessage(phone, message);
+    toast.success(`تم فتح الواتساب لـ ${student.name}`);
+  };
+
+  const handleOpenGroupPreview = () => {
     if (students.length === 0) {
       toast.error('لا يوجد طلاب في هذه المجموعة');
       return;
@@ -90,11 +96,69 @@ export function NextSessionReminderCard({
     sendWhatsAppToMultiple(students, buildMessage);
     toast.success(`جاري فتح الواتساب لـ ${students.length} طالب...`);
     setShowPreview(false);
-
-    if (onSendWhatsApp) {
-      onSendWhatsApp();
-    }
+    if (onSendWhatsApp) onSendWhatsApp();
   };
+
+  const renderSendOptions = () => (
+    <div className="mt-3 space-y-2 border-t pt-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          size="sm"
+          variant={sendMode === 'individual' ? 'default' : 'outline'}
+          onClick={() => setSendMode('individual')}
+          className="gap-1 text-xs"
+        >
+          <User className="h-3 w-3" />
+          إرسال لطالب
+        </Button>
+        <Button
+          size="sm"
+          variant={sendMode === 'group' ? 'default' : 'outline'}
+          onClick={() => setSendMode('group')}
+          className="gap-1 text-xs"
+        >
+          <Users className="h-3 w-3" />
+          إرسال للمجموعة
+        </Button>
+      </div>
+
+      {sendMode === 'individual' && (
+        <div className="flex items-center gap-2">
+          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+            <SelectTrigger className="flex-1 h-8 text-xs">
+              <SelectValue placeholder="اختر طالب..." />
+            </SelectTrigger>
+            <SelectContent>
+              {students.map(s => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            onClick={() => handleSendIndividual(selectedStudentId)}
+            disabled={!selectedStudentId}
+            className="gap-1 text-xs"
+          >
+            <MessageCircle className="h-3 w-3" />
+            إرسال
+          </Button>
+        </div>
+      )}
+
+      {sendMode === 'group' && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleOpenGroupPreview}
+          className="gap-1 text-xs w-full"
+        >
+          <Eye className="h-3 w-3" />
+          معاينة وإرسال للمجموعة ({students.length} طالب)
+        </Button>
+      )}
+    </div>
+  );
 
   if (compact) {
     return (
@@ -137,19 +201,7 @@ export function NextSessionReminderCard({
               </Badge>
             )}
           </div>
-          {students.length > 0 && (
-            <div className="mt-2 flex justify-end">
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={handleOpenPreview}
-                className="gap-1 text-xs"
-              >
-                <Eye className="h-3 w-3" />
-                معاينة وإرسال
-              </Button>
-            </div>
-          )}
+          {students.length > 0 && renderSendOptions()}
         </div>
 
         <MessagePreviewDialog
@@ -216,18 +268,10 @@ export function NextSessionReminderCard({
               <span className="text-muted-foreground">{reminder.note}</span>
             </div>
           )}
-          <div className="flex justify-end pt-2 gap-2">
-            {students.length > 0 && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={handleOpenPreview}
-                className="gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                معاينة وإرسال واتساب
-              </Button>
-            )}
+          
+          {students.length > 0 && renderSendOptions()}
+
+          <div className="flex justify-end pt-2">
             <Link to={`/attendance?group=${group.id}`}>
               <Button size="sm" variant="outline">
                 فتح الحضور

@@ -854,10 +854,6 @@ export default function Attendance() {
                 عرض غياب اليوم
               </Button>
             </Link>
-            <Button onClick={handleSendHomeworkToGroup} variant="outline" className="gap-2">
-              <MessageCircle className="h-5 w-5" />
-              إرسال الواجب للمجموعة
-            </Button>
             <Button onClick={handleMarkAllPresent} className="gap-2">
               <UserCheck className="h-5 w-5" />
               تسجيل حضور الكل
@@ -1073,15 +1069,6 @@ export default function Attendance() {
                                 >
                                   الواجب
                                 </label>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-6 w-6"
-                                  onClick={() => handleSendHomeworkMessage(student.id)}
-                                  title="إرسال حالة الواجب للولي"
-                                >
-                                  <MessageCircle className="h-3 w-3" />
-                                </Button>
                               </div>
                             );
                           })()}
