@@ -1,0 +1,1 @@
+ALTER TABLE public.groups ADD COLUMN whatsapp_group_link text DEFAULT NULL;
