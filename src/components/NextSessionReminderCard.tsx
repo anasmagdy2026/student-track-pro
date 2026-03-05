@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { NextSessionReminder } from '@/hooks/useNextSessionReminders';
 import { Group, Student } from '@/types';
-import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye, Users, User } from 'lucide-react';
+import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye, Users, User, Send, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { sendWhatsAppMessage, createNextSessionReminderMessage } from '@/utils/whatsapp';
 import { toast } from 'sonner';
