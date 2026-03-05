@@ -51,6 +51,7 @@ export function NextSessionReminderCard({
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   
   const hasContent = reminder.homework || reminder.recitation || reminder.exam || reminder.sheet || reminder.note;
+  const hasWhatsAppGroup = !!group.whatsapp_group_link;
   
   if (!hasContent) return null;
 
