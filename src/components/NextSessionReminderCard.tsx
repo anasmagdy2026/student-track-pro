@@ -103,23 +103,16 @@ export function NextSessionReminderCard({
     });
   };
 
-  const handleSendToWhatsAppGroup = async () => {
+  const handleSendToWhatsAppGroup = () => {
     if (!group.whatsapp_group_link) {
       toast.error('لم يتم إضافة رابط جروب الواتساب لهذه المجموعة');
       return;
     }
     const message = buildGroupMessage();
-    try {
-      await navigator.clipboard.writeText(message);
-      toast.success('تم نسخ الرسالة! سيتم فتح الجروب، الصق الرسالة هناك');
-      setTimeout(() => {
-        window.open(group.whatsapp_group_link!, '_blank');
-      }, 500);
-    } catch {
-      // fallback: open group link directly
-      window.open(group.whatsapp_group_link, '_blank');
-      toast.info('تم فتح الجروب، انسخ الرسالة يدوياً');
-    }
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+    toast.success('سيتم فتح واتساب، اختر الجروب وأرسل الرسالة');
   };
 
   const handleConfirmSend = () => {
