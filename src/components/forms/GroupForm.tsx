@@ -53,6 +53,7 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
   const [timeTo, setTimeTo] = useState(initialData?.time_to || '');
   const [hasFridaySession, setHasFridaySession] = useState(initialData?.has_friday_session || false);
   const [fridayTime, setFridayTime] = useState(initialData?.friday_time || '');
+  const [whatsappGroupLink, setWhatsappGroupLink] = useState(initialData?.whatsapp_group_link || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getPatternLabel = (valueDays: string[]) => {
