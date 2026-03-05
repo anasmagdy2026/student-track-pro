@@ -91,6 +91,7 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         time_to: timeTo || null,
         has_friday_session: hasFridaySession,
         friday_time: fridayTime || null,
+        whatsapp_group_link: whatsappGroupLink || null,
       });
     } finally {
       setIsSubmitting(false);
