@@ -377,6 +377,7 @@ export type Database = {
           time_from: string | null
           time_to: string | null
           updated_at: string
+          whatsapp_group_link: string | null
         }
         Insert: {
           created_at?: string
@@ -390,6 +391,7 @@ export type Database = {
           time_from?: string | null
           time_to?: string | null
           updated_at?: string
+          whatsapp_group_link?: string | null
         }
         Update: {
           created_at?: string
@@ -403,6 +405,7 @@ export type Database = {
           time_from?: string | null
           time_to?: string | null
           updated_at?: string
+          whatsapp_group_link?: string | null
         }
         Relationships: [
           {

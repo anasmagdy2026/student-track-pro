@@ -24,6 +24,7 @@ interface GroupFormProps {
     time_to?: string | null;
     has_friday_session?: boolean;
     friday_time?: string | null;
+    whatsapp_group_link?: string | null;
   };
   onSubmit: (data: {
     name: string;
@@ -34,6 +35,7 @@ interface GroupFormProps {
     time_to: string | null;
     has_friday_session: boolean;
     friday_time: string | null;
+    whatsapp_group_link: string | null;
   }) => void;
   isEdit?: boolean;
 }
@@ -51,6 +53,7 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
   const [timeTo, setTimeTo] = useState(initialData?.time_to || '');
   const [hasFridaySession, setHasFridaySession] = useState(initialData?.has_friday_session || false);
   const [fridayTime, setFridayTime] = useState(initialData?.friday_time || '');
+  const [whatsappGroupLink, setWhatsappGroupLink] = useState(initialData?.whatsapp_group_link || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getPatternLabel = (valueDays: string[]) => {
@@ -88,6 +91,7 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         time_to: timeTo || null,
         has_friday_session: hasFridaySession,
         friday_time: fridayTime || null,
+        whatsapp_group_link: whatsappGroupLink || null,
       });
     } finally {
       setIsSubmitting(false);
@@ -245,6 +249,20 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
             />
           </div>
         )}
+      </div>
+
+      {/* WhatsApp Group Link */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">رابط جروب الواتساب</label>
+        <Input
+          value={whatsappGroupLink}
+          onChange={(e) => setWhatsappGroupLink(e.target.value)}
+          placeholder="https://chat.whatsapp.com/..."
+          dir="ltr"
+        />
+        <p className="text-xs text-muted-foreground">
+          الصق رابط جروب الواتساب لإرسال المطلوب للمجموعة مباشرة
+        </p>
       </div>
 
       <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>

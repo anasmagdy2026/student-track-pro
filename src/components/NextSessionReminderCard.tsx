@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { NextSessionReminder } from '@/hooks/useNextSessionReminders';
 import { Group, Student } from '@/types';
-import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye, Users, User } from 'lucide-react';
+import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye, Users, User, Send, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { sendWhatsAppMessage, createNextSessionReminderMessage } from '@/utils/whatsapp';
 import { toast } from 'sonner';
@@ -51,6 +51,7 @@ export function NextSessionReminderCard({
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   
   const hasContent = reminder.homework || reminder.recitation || reminder.exam || reminder.sheet || reminder.note;
+  const hasWhatsAppGroup = !!group.whatsapp_group_link;
   
   if (!hasContent) return null;
 
@@ -90,6 +91,35 @@ export function NextSessionReminderCard({
       return;
     }
     setShowPreview(true);
+  };
+
+  const buildGroupMessage = () => {
+    return createNextSessionReminderMessage('الطلاب', group.name, {
+      homework: reminder.homework,
+      recitation: reminder.recitation,
+      exam: reminder.exam,
+      sheet: reminder.sheet,
+      note: reminder.note,
+    });
+  };
+
+  const handleSendToWhatsAppGroup = async () => {
+    if (!group.whatsapp_group_link) {
+      toast.error('لم يتم إضافة رابط جروب الواتساب لهذه المجموعة');
+      return;
+    }
+    const message = buildGroupMessage();
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.success('تم نسخ الرسالة! سيتم فتح الجروب، الصق الرسالة هناك');
+      setTimeout(() => {
+        window.open(group.whatsapp_group_link!, '_blank');
+      }, 500);
+    } catch {
+      // fallback: open group link directly
+      window.open(group.whatsapp_group_link, '_blank');
+      toast.info('تم فتح الجروب، انسخ الرسالة يدوياً');
+    }
   };
 
   const handleConfirmSend = () => {
@@ -147,15 +177,33 @@ export function NextSessionReminderCard({
       )}
 
       {sendMode === 'group' && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleOpenGroupPreview}
-          className="gap-1 text-xs w-full"
-        >
-          <Eye className="h-3 w-3" />
-          معاينة وإرسال للمجموعة ({students.length} طالب)
-        </Button>
+        <div className="space-y-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleOpenGroupPreview}
+            className="gap-1 text-xs w-full"
+          >
+            <Eye className="h-3 w-3" />
+            معاينة وإرسال فردي ({students.length} طالب)
+          </Button>
+          {hasWhatsAppGroup && (
+            <Button
+              size="sm"
+              variant="default"
+              onClick={handleSendToWhatsAppGroup}
+              className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Send className="h-3 w-3" />
+              إرسال لجروب الواتساب
+            </Button>
+          )}
+          {!hasWhatsAppGroup && (
+            <p className="text-xs text-muted-foreground text-center">
+              أضف رابط جروب الواتساب في إعدادات المجموعة لتتمكن من الإرسال المباشر
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
