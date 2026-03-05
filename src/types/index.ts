@@ -22,6 +22,7 @@ export interface Group {
   time_to?: string | null;
   has_friday_session?: boolean;
   friday_time?: string | null;
+  whatsapp_group_link?: string | null;
   created_at?: string;
   updated_at?: string;
 }

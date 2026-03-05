@@ -251,6 +251,20 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         )}
       </div>
 
+      {/* WhatsApp Group Link */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">رابط جروب الواتساب</label>
+        <Input
+          value={whatsappGroupLink}
+          onChange={(e) => setWhatsappGroupLink(e.target.value)}
+          placeholder="https://chat.whatsapp.com/..."
+          dir="ltr"
+        />
+        <p className="text-xs text-muted-foreground">
+          الصق رابط جروب الواتساب لإرسال المطلوب للمجموعة مباشرة
+        </p>
+      </div>
+
       <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
           <>
