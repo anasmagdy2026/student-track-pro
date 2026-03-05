@@ -24,6 +24,7 @@ interface GroupFormProps {
     time_to?: string | null;
     has_friday_session?: boolean;
     friday_time?: string | null;
+    whatsapp_group_link?: string | null;
   };
   onSubmit: (data: {
     name: string;
@@ -34,6 +35,7 @@ interface GroupFormProps {
     time_to: string | null;
     has_friday_session: boolean;
     friday_time: string | null;
+    whatsapp_group_link: string | null;
   }) => void;
   isEdit?: boolean;
 }
