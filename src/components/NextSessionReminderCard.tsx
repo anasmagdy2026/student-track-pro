@@ -93,6 +93,35 @@ export function NextSessionReminderCard({
     setShowPreview(true);
   };
 
+  const buildGroupMessage = () => {
+    return createNextSessionReminderMessage('الطلاب', group.name, {
+      homework: reminder.homework,
+      recitation: reminder.recitation,
+      exam: reminder.exam,
+      sheet: reminder.sheet,
+      note: reminder.note,
+    });
+  };
+
+  const handleSendToWhatsAppGroup = async () => {
+    if (!group.whatsapp_group_link) {
+      toast.error('لم يتم إضافة رابط جروب الواتساب لهذه المجموعة');
+      return;
+    }
+    const message = buildGroupMessage();
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.success('تم نسخ الرسالة! سيتم فتح الجروب، الصق الرسالة هناك');
+      setTimeout(() => {
+        window.open(group.whatsapp_group_link!, '_blank');
+      }, 500);
+    } catch {
+      // fallback: open group link directly
+      window.open(group.whatsapp_group_link, '_blank');
+      toast.info('تم فتح الجروب، انسخ الرسالة يدوياً');
+    }
+  };
+
   const handleConfirmSend = () => {
     sendWhatsAppToMultiple(students, buildMessage);
     toast.success(`جاري فتح الواتساب لـ ${students.length} طالب...`);
