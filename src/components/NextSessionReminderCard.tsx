@@ -131,79 +131,44 @@ export function NextSessionReminderCard({
 
   const renderSendOptions = () => (
     <div className="mt-3 space-y-2 border-t pt-3">
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* إرسال لطالب محدد */}
+      <div className="flex items-center gap-2">
+        <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+          <SelectTrigger className="flex-1 h-8 text-xs">
+            <SelectValue placeholder="اختر طالب للإرسال الفردي..." />
+          </SelectTrigger>
+          <SelectContent>
+            {students.map(s => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           size="sm"
-          variant={sendMode === 'individual' ? 'default' : 'outline'}
-          onClick={() => setSendMode('individual')}
+          onClick={() => handleSendIndividual(selectedStudentId)}
+          disabled={!selectedStudentId}
           className="gap-1 text-xs"
         >
           <User className="h-3 w-3" />
-          إرسال لطالب
-        </Button>
-        <Button
-          size="sm"
-          variant={sendMode === 'group' ? 'default' : 'outline'}
-          onClick={() => setSendMode('group')}
-          className="gap-1 text-xs"
-        >
-          <Users className="h-3 w-3" />
-          إرسال للمجموعة
+          إرسال
         </Button>
       </div>
 
-      {sendMode === 'individual' && (
-        <div className="flex items-center gap-2">
-          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="اختر طالب..." />
-            </SelectTrigger>
-            <SelectContent>
-              {students.map(s => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            size="sm"
-            onClick={() => handleSendIndividual(selectedStudentId)}
-            disabled={!selectedStudentId}
-            className="gap-1 text-xs"
-          >
-            <MessageCircle className="h-3 w-3" />
-            إرسال
-          </Button>
-        </div>
-      )}
-
-      {sendMode === 'group' && (
-        <div className="space-y-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleOpenGroupPreview}
-            className="gap-1 text-xs w-full"
-          >
-            <Eye className="h-3 w-3" />
-            معاينة وإرسال فردي ({students.length} طالب)
-          </Button>
-          {hasWhatsAppGroup && (
-            <Button
-              size="sm"
-              variant="default"
-              onClick={handleSendToWhatsAppGroup}
-              className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Send className="h-3 w-3" />
-              إرسال لجروب الواتساب
-            </Button>
-          )}
-          {!hasWhatsAppGroup && (
-            <p className="text-xs text-muted-foreground text-center">
-              أضف رابط جروب الواتساب في إعدادات المجموعة لتتمكن من الإرسال المباشر
-            </p>
-          )}
-        </div>
+      {/* إرسال لجروب الواتساب */}
+      {hasWhatsAppGroup ? (
+        <Button
+          size="sm"
+          variant="default"
+          onClick={handleSendToWhatsAppGroup}
+          className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
+        >
+          <Send className="h-3 w-3" />
+          إرسال لجروب الواتساب
+        </Button>
+      ) : (
+        <p className="text-xs text-muted-foreground text-center">
+          أضف رابط جروب الواتساب في إعدادات المجموعة لتتمكن من الإرسال المباشر
+        </p>
       )}
     </div>
   );
