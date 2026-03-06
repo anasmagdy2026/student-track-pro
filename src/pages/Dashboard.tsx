@@ -53,6 +53,10 @@ export default function Dashboard() {
   const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading || gradesLoading || groupsLoading || remindersLoading;
 
   const todayGroups = getTodayGroups();
+  const filteredDashboardGroups = selectedGrade === 'all' 
+    ? groups 
+    : groups.filter(g => g.grade === selectedGrade);
+
   const todayReminders = todayGroups
     .filter(g => hasReminder(g.id))
     .map(g => ({ group: g, reminder: getReminderByGroupId(g.id)! }));
