@@ -290,7 +290,7 @@ export default function Groups() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>تعديل المجموعة</DialogTitle>
                             <DialogDescription>قم بتعديل بيانات المجموعة</DialogDescription>

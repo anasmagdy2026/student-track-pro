@@ -122,25 +122,118 @@ export default function PrintCards() {
         break-inside: avoid;
         page-break-inside: avoid;
         overflow: hidden;
+        position: relative;
+        border-radius: 12px;
+        border: 3px solid #2d6b4f;
+        background: linear-gradient(135deg, #f8faf9 0%, #eef3f0 100%);
+      }
+      .print-card__border-text {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .print-card__border-text span {
+        position: absolute;
+        font-size: 6px;
+        font-weight: 700;
+        color: rgba(45,107,79,0.15);
+        letter-spacing: 2px;
+        white-space: nowrap;
+        font-family: Arial, sans-serif;
+      }
+      .print-card__border-text-top { top: 2px; left: 0; right: 0; text-align: center; }
+      .print-card__border-text-bottom { bottom: 2px; left: 0; right: 0; text-align: center; }
+      .print-card__border-text-left {
+        top: 50%; left: -30px;
+        transform: rotate(90deg) translateX(-50%);
+        transform-origin: center;
+      }
+      .print-card__border-text-right {
+        top: 50%; right: -30px;
+        transform: rotate(-90deg) translateX(50%);
+        transform-origin: center;
       }
       .print-card__inner {
-        border: 2px solid rgba(0,0,0,0.08);
-        border-radius: 10px;
-        padding: 3mm 5mm;
+        padding: 4mm 5mm 3mm;
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        position: relative;
+        z-index: 1;
       }
-      .print-card__header { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 2mm; }
-      .print-card__icon { width: 14px; height: 14px; }
-      .print-card__title { margin: 0; font-size: 11px; font-weight: 700; }
-      .print-card__qr { display: flex; justify-content: center; margin-bottom: 2mm; }
-      .print-card__info { text-align: center; }
-      .print-card__name { font-size: 13px; font-weight: 800; margin-bottom: 1mm; }
-      .print-card__code { margin-bottom: 1mm; }
-      .print-card__group { font-size: 9px; color: #6b7280; margin-top: 1mm; }
-      .print-card__footer { margin-top: 2mm; padding-top: 1mm; border-top: 1px solid #e5e7eb; font-size: 8px; color: #6b7280; }
+      .print-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 1mm;
+        background: linear-gradient(90deg, transparent, rgba(45,107,79,0.08), transparent);
+        padding: 1mm 0;
+        border-radius: 4px;
+      }
+      .print-card__laurel { font-size: 14px; }
+      .print-card__title {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 800;
+        color: #2d6b4f;
+      }
+      .print-card__body {
+        display: flex;
+        align-items: center;
+        gap: 4mm;
+        flex: 1;
+        direction: ltr;
+      }
+      .print-card__qr {
+        flex-shrink: 0;
+      }
+      .print-card__qr-frame {
+        background: white;
+        border: 2px solid rgba(45,107,79,0.2);
+        border-radius: 6px;
+        padding: 3px;
+      }
+      .print-card__info {
+        flex: 1;
+        text-align: right;
+        direction: rtl;
+      }
+      .print-card__name {
+        font-size: 15px;
+        font-weight: 800;
+        color: #1a1a1a;
+        margin-bottom: 2mm;
+        line-height: 1.3;
+      }
+      .print-card__code {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 1px;
+      }
+      .print-card__footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1mm;
+        padding-top: 1mm;
+        border-top: 1px solid rgba(45,107,79,0.15);
+      }
+      .print-card__footer-code {
+        font-size: 10px;
+        font-weight: 700;
+        color: #333;
+        font-family: 'Courier New', monospace;
+      }
+      .print-card__footer-grade {
+        font-size: 10px;
+        font-weight: 700;
+        color: #2d6b4f;
+      }
     </style>
   </head>
   <body>

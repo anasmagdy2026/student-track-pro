@@ -9,6 +9,13 @@ import { useGroups } from '@/hooks/useGroups';
 import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
 import { NextSessionReminderCard } from '@/components/NextSessionReminderCard';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Users,
   UserCheck,
   UserX,
@@ -18,10 +25,14 @@ import {
   FileText,
   AlertTriangle,
   ClipboardList,
+  BookOpen,
+  Plus,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PageLoading } from '@/components/PageLoading';
+import { NextSessionReminderDialog } from '@/components/NextSessionReminderDialog';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
   const { students, loading: studentsLoading } = useStudents();
