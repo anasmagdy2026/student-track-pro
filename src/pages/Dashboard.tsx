@@ -348,8 +348,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
-        </div>
-
         {/* Next Session Reminder Dialog */}
         {selectedGroupId && (
           <NextSessionReminderDialog
@@ -378,6 +376,7 @@ export default function Dashboard() {
             onRestoreLog={restoreFromLog}
           />
         )}
+        </div>
       )}
     </Layout>
   );
