@@ -213,6 +213,12 @@ export default function Dashboard() {
                   <span>تسجيل دفعة</span>
                 </Button>
               </Link>
+              <Link to="/lessons">
+                <Button variant="outline" className="w-full h-20 flex-col gap-2">
+                  <BookOpen className="h-6 w-6" />
+                  <span>إضافة حصة</span>
+                </Button>
+              </Link>
               <Link to="/exams">
                 <Button variant="outline" className="w-full h-20 flex-col gap-2">
                   <FileText className="h-6 w-6" />
@@ -222,6 +228,73 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Dashboard Next Session Reminder Widget */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-warning" />
+              المطلوب الحصة القادمة
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Select value={selectedGrade} onValueChange={(v) => { setSelectedGrade(v); setSelectedGroupId(''); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="السنة الدراسية" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل السنوات</SelectItem>
+                  {activeGradeLevels.map((g) => (
+                    <SelectItem key={g.code} value={g.code}>{g.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر المجموعة" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDashboardGroups.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.name} ({g.days.join(' - ')})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                onClick={() => {
+                  if (!selectedGroupId) {
+                    toast.error('اختر مجموعة أولاً');
+                    return;
+                  }
+                  setReminderDialogOpen(true);
+                }}
+                disabled={!selectedGroupId}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                إضافة / تعديل المطلوب
+              </Button>
+            </div>
+            
+            {selectedGroupId && hasReminder(selectedGroupId) && (
+              <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg">
+                {(() => {
+                  const r = getReminderByGroupId(selectedGroupId);
+                  const g = groups.find(gr => gr.id === selectedGroupId);
+                  if (!r || !g) return null;
+                  return (
+                    <NextSessionReminderCard 
+                      group={g} 
+                      reminder={r} 
+                      compact
+                      students={students.filter(s => s.group_id === g.id)}
+                    />
+                  );
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Next Session Reminders */}
         {todayReminders.length > 0 && (
