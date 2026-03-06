@@ -349,6 +349,35 @@ export default function Dashboard() {
           </Card>
         )}
         </div>
+
+        {/* Next Session Reminder Dialog */}
+        {selectedGroupId && (
+          <NextSessionReminderDialog
+            open={reminderDialogOpen}
+            onOpenChange={setReminderDialogOpen}
+            groupName={groups.find(g => g.id === selectedGroupId)?.name || ''}
+            groupId={selectedGroupId}
+            reminder={getReminderByGroupId(selectedGroupId)}
+            onSave={async (data) => {
+              try {
+                await upsertReminder(selectedGroupId, data);
+                toast.success('تم حفظ المطلوب للحصة الجاية');
+              } catch {
+                toast.error('حدث خطأ أثناء الحفظ');
+              }
+            }}
+            onClear={async () => {
+              try {
+                await clearReminder(selectedGroupId);
+                toast.success('تم مسح المطلوب');
+              } catch {
+                toast.error('حدث خطأ أثناء المسح');
+              }
+            }}
+            onFetchLog={fetchReminderLog}
+            onRestoreLog={restoreFromLog}
+          />
+        )}
       )}
     </Layout>
   );
