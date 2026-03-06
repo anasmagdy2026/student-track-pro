@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStudents } from '@/hooks/useStudents';
@@ -9,6 +10,13 @@ import { useGroups } from '@/hooks/useGroups';
 import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
 import { NextSessionReminderCard } from '@/components/NextSessionReminderCard';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Users,
   UserCheck,
   UserX,
@@ -18,10 +26,14 @@ import {
   FileText,
   AlertTriangle,
   ClipboardList,
+  BookOpen,
+  Plus,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PageLoading } from '@/components/PageLoading';
+import { NextSessionReminderDialog } from '@/components/NextSessionReminderDialog';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
   const { students, loading: studentsLoading } = useStudents();
@@ -30,11 +42,22 @@ export default function Dashboard() {
   const { exams, loading: examsLoading } = useExams();
   const { activeGradeLevels, loading: gradesLoading } = useGradeLevels();
   const { groups, loading: groupsLoading, getTodayGroups } = useGroups();
-  const { reminders, loading: remindersLoading, hasReminder, getReminderByGroupId } = useNextSessionReminders();
+  const { 
+    reminders, loading: remindersLoading, hasReminder, getReminderByGroupId,
+    upsertReminder, clearReminder, fetchReminderLog, restoreFromLog,
+  } = useNextSessionReminders();
+
+  const [selectedGrade, setSelectedGrade] = useState<string>('all');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
 
   const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading || gradesLoading || groupsLoading || remindersLoading;
 
   const todayGroups = getTodayGroups();
+  const filteredDashboardGroups = selectedGrade === 'all' 
+    ? groups 
+    : groups.filter(g => g.grade === selectedGrade);
+
   const todayReminders = todayGroups
     .filter(g => hasReminder(g.id))
     .map(g => ({ group: g, reminder: getReminderByGroupId(g.id)! }));
@@ -191,6 +214,12 @@ export default function Dashboard() {
                   <span>تسجيل دفعة</span>
                 </Button>
               </Link>
+              <Link to="/lessons">
+                <Button variant="outline" className="w-full h-20 flex-col gap-2">
+                  <BookOpen className="h-6 w-6" />
+                  <span>إضافة حصة</span>
+                </Button>
+              </Link>
               <Link to="/exams">
                 <Button variant="outline" className="w-full h-20 flex-col gap-2">
                   <FileText className="h-6 w-6" />
@@ -200,6 +229,73 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Dashboard Next Session Reminder Widget */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-warning" />
+              المطلوب الحصة القادمة
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Select value={selectedGrade} onValueChange={(v) => { setSelectedGrade(v); setSelectedGroupId(''); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="السنة الدراسية" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل السنوات</SelectItem>
+                  {activeGradeLevels.map((g) => (
+                    <SelectItem key={g.code} value={g.code}>{g.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر المجموعة" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDashboardGroups.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.name} ({g.days.join(' - ')})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                onClick={() => {
+                  if (!selectedGroupId) {
+                    toast.error('اختر مجموعة أولاً');
+                    return;
+                  }
+                  setReminderDialogOpen(true);
+                }}
+                disabled={!selectedGroupId}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                إضافة / تعديل المطلوب
+              </Button>
+            </div>
+            
+            {selectedGroupId && hasReminder(selectedGroupId) && (
+              <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg">
+                {(() => {
+                  const r = getReminderByGroupId(selectedGroupId);
+                  const g = groups.find(gr => gr.id === selectedGroupId);
+                  if (!r || !g) return null;
+                  return (
+                    <NextSessionReminderCard 
+                      group={g} 
+                      reminder={r} 
+                      compact
+                      students={students.filter(s => s.group_id === g.id)}
+                    />
+                  );
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Next Session Reminders */}
         {todayReminders.length > 0 && (
@@ -251,6 +347,34 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
+        )}
+        {/* Next Session Reminder Dialog */}
+        {selectedGroupId && (
+          <NextSessionReminderDialog
+            open={reminderDialogOpen}
+            onOpenChange={setReminderDialogOpen}
+            groupName={groups.find(g => g.id === selectedGroupId)?.name || ''}
+            groupId={selectedGroupId}
+            reminder={getReminderByGroupId(selectedGroupId)}
+            onSave={async (data) => {
+              try {
+                await upsertReminder(selectedGroupId, data);
+                toast.success('تم حفظ المطلوب للحصة الجاية');
+              } catch {
+                toast.error('حدث خطأ أثناء الحفظ');
+              }
+            }}
+            onClear={async () => {
+              try {
+                await clearReminder(selectedGroupId);
+                toast.success('تم مسح المطلوب');
+              } catch {
+                toast.error('حدث خطأ أثناء المسح');
+              }
+            }}
+            onFetchLog={fetchReminderLog}
+            onRestoreLog={restoreFromLog}
+          />
         )}
         </div>
       )}
