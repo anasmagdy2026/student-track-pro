@@ -147,7 +147,7 @@ export default function Groups() {
                   إضافة مجموعة جديدة
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>إضافة مجموعة جديدة</DialogTitle>
                   <DialogDescription>أدخل بيانات المجموعة الجديدة</DialogDescription>
