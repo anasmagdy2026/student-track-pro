@@ -41,7 +41,14 @@ export default function Dashboard() {
   const { exams, loading: examsLoading } = useExams();
   const { activeGradeLevels, loading: gradesLoading } = useGradeLevels();
   const { groups, loading: groupsLoading, getTodayGroups } = useGroups();
-  const { reminders, loading: remindersLoading, hasReminder, getReminderByGroupId } = useNextSessionReminders();
+  const { 
+    reminders, loading: remindersLoading, hasReminder, getReminderByGroupId,
+    upsertReminder, clearReminder, fetchReminderLog, restoreFromLog,
+  } = useNextSessionReminders();
+
+  const [selectedGrade, setSelectedGrade] = useState<string>('all');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
 
   const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading || gradesLoading || groupsLoading || remindersLoading;
 
