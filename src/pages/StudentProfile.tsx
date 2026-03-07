@@ -32,6 +32,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useGroups } from '@/hooks/useGroups';
 import { useLessons } from '@/hooks/useLessons';
+import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
 import { supabase } from '@/integrations/supabase/client';
