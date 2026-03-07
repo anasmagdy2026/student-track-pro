@@ -53,6 +53,7 @@ export function NextSessionReminderDialog({
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [logEntries, setLogEntries] = useState<ReminderLogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
