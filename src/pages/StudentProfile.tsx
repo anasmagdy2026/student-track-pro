@@ -503,6 +503,7 @@ export default function StudentProfile() {
                       paymentStatus={reportData.paymentStatus}
                       lessonScores={reportData.lessonScores}
                       examResults={reportData.examResults}
+                      reminderHomeworks={reminderLogs}
                     />
                   )}
                 </div>
