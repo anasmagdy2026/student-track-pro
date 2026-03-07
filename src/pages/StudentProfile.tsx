@@ -94,6 +94,13 @@ export default function StudentProfile() {
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
+  const student = getStudentById(id || '');
+  const attendance = getStudentAttendance(id || '');
+  const attendanceStats = getAttendanceStats(id || '');
+  const payments = getStudentPayments(id || '');
+  const examResults = getStudentResultsWithExams(id || '');
+  const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
+
   // Fetch reminder logs for the report month
   useEffect(() => {
     if (!student?.group_id) return;
@@ -105,13 +112,6 @@ export default function StudentProfile() {
       setReminderLogs(filtered);
     });
   }, [reportMonth, student?.group_id, fetchReminderLog]);
-
-  const student = getStudentById(id || '');
-  const attendance = getStudentAttendance(id || '');
-  const attendanceStats = getAttendanceStats(id || '');
-  const payments = getStudentPayments(id || '');
-  const examResults = getStudentResultsWithExams(id || '');
-  const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
 
   const activeBlock = useMemo(() => {
     if (!student) return null;
