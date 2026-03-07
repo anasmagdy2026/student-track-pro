@@ -41,6 +41,7 @@ export default function Groups() {
     getReminderByGroupId, 
     upsertReminder, 
     clearReminder, 
+    archiveAndClear,
     hasReminder,
     fetchReminderLog,
     restoreFromLog,
