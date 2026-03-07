@@ -233,6 +233,8 @@ export default function StudentProfile() {
         const sheet = studentSheets.find((s) => s.lesson_id === lesson.id);
         const recitation = studentRecitations.find((r) => r.lesson_id === lesson.id);
         const hw = studentHomework.find((h) => h.lesson_id === lesson.id);
+        // Find closest reminder log homework for this lesson's date
+        const matchingLog = reminderLogs.find(rl => rl.date <= lesson.date);
         return {
           lessonName: lesson.name,
           sheetScore: sheet?.score ?? null,
@@ -240,6 +242,7 @@ export default function StudentProfile() {
           sheetMax: lesson.sheet_max_score,
           recitationMax: lesson.recitation_max_score,
           homeworkDone: hw ? hw.status === 'done' : false,
+          homeworkText: matchingLog?.homework || null,
         };
       })
       .sort((a, b) => a.lessonName.localeCompare(b.lessonName, 'ar'));
