@@ -44,7 +44,7 @@ export default function Dashboard() {
   const { groups, loading: groupsLoading, getTodayGroups } = useGroups();
   const { 
     reminders, loading: remindersLoading, hasReminder, getReminderByGroupId,
-    upsertReminder, clearReminder, fetchReminderLog, restoreFromLog,
+    upsertReminder, clearReminder, archiveAndClear, fetchReminderLog, restoreFromLog,
   } = useNextSessionReminders();
 
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
