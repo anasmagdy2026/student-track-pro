@@ -42,6 +42,7 @@ export function NextSessionReminderDialog({
   reminder,
   onSave,
   onClear,
+  onArchiveAndNew,
   onFetchLog,
   onRestoreLog,
 }: NextSessionReminderDialogProps) {
