@@ -94,6 +94,18 @@ export default function StudentProfile() {
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
+  // Fetch reminder logs for the report month
+  useEffect(() => {
+    if (!student?.group_id) return;
+    fetchReminderLog(student.group_id).then(logs => {
+      const filtered = logs
+        .filter(l => l.created_at.startsWith(reportMonth) && l.homework)
+        .map(l => ({ date: l.created_at.slice(0, 10), homework: l.homework! }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setReminderLogs(filtered);
+    });
+  }, [reportMonth, student?.group_id, fetchReminderLog]);
+
   const student = getStudentById(id || '');
   const attendance = getStudentAttendance(id || '');
   const attendanceStats = getAttendanceStats(id || '');
