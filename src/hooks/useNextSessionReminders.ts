@@ -198,6 +198,7 @@ export function useNextSessionReminders() {
     getReminderByGroupId,
     upsertReminder,
     clearReminder,
+    archiveAndClear,
     hasReminder,
     fetchReminderLog,
     restoreFromLog,

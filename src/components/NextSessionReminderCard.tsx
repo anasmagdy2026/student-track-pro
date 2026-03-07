@@ -124,6 +124,14 @@ export function NextSessionReminderCard({
   };
 
   const buildGroupMessage = () => {
+    const tpl = getTemplateByCode('next_session');
+    if (tpl && tpl.is_active) {
+      return buildFromTemplate(tpl.template, {
+        studentName: 'الطلاب',
+        groupName: group.name,
+        content: buildContentBlock(),
+      });
+    }
     return createNextSessionReminderMessage('الطلاب', group.name, {
       homework: reminder.homework,
       recitation: reminder.recitation,

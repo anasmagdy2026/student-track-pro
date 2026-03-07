@@ -144,6 +144,25 @@ export default function Payments() {
         return;
       }
       await addPayment(studentId, selectedMonth, amount);
+      
+      // Auto-pay siblings (same parent_phone) with amount 0
+      const student = students.find(s => s.id === studentId);
+      if (student) {
+        const siblings = students.filter(
+          s => s.id !== studentId && s.parent_phone === student.parent_phone
+        );
+        for (const sibling of siblings) {
+          if (!isMonthPaid(sibling.id, selectedMonth) && !isBlocked(sibling.id)) {
+            try {
+              await addPayment(sibling.id, selectedMonth, 0);
+              toast.success(`✅ تم تسجيل دفع ${sibling.name} تلقائياً (أخ/أخت)`);
+            } catch {
+              // ignore sibling payment errors
+            }
+          }
+        }
+      }
+      
       toast.success('✅ تم تسجيل الدفع بنجاح! شكراً لك.');
       setConfirmPayment({ open: false, studentId: '', studentName: '', amount: 0, fullAmount: 0, fraction: 'full' });
     } catch (error) {
