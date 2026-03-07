@@ -44,7 +44,7 @@ export default function Dashboard() {
   const { groups, loading: groupsLoading, getTodayGroups } = useGroups();
   const { 
     reminders, loading: remindersLoading, hasReminder, getReminderByGroupId,
-    upsertReminder, clearReminder, fetchReminderLog, restoreFromLog,
+    upsertReminder, clearReminder, archiveAndClear, fetchReminderLog, restoreFromLog,
   } = useNextSessionReminders();
 
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
@@ -370,6 +370,14 @@ export default function Dashboard() {
                 toast.success('تم مسح المطلوب');
               } catch {
                 toast.error('حدث خطأ أثناء المسح');
+              }
+            }}
+            onArchiveAndNew={async () => {
+              try {
+                await archiveAndClear(selectedGroupId);
+                toast.success('تم حفظ المطلوب القديم في السجل');
+              } catch {
+                toast.error('حدث خطأ');
               }
             }}
             onFetchLog={fetchReminderLog}

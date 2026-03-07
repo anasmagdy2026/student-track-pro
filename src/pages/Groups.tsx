@@ -41,6 +41,7 @@ export default function Groups() {
     getReminderByGroupId, 
     upsertReminder, 
     clearReminder, 
+    archiveAndClear,
     hasReminder,
     fetchReminderLog,
     restoreFromLog,
@@ -366,6 +367,15 @@ export default function Groups() {
               toast.success('تم مسح المطلوب');
             } catch {
               toast.error('حدث خطأ أثناء المسح');
+            }
+          }}
+          onArchiveAndNew={async () => {
+            if (!reminderGroup) return;
+            try {
+              await archiveAndClear(reminderGroup.id);
+              toast.success('تم حفظ المطلوب القديم في السجل');
+            } catch {
+              toast.error('حدث خطأ');
             }
           }}
           onFetchLog={fetchReminderLog}

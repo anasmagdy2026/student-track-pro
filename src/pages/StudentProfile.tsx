@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +32,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { useExams } from '@/hooks/useExams';
 import { useGroups } from '@/hooks/useGroups';
 import { useLessons } from '@/hooks/useLessons';
+import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,6 +82,7 @@ export default function StudentProfile() {
   const { blocks, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent, refetch: refetchBlocks } = useStudentBlocks();
   const { events, createEvent } = useAlertEvents();
   const { getTemplateByCode } = useWhatsAppTemplates();
+  const { fetchReminderLog } = useNextSessionReminders();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
@@ -88,6 +90,7 @@ export default function StudentProfile() {
 
   const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
   const [freezeReason, setFreezeReason] = useState('');
+  const [reminderLogs, setReminderLogs] = useState<{ date: string; homework: string }[]>([]);
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
@@ -97,6 +100,18 @@ export default function StudentProfile() {
   const payments = getStudentPayments(id || '');
   const examResults = getStudentResultsWithExams(id || '');
   const studentGroup = student?.group_id ? getGroupById(student.group_id) : null;
+
+  // Fetch reminder logs for the report month
+  useEffect(() => {
+    if (!student?.group_id) return;
+    fetchReminderLog(student.group_id).then(logs => {
+      const filtered = logs
+        .filter(l => l.created_at.startsWith(reportMonth) && l.homework)
+        .map(l => ({ date: l.created_at.slice(0, 10), homework: l.homework! }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setReminderLogs(filtered);
+    });
+  }, [reportMonth, student?.group_id, fetchReminderLog]);
 
   const activeBlock = useMemo(() => {
     if (!student) return null;
@@ -230,6 +245,8 @@ export default function StudentProfile() {
         const sheet = studentSheets.find((s) => s.lesson_id === lesson.id);
         const recitation = studentRecitations.find((r) => r.lesson_id === lesson.id);
         const hw = studentHomework.find((h) => h.lesson_id === lesson.id);
+        // Find closest reminder log homework for this lesson's date
+        const matchingLog = reminderLogs.find(rl => rl.date <= lesson.date);
         return {
           lessonName: lesson.name,
           sheetScore: sheet?.score ?? null,
@@ -237,6 +254,7 @@ export default function StudentProfile() {
           sheetMax: lesson.sheet_max_score,
           recitationMax: lesson.recitation_max_score,
           homeworkDone: hw ? hw.status === 'done' : false,
+          homeworkText: matchingLog?.homework || null,
         };
       })
       .sort((a, b) => a.lessonName.localeCompare(b.lessonName, 'ar'));
@@ -497,6 +515,7 @@ export default function StudentProfile() {
                       paymentStatus={reportData.paymentStatus}
                       lessonScores={reportData.lessonScores}
                       examResults={reportData.examResults}
+                      reminderHomeworks={reminderLogs}
                     />
                   )}
                 </div>

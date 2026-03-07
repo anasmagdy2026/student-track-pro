@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, BookOpen, FileText, ClipboardList, PenTool, StickyNote, Trash2, History, RotateCcw } from 'lucide-react';
+import { Loader2, BookOpen, FileText, ClipboardList, PenTool, StickyNote, Trash2, History, RotateCcw, PlusCircle } from 'lucide-react';
 import { NextSessionReminder, ReminderLogEntry } from '@/hooks/useNextSessionReminders';
 
 interface NextSessionReminderDialogProps {
@@ -29,6 +29,7 @@ interface NextSessionReminderDialogProps {
     note?: string | null;
   }) => Promise<void>;
   onClear: () => Promise<void>;
+  onArchiveAndNew: () => Promise<void>;
   onFetchLog: (groupId: string) => Promise<ReminderLogEntry[]>;
   onRestoreLog: (groupId: string, entry: ReminderLogEntry) => Promise<void>;
 }
@@ -41,6 +42,7 @@ export function NextSessionReminderDialog({
   reminder,
   onSave,
   onClear,
+  onArchiveAndNew,
   onFetchLog,
   onRestoreLog,
 }: NextSessionReminderDialogProps) {
@@ -51,6 +53,7 @@ export function NextSessionReminderDialog({
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [logEntries, setLogEntries] = useState<ReminderLogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
@@ -196,8 +199,8 @@ export function NextSessionReminderDialog({
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <Button onClick={handleSave} className="flex-1" disabled={isSaving || isClearing}>
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Button onClick={handleSave} className="flex-1" disabled={isSaving || isClearing || isArchiving}>
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -207,6 +210,29 @@ export function NextSessionReminderDialog({
               'حفظ'
             )}
           </Button>
+          {hasContent && (
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                setIsArchiving(true);
+                try {
+                  await onArchiveAndNew();
+                  setHomework('');
+                  setRecitation('');
+                  setExam('');
+                  setSheet('');
+                  setNote('');
+                } finally {
+                  setIsArchiving(false);
+                }
+              }}
+              disabled={isSaving || isClearing || isArchiving}
+              className="gap-1"
+            >
+              {isArchiving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+              إضافة جديد
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={handleShowHistory}
@@ -219,7 +245,7 @@ export function NextSessionReminderDialog({
             <Button 
               variant="outline" 
               onClick={handleClear} 
-              disabled={isSaving || isClearing}
+              disabled={isSaving || isClearing || isArchiving}
               className="text-destructive hover:text-destructive"
             >
               {isClearing ? (

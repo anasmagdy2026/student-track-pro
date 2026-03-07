@@ -23,8 +23,9 @@ interface MonthlyReportProps {
   month: string;
   attendanceRecords: { date: string; present: boolean }[];
   paymentStatus: { paid: boolean; amount: number };
-  lessonScores: { lessonName: string; sheetScore: number | null; recitationScore: number | null; sheetMax: number; recitationMax: number; homeworkDone: boolean | null }[];
+  lessonScores: { lessonName: string; sheetScore: number | null; recitationScore: number | null; sheetMax: number; recitationMax: number; homeworkDone: boolean | null; homeworkText?: string | null }[];
   examResults: { examName: string; score: number | null; maxScore: number; absent: boolean }[];
+  reminderHomeworks?: { date: string; homework: string }[];
 }
 
 export function MonthlyReport({
@@ -35,6 +36,7 @@ export function MonthlyReport({
   paymentStatus,
   lessonScores,
   examResults,
+  reminderHomeworks = [],
 }: MonthlyReportProps) {
   const reportRef = useRef<HTMLDivElement>(null);
   const { getGradeLabel } = useGradeLevels();
@@ -538,6 +540,7 @@ export function MonthlyReport({
                     <th className="text-center">درجة الشيت</th>
                     <th className="text-center">درجة التسميع</th>
                     <th className="text-center">الواجب</th>
+                    <th className="text-center">وصف الواجب</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -558,6 +561,9 @@ export function MonthlyReport({
                         <span className={`print-badge ${lesson.homeworkDone === true ? 'bg-success/10 text-success' : lesson.homeworkDone === false ? 'bg-destructive/10 text-destructive' : ''}`}>
                           {lesson.homeworkDone === true ? '✓ حل' : lesson.homeworkDone === false ? '✗ لم يحل' : '-'}
                         </span>
+                      </td>
+                      <td className="text-center text-xs">
+                        {lesson.homeworkText || '-'}
                       </td>
                     </tr>
                   ))}

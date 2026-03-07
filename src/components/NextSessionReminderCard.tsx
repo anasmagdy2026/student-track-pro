@@ -13,7 +13,8 @@ import { NextSessionReminder } from '@/hooks/useNextSessionReminders';
 import { Group, Student } from '@/types';
 import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye, Users, User, Send, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { sendWhatsAppMessage, createNextSessionReminderMessage } from '@/utils/whatsapp';
+import { sendWhatsAppMessage, createNextSessionReminderMessage, buildFromTemplate } from '@/utils/whatsapp';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import { toast } from 'sonner';
 import { MessagePreviewDialog } from '@/components/MessagePreviewDialog';
 
@@ -49,13 +50,32 @@ export function NextSessionReminderCard({
   const [showPreview, setShowPreview] = useState(false);
   const [sendMode, setSendMode] = useState<'individual' | 'group'>('group');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  const { getTemplateByCode } = useWhatsAppTemplates();
   
   const hasContent = reminder.homework || reminder.recitation || reminder.exam || reminder.sheet || reminder.note;
   const hasWhatsAppGroup = !!group.whatsapp_group_link;
   
   if (!hasContent) return null;
 
+  const buildContentBlock = () => {
+    let content = '';
+    if (reminder.homework) content += `الواجب: ${reminder.homework}\n`;
+    if (reminder.recitation) content += `التسميع: ${reminder.recitation}\n`;
+    if (reminder.exam) content += `الامتحان: ${reminder.exam}\n`;
+    if (reminder.sheet) content += `الشيت: ${reminder.sheet}\n`;
+    if (reminder.note) content += `ملاحظة: ${reminder.note}\n`;
+    return content.trim();
+  };
+
   const buildMessage = (student: Student) => {
+    const tpl = getTemplateByCode('next_session');
+    if (tpl && tpl.is_active) {
+      return buildFromTemplate(tpl.template, {
+        studentName: student.name,
+        groupName: group.name,
+        content: buildContentBlock(),
+      });
+    }
     return createNextSessionReminderMessage(student.name, group.name, {
       homework: reminder.homework,
       recitation: reminder.recitation,
@@ -65,13 +85,23 @@ export function NextSessionReminderCard({
     });
   };
 
-  const messageTemplate = createNextSessionReminderMessage('{studentName}', group.name, {
-    homework: reminder.homework,
-    recitation: reminder.recitation,
-    exam: reminder.exam,
-    sheet: reminder.sheet,
-    note: reminder.note,
-  });
+  const messageTemplate = (() => {
+    const tpl = getTemplateByCode('next_session');
+    if (tpl && tpl.is_active) {
+      return buildFromTemplate(tpl.template, {
+        studentName: '{studentName}',
+        groupName: group.name,
+        content: buildContentBlock(),
+      });
+    }
+    return createNextSessionReminderMessage('{studentName}', group.name, {
+      homework: reminder.homework,
+      recitation: reminder.recitation,
+      exam: reminder.exam,
+      sheet: reminder.sheet,
+      note: reminder.note,
+    });
+  })();
 
   const handleSendIndividual = (studentId: string) => {
     const student = students.find(s => s.id === studentId);
@@ -94,6 +124,14 @@ export function NextSessionReminderCard({
   };
 
   const buildGroupMessage = () => {
+    const tpl = getTemplateByCode('next_session');
+    if (tpl && tpl.is_active) {
+      return buildFromTemplate(tpl.template, {
+        studentName: 'الطلاب',
+        groupName: group.name,
+        content: buildContentBlock(),
+      });
+    }
     return createNextSessionReminderMessage('الطلاب', group.name, {
       homework: reminder.homework,
       recitation: reminder.recitation,
