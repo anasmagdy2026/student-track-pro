@@ -369,6 +369,15 @@ export default function Groups() {
               toast.error('حدث خطأ أثناء المسح');
             }
           }}
+          onArchiveAndNew={async () => {
+            if (!reminderGroup) return;
+            try {
+              await archiveAndClear(reminderGroup.id);
+              toast.success('تم حفظ المطلوب القديم في السجل');
+            } catch {
+              toast.error('حدث خطأ');
+            }
+          }}
           onFetchLog={fetchReminderLog}
           onRestoreLog={restoreFromLog}
         />

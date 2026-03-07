@@ -199,8 +199,8 @@ export function NextSessionReminderDialog({
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <Button onClick={handleSave} className="flex-1" disabled={isSaving || isClearing}>
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Button onClick={handleSave} className="flex-1" disabled={isSaving || isClearing || isArchiving}>
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -210,6 +210,29 @@ export function NextSessionReminderDialog({
               'حفظ'
             )}
           </Button>
+          {hasContent && (
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                setIsArchiving(true);
+                try {
+                  await onArchiveAndNew();
+                  setHomework('');
+                  setRecitation('');
+                  setExam('');
+                  setSheet('');
+                  setNote('');
+                } finally {
+                  setIsArchiving(false);
+                }
+              }}
+              disabled={isSaving || isClearing || isArchiving}
+              className="gap-1"
+            >
+              {isArchiving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+              إضافة جديد
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={handleShowHistory}
@@ -222,7 +245,7 @@ export function NextSessionReminderDialog({
             <Button 
               variant="outline" 
               onClick={handleClear} 
-              disabled={isSaving || isClearing}
+              disabled={isSaving || isClearing || isArchiving}
               className="text-destructive hover:text-destructive"
             >
               {isClearing ? (

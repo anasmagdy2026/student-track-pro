@@ -372,6 +372,14 @@ export default function Dashboard() {
                 toast.error('حدث خطأ أثناء المسح');
               }
             }}
+            onArchiveAndNew={async () => {
+              try {
+                await archiveAndClear(selectedGroupId);
+                toast.success('تم حفظ المطلوب القديم في السجل');
+              } catch {
+                toast.error('حدث خطأ');
+              }
+            }}
             onFetchLog={fetchReminderLog}
             onRestoreLog={restoreFromLog}
           />
