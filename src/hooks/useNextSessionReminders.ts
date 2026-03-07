@@ -135,6 +135,30 @@ export function useNextSessionReminders() {
     );
   };
 
+  // Archive current reminder to log and clear it (for "إضافة جديد" flow)
+  const archiveAndClear = async (groupId: string) => {
+    const existing = reminders.find(r => r.group_id === groupId);
+    if (!existing) return;
+
+    const hasContent = existing.homework || existing.recitation || existing.exam || existing.sheet || existing.note;
+    if (hasContent) {
+      // Save current to log
+      await supabase
+        .from('next_session_reminder_log')
+        .insert([{
+          group_id: groupId,
+          homework: existing.homework,
+          recitation: existing.recitation,
+          exam: existing.exam,
+          sheet: existing.sheet,
+          note: existing.note,
+        }]);
+    }
+
+    // Clear current
+    await clearReminder(groupId);
+  };
+
   const hasReminder = (groupId: string) => {
     const reminder = getReminderByGroupId(groupId);
     if (!reminder) return false;
