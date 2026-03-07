@@ -36,6 +36,7 @@ export function MonthlyReport({
   paymentStatus,
   lessonScores,
   examResults,
+  reminderHomeworks = [],
 }: MonthlyReportProps) {
   const reportRef = useRef<HTMLDivElement>(null);
   const { getGradeLabel } = useGradeLevels();
