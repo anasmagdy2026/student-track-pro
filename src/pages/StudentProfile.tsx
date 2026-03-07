@@ -88,8 +88,9 @@ export default function StudentProfile() {
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
   const [reportMonth, setReportMonth] = useState<string>(new Date().toISOString().slice(0, 7));
 
-  const [reminderLogs, setReminderLogs] = useState<{ date: string; homework: string }[]>([]);
+  const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
   const [freezeReason, setFreezeReason] = useState('');
+  const [reminderLogs, setReminderLogs] = useState<{ date: string; homework: string }[]>([]);
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
