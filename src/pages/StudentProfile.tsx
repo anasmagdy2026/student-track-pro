@@ -82,6 +82,7 @@ export default function StudentProfile() {
   const { blocks, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent, refetch: refetchBlocks } = useStudentBlocks();
   const { events, createEvent } = useAlertEvents();
   const { getTemplateByCode } = useWhatsAppTemplates();
+  const { fetchReminderLog } = useNextSessionReminders();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
