@@ -13,7 +13,8 @@ import { NextSessionReminder } from '@/hooks/useNextSessionReminders';
 import { Group, Student } from '@/types';
 import { BookOpen, ClipboardList, FileText, MessageCircle, Mic, StickyNote, Eye, Users, User, Send, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { sendWhatsAppMessage, createNextSessionReminderMessage } from '@/utils/whatsapp';
+import { sendWhatsAppMessage, createNextSessionReminderMessage, buildFromTemplate } from '@/utils/whatsapp';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import { toast } from 'sonner';
 import { MessagePreviewDialog } from '@/components/MessagePreviewDialog';
 
