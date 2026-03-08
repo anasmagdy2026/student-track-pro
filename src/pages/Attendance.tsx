@@ -68,7 +68,7 @@ export default function Attendance() {
   const { groups, loading: groupsLoading, getTodayGroups, getGroupById } = useGroups();
   const { loading: paymentsLoading, isMonthPaid } = usePayments();
   const { exams, results, loading: examsLoading } = useExams();
-  const { lessons, sheets, recitations, loading: lessonsLoading, toggleHomework, getHomeworkStatus, addLesson } = useLessons();
+  const { lessons, sheets, recitations, loading: lessonsLoading, toggleHomework, getHomeworkStatus } = useLessons();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
   const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
@@ -180,28 +180,7 @@ export default function Attendance() {
       }) || null;
   };
 
-  // Auto-create lesson for homework if none exists
-  const getOrCreateLessonForHomework = async (studentId: string) => {
-    const existing = getTodayLessonForStudent(studentId);
-    if (existing) return existing;
-    const student = students.find(s => s.id === studentId);
-    if (!student) return null;
-    const groupId = student.group_id || (selectedGroup !== 'all' ? selectedGroup : null);
-    if (!groupId) return null;
-    try {
-      const lesson = await addLesson({
-        name: `حصة ${selectedDate}`,
-        date: selectedDate,
-        grade: student.grade,
-        group_id: groupId,
-        sheet_max_score: 10,
-        recitation_max_score: 10,
-      });
-      return lesson;
-    } catch {
-      return null;
-    }
-  };
+  // No longer auto-create lessons — require existing lesson
 
   const parseTimeToDate = (dateIso: string, timeHHmm: string) => {
     const [h, m] = timeHHmm.split(':').map(Number);
@@ -1053,13 +1032,13 @@ export default function Attendance() {
                                 <Checkbox
                                   id={`hw-${student.id}`}
                                   checked={isDone}
+                                  disabled={!todayLesson}
                                   onCheckedChange={async (checked) => {
-                                    const lesson = todayLesson || await getOrCreateLessonForHomework(student.id);
-                                    if (!lesson) {
-                                      toast.error('تعذر إنشاء الحصة لتسجيل الواجب');
+                                    if (!todayLesson) {
+                                      toast.error('لا توجد حصة مسجلة لهذا اليوم. أضف حصة من صفحة الحصص أولاً.');
                                       return;
                                     }
-                                    toggleHomework(lesson.id, student.id, checked === true);
+                                    toggleHomework(todayLesson.id, student.id, checked === true);
                                   }}
                                   className="h-5 w-5"
                                 />
