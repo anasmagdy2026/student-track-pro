@@ -159,10 +159,6 @@ export default function Groups() {
               <Merge className="h-5 w-5" />
               دمج مجموعات
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => setMergeFridayOpen(true)}>
-              <Merge className="h-5 w-5" />
-              دمج مجموعات الجمعة
-            </Button>
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
