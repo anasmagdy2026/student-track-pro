@@ -57,6 +57,7 @@ export default function Groups() {
   const [reminderGroup, setReminderGroup] = useState<Group | null>(null);
   const [filterDay, setFilterDay] = useState<string>('all');
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeFridayOpen, setMergeFridayOpen] = useState(false);
   const [lessonLogGroup, setLessonLogGroup] = useState<Group | null>(null);
 
   const todayGroups = getTodayGroups();
@@ -143,6 +144,10 @@ export default function Groups() {
             <Button variant="outline" className="gap-2" onClick={() => setMergeOpen(true)}>
               <Merge className="h-5 w-5" />
               دمج مجموعات
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={() => setMergeFridayOpen(true)}>
+              <Merge className="h-5 w-5" />
+              دمج مجموعات الجمعة
             </Button>
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger asChild>
@@ -416,6 +421,18 @@ export default function Groups() {
             // Refetch data after merge
             window.location.reload();
           }}
+        />
+
+        {/* Merge Friday Groups Dialog */}
+        <MergeGroupsDialog
+          open={mergeFridayOpen}
+          onOpenChange={setMergeFridayOpen}
+          groups={groups}
+          getStudentCount={(gId) => getStudentsByGroup(gId).length}
+          onMerged={() => {
+            window.location.reload();
+          }}
+          fridayOnly
         />
 
         {/* Lesson Log Dialog */}

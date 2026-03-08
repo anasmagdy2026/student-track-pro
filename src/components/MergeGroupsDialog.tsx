@@ -18,9 +18,10 @@ interface Props {
   groups: Group[];
   getStudentCount: (groupId: string) => number;
   onMerged: () => void;
+  fridayOnly?: boolean;
 }
 
-export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount, onMerged }: Props) {
+export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount, onMerged, fridayOnly }: Props) {
   const [targetGroupId, setTargetGroupId] = useState<string>('');
   const [sourceGroupIds, setSourceGroupIds] = useState<string[]>([]);
   const [merging, setMerging] = useState(false);
@@ -66,10 +67,12 @@ export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount,
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Merge className="h-5 w-5 text-primary" />
-            دمج المجموعات
+            {fridayOnly ? 'دمج مجموعات حصص الجمعة' : 'دمج المجموعات'}
           </DialogTitle>
           <DialogDescription>
-            نقل طلاب المجموعات المختارة إلى مجموعة مستهدفة
+            {fridayOnly
+              ? 'نقل طلاب مجموعات الجمعة المختارة إلى مجموعة مستهدفة'
+              : 'نقل طلاب المجموعات المختارة إلى مجموعة مستهدفة'}
           </DialogDescription>
         </DialogHeader>
 
@@ -82,7 +85,7 @@ export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount,
                 <SelectValue placeholder="اختر المجموعة المستهدفة" />
               </SelectTrigger>
               <SelectContent>
-                {groups.map(g => (
+                {(fridayOnly ? groups.filter(g => g.has_friday_session) : groups).map(g => (
                   <SelectItem key={g.id} value={g.id}>
                     {g.name} ({getStudentCount(g.id)} طالب)
                   </SelectItem>
@@ -95,7 +98,7 @@ export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount,
           <div className="space-y-2">
             <label className="text-sm font-medium">المجموعات المراد دمجها (نقل طلابها)</label>
             <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-              {groups.filter(g => g.id !== targetGroupId).map(g => {
+              {(fridayOnly ? groups.filter(g => g.has_friday_session) : groups).filter(g => g.id !== targetGroupId).map(g => {
                 const count = getStudentCount(g.id);
                 return (
                   <label key={g.id} className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-muted/50">
