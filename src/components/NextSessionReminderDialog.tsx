@@ -47,6 +47,8 @@ export function NextSessionReminderDialog({
   onArchiveAndNew,
   onFetchLog,
   onRestoreLog,
+  onUpdateLog,
+  onDeleteLog,
 }: NextSessionReminderDialogProps) {
   const [homework, setHomework] = useState('');
   const [recitation, setRecitation] = useState('');
