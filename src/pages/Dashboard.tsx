@@ -152,18 +152,42 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Friday Sessions Alert */}
-        {new Date().getDay() === 5 && getFridaySessionGroups().length > 0 && (
-          <Card className="bg-warning/10 border-warning/30">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-6 w-6 text-warning" />
-                <div>
-                  <p className="font-bold text-warning">🕌 حصص يوم الجمعة</p>
-                  <p className="text-sm text-muted-foreground">
-                    {getFridaySessionGroups().map(g => `${g.name} (${formatTime12(g.friday_time || g.time)})`).join(' - ')}
-                  </p>
-                </div>
+        {/* Friday Sessions Section - Always visible */}
+        {getFridaySessionGroups().length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Calendar className="h-5 w-5 text-primary" />
+                🕌 حصص يوم الجمعة
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({getFridaySessionGroups().length} مجموعة)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {getFridaySessionGroups().map(group => {
+                  const studentCount = students.filter(s => s.group_id === group.id).length;
+                  const isFriday = new Date().getDay() === 5;
+                  return (
+                    <Link key={group.id} to="/groups" className="block">
+                      <div className={`p-3 rounded-lg border transition-colors hover:bg-muted/50 ${isFriday ? 'border-primary/40 bg-primary/5' : ''}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-semibold text-sm">{group.name}</p>
+                          {isFriday && (
+                            <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-medium">اليوم</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          ⏰ {formatTime12(group.friday_time || group.time)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          👥 {studentCount} طالب
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
