@@ -93,6 +93,7 @@ export default function Lessons() {
   const [addToGroupsLesson, setAddToGroupsLesson] = useState<Lesson | null>(null);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [addToGroupsSearch, setAddToGroupsSearch] = useState('');
+  const [groupDates, setGroupDates] = useState<Record<string, string>>({});
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isGradesOpen, setIsGradesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sheet');
@@ -818,7 +819,7 @@ export default function Lessons() {
         {/* Add to Groups Dialog */}
         <Dialog open={isAddToGroupsOpen} onOpenChange={(open) => {
           setIsAddToGroupsOpen(open);
-          if (!open) { setAddToGroupsLesson(null); setSelectedGroupIds(new Set()); setAddToGroupsSearch(''); }
+          if (!open) { setAddToGroupsLesson(null); setSelectedGroupIds(new Set()); setAddToGroupsSearch(''); setGroupDates({}); }
         }}>
           <DialogContent>
             <DialogHeader>
@@ -865,15 +866,27 @@ export default function Lessons() {
                                   else next.delete(group.id);
                                   return next;
                                 });
+                                if (e.target.checked && !groupDates[group.id]) {
+                                  setGroupDates(prev => ({ ...prev, [group.id]: new Date().toISOString().split('T')[0] }));
+                                }
                               }}
-                              className="h-4 w-4 rounded border-input"
+                              className="h-4 w-4 rounded border-input shrink-0"
                             />
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium">{group.name}</p>
                               <p className="text-xs text-muted-foreground">
                                 {group.days.join(' · ')} - {formatTime12(group.time)}
                                 {alreadyExists && ' (مضافة بالفعل)'}
                               </p>
+                              {selectedGroupIds.has(group.id) && (
+                                <Input
+                                  type="date"
+                                  value={groupDates[group.id] || ''}
+                                  onChange={(e) => setGroupDates(prev => ({ ...prev, [group.id]: e.target.value }))}
+                                  className="mt-1.5 h-8 text-xs"
+                                  dir="ltr"
+                                />
+                              )}
                             </div>
                           </label>
                         );
@@ -893,7 +906,7 @@ export default function Lessons() {
                       for (const gid of selectedGroupIds) {
                         await addLesson({
                           name: addToGroupsLesson.name,
-                          date: addToGroupsLesson.date,
+                          date: groupDates[gid] || addToGroupsLesson.date,
                           grade: addToGroupsLesson.grade,
                           group_id: gid,
                           sheet_max_score: addToGroupsLesson.sheet_max_score,
