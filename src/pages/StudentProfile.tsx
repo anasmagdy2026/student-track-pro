@@ -98,6 +98,8 @@ export default function StudentProfile() {
   const [reminderLogs, setReminderLogs] = useState<{ date: string; homework: string }[]>([]);
 
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [siblingDialogOpen, setSiblingDialogOpen] = useState(false);
+  const [siblingSearch, setSiblingSearch] = useState('');
 
   const student = getStudentById(id || '');
   const attendance = getStudentAttendance(id || '');
