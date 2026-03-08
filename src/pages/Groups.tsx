@@ -52,6 +52,10 @@ export default function Groups() {
 
   const isLoading = groupsLoading || studentsLoading || gradesLoading || remindersLoading;
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  const highlightRef = useRef<HTMLDivElement>(null);
+
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [reminderGroup, setReminderGroup] = useState<Group | null>(null);
@@ -59,6 +63,17 @@ export default function Groups() {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergeFridayOpen, setMergeFridayOpen] = useState(false);
   const [lessonLogGroup, setLessonLogGroup] = useState<Group | null>(null);
+
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Clear highlight param after scrolling
+      const timeout = setTimeout(() => {
+        setSearchParams({}, { replace: true });
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [highlightId, groups]);
 
   const todayGroups = getTodayGroups();
   
