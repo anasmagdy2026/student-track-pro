@@ -215,6 +215,12 @@ export default function PrintCards() {
         font-family: 'Courier New', monospace;
         letter-spacing: 1px;
       }
+      .print-card__group-grade {
+        font-size: 9px;
+        font-weight: 600;
+        color: #2d6b4f;
+        margin-top: 1px;
+      }
       .print-card__footer {
         display: flex;
         justify-content: space-between;
