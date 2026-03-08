@@ -32,8 +32,15 @@ export async function requestNotificationPermission(): Promise<string | null> {
     const messaging = await getMessagingInstance();
     if (!messaging) return null;
 
-    // Register the service worker
-    const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    // Try to use the existing PWA service worker first (which has Firebase injected)
+    // Fall back to the standalone Firebase SW
+    let registration: ServiceWorkerRegistration;
+    const existingReg = await navigator.serviceWorker.getRegistration("/");
+    if (existingReg) {
+      registration = existingReg;
+    } else {
+      registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    }
 
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
