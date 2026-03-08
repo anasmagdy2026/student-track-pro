@@ -534,7 +534,16 @@ export default function Lessons() {
 
         {/* Filter */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 space-y-4">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="بحث باسم الحصة..."
+                className="pr-9"
+              />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
