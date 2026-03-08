@@ -319,6 +319,7 @@ export default function Groups() {
                           {editingGroup && (
                             <GroupForm
                               initialData={{
+                                id: editingGroup.id,
                                 name: editingGroup.name,
                                 grade: editingGroup.grade,
                                 days: editingGroup.days,
@@ -330,6 +331,7 @@ export default function Groups() {
                               }}
                               onSubmit={handleUpdateGroup}
                               isEdit
+                              allGroups={groups}
                             />
                           )}
                         </DialogContent>
