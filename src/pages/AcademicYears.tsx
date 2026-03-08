@@ -151,7 +151,7 @@ export default function AcademicYears() {
                                       {group.days.join(' - ')}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                      {group.time}
+                                      {formatTime12(group.time)}
                                     </p>
                                   </div>
                                   <Badge>{groupStudents.length} طالب</Badge>

@@ -567,7 +567,7 @@ export default function StudentProfile() {
                 <p className="font-bold text-lg">{studentGroup?.name || '-'}</p>
                 {studentGroup?.time && (
                   <p className="text-xs text-muted-foreground mt-1" dir="ltr">
-                    {studentGroup.time}
+                    {formatTime12(studentGroup.time)}
                   </p>
                 )}
               </div>
