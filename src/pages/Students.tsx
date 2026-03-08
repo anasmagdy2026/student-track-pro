@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatTime12 } from '@/lib/utils';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -393,7 +394,7 @@ export default function Students() {
                       .filter(g => g.id !== transferStudent?.group_id)
                       .map(g => (
                         <SelectItem key={g.id} value={g.id}>
-                          {g.name} - {g.time}
+                          {g.name} - {formatTime12(g.time)}
                         </SelectItem>
                       ))}
                   </SelectContent>

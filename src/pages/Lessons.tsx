@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { formatTime12 } from '@/lib/utils';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -509,7 +510,7 @@ export default function Lessons() {
                         <SelectContent>
                           {filteredGroupsByGrade.map((group) => (
                             <SelectItem key={group.id} value={group.id}>
-                              {group.name} ({group.days.join(' - ')}) - {group.time}
+                              {group.name} ({group.days.join(' - ')}) - {formatTime12(group.time)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -609,7 +610,7 @@ export default function Lessons() {
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                               <Badge variant="outline" className="text-xs">{getGradeLabel(group?.grade || '')}</Badge>
                               {group?.days?.length ? (
-                                <span className="text-xs text-muted-foreground">{group.days.join(' · ')} - {group.time}</span>
+                                <span className="text-xs text-muted-foreground">{group.days.join(' · ')} - {formatTime12(group.time)}</span>
                               ) : null}
                               <Badge variant="secondary" className="text-xs">{groupLessons.length} حصة</Badge>
                               <Badge variant="outline" className="text-xs">{students.length} طالب</Badge>

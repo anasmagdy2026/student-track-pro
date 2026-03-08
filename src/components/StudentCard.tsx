@@ -1,4 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react';
+import { formatTime12 } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -160,7 +161,7 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
               </Badge>
               {group && (
                 <p className="text-sm text-muted-foreground">
-                  {group.name} - {group.time}
+                  {group.name} - {formatTime12(group.time)}
                 </p>
               )}
 

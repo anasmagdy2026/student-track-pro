@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatTime12 } from '@/lib/utils';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -856,7 +857,7 @@ export default function Attendance() {
                         size="sm"
                         onClick={() => setSelectedGroup(g.id)}
                       >
-                        {g.name} ({g.time})
+                        {g.name} ({formatTime12(g.time)})
                       </Button>
                     ))}
                   </div>
@@ -941,7 +942,7 @@ export default function Attendance() {
                     <SelectItem value="all">كل المجموعات</SelectItem>
                     {groups.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
-                        {g.name} ({g.time})
+                        {g.name} ({formatTime12(g.time)})
                       </SelectItem>
                     ))}
                   </SelectContent>

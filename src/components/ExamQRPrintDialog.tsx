@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatTime12 } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -247,7 +248,7 @@ export function ExamQRPrintDialog({ open, onOpenChange, exam }: ExamQRPrintDialo
                 <SelectContent>
                   {gradeGroups.map(group => (
                     <SelectItem key={group.id} value={group.id}>
-                      {group.name} - {group.days.join(', ')} ({group.time})
+                      {group.name} - {group.days.join(', ')} ({formatTime12(group.time)})
                     </SelectItem>
                   ))}
                 </SelectContent>

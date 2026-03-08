@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatTime12 } from '@/lib/utils';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -151,7 +152,7 @@ export default function AcademicYears() {
                                       {group.days.join(' - ')}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                      {group.time}
+                                      {formatTime12(group.time)}
                                     </p>
                                   </div>
                                   <Badge>{groupStudents.length} طالب</Badge>
