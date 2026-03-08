@@ -510,7 +510,7 @@ export default function Lessons() {
                         <SelectContent>
                           {filteredGroupsByGrade.map((group) => (
                             <SelectItem key={group.id} value={group.id}>
-                              {group.name} ({group.days.join(' - ')}) - {group.time}
+                              {group.name} ({group.days.join(' - ')}) - {formatTime12(group.time)}
                             </SelectItem>
                           ))}
                         </SelectContent>
