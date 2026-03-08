@@ -42,7 +42,7 @@ export default function Dashboard() {
   const { loading: paymentsLoading, getPaymentStats } = usePayments();
   const { exams, loading: examsLoading } = useExams();
   const { activeGradeLevels, loading: gradesLoading } = useGradeLevels();
-  const { groups, loading: groupsLoading, getTodayGroups } = useGroups();
+  const { groups, loading: groupsLoading, getTodayGroups, getFridaySessionGroups } = useGroups();
   const { 
     reminders, loading: remindersLoading, hasReminder, getReminderByGroupId,
     upsertReminder, clearReminder, archiveAndClear, fetchReminderLog, restoreFromLog,
