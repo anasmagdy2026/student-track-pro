@@ -330,10 +330,22 @@ export default function Students() {
                               <Button
                                 size="icon"
                                 variant="ghost"
+                                title="نقل لمجموعة أخرى"
+                                onClick={() => {
+                                  setTransferStudent(student);
+                                  setTransferGroupId('');
+                                }}
+                              >
+                                <ArrowRightLeft className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 className="text-destructive hover:text-destructive"
                                 onClick={() => handleDeleteStudent(student)}
                               >
                                 <Trash2 className="h-4 w-4" />
+                              </Button>
                               </Button>
                             </div>
                           </TableCell>
