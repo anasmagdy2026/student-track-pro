@@ -119,6 +119,26 @@ export default function Students() {
     }
   };
 
+  const handleTransferStudent = async () => {
+    if (!transferStudent || !transferGroupId) return;
+    try {
+      const targetGroup = getGroupById(transferGroupId);
+      await updateStudent(transferStudent.id, {
+        name: transferStudent.name,
+        grade: targetGroup?.grade || transferStudent.grade,
+        group_id: transferGroupId,
+        parent_phone: transferStudent.parent_phone,
+        student_phone: transferStudent.student_phone || '',
+        monthly_fee: transferStudent.monthly_fee,
+      });
+      toast.success(`تم نقل ${transferStudent.name} إلى ${targetGroup?.name}`);
+      setTransferStudent(null);
+      setTransferGroupId('');
+    } catch (error) {
+      toast.error('حدث خطأ أثناء نقل الطالب');
+    }
+  };
+
   return (
     <Layout>
       {isLoading ? (
