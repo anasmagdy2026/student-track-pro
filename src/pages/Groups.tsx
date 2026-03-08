@@ -382,6 +382,8 @@ export default function Groups() {
           }}
           onFetchLog={fetchReminderLog}
           onRestoreLog={restoreFromLog}
+          onUpdateLog={updateLogEntry}
+          onDeleteLog={deleteLogEntry}
         />
 
         {/* Merge Groups Dialog */}
