@@ -86,6 +86,8 @@ export default function Lessons() {
   const [editDate, setEditDate] = useState('');
   const [editSheetMax, setEditSheetMax] = useState(10);
   const [editRecitationMax, setEditRecitationMax] = useState(10);
+  const [editGroupId, setEditGroupId] = useState('');
+  const [editGrade, setEditGrade] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isGradesOpen, setIsGradesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sheet');
