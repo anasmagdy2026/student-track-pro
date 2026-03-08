@@ -76,7 +76,7 @@ import { toast } from 'sonner';
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getStudentById } = useStudents();
+  const { students, getStudentById } = useStudents();
   const { getStudentAttendance, getAttendanceStats, markAsNotified, getAttendanceByMonth } = useAttendance();
   const { getStudentPayments, markAsNotified: markPaymentNotified, isMonthPaid, getPaymentByMonth } = usePayments();
   const { exams, getStudentResultsWithExams, markResultAsNotified } = useExams();
