@@ -639,6 +639,27 @@ export default function Payments() {
           variant="destructive"
         />
 
+        {/* تأكيد دفع الإخوة */}
+        <ConfirmDialog
+          open={confirmSiblings.open}
+          onOpenChange={(open) => setConfirmSiblings({ ...confirmSiblings, open })}
+          title="تأكيد دفع الإخوة"
+          description={`تم العثور على إخوة لم يدفعوا هذا الشهر:\n${confirmSiblings.siblings.map(s => `• ${s.name}`).join('\n')}\n\nهل تريد تسجيل دفعهم تلقائياً بقيمة صفر؟`}
+          confirmText="نعم، سجّل الدفع"
+          cancelText="لا، شكراً"
+          onConfirm={async () => {
+            for (const sibling of confirmSiblings.siblings) {
+              try {
+                await addPayment(sibling.id, confirmSiblings.month, 0);
+                toast.success(`✅ تم تسجيل دفع ${sibling.name} (أخ/أخت)`);
+              } catch {
+                // ignore
+              }
+            }
+            setConfirmSiblings({ open: false, siblings: [], month: '' });
+          }}
+        />
+
         <AlertDialog
           open={blockedDialogOpen}
           onOpenChange={(open) => {
