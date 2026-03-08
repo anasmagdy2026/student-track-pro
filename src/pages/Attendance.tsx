@@ -1032,13 +1032,13 @@ export default function Attendance() {
                                 <Checkbox
                                   id={`hw-${student.id}`}
                                   checked={isDone}
+                                  disabled={!todayLesson}
                                   onCheckedChange={async (checked) => {
-                                    const lesson = todayLesson || await getOrCreateLessonForHomework(student.id);
-                                    if (!lesson) {
-                                      toast.error('تعذر إنشاء الحصة لتسجيل الواجب');
+                                    if (!todayLesson) {
+                                      toast.error('لا توجد حصة مسجلة لهذا اليوم. أضف حصة من صفحة الحصص أولاً.');
                                       return;
                                     }
-                                    toggleHomework(lesson.id, student.id, checked === true);
+                                    toggleHomework(todayLesson.id, student.id, checked === true);
                                   }}
                                   className="h-5 w-5"
                                 />
