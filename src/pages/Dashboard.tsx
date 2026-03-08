@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatTime12 } from '@/lib/utils';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStudents } from '@/hooks/useStudents';
