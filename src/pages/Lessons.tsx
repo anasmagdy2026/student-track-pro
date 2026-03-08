@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Layout } from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { useGroups } from '@/hooks/useGroups';
 import { useStudents } from '@/hooks/useStudents';
 import { useLessons } from '@/hooks/useLessons';
@@ -38,6 +43,8 @@ import {
   Search,
   Loader2,
   ClipboardList,
+  ChevronDown,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
@@ -82,11 +89,10 @@ export default function Lessons() {
   const [isGradesOpen, setIsGradesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sheet');
   const [filterGrade, setFilterGrade] = useState<string>('all');
-  const [filterGroup, setFilterGroup] = useState<string>('all'); // group_id
-  const [filterDay, setFilterDay] = useState<string>('all');
-  const [filterTime, setFilterTime] = useState<string>('all');
+  const [filterGroup, setFilterGroup] = useState<string>('all');
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
-  // Form state - مفصولة لتجنب مشكلة الكتابة
+  // Form state
   const [lessonName, setLessonName] = useState('');
   const [lessonDate, setLessonDate] = useState(new Date().toISOString().split('T')[0]);
   const [lessonGrade, setLessonGrade] = useState<string>(activeGradeLevels[0]?.code ?? 'sec1');
@@ -103,19 +109,41 @@ export default function Lessons() {
     { active: false, done: 0, total: 0 }
   );
 
-  const availableTimes = Array.from(new Set(groups.map(g => g.time).filter(Boolean))).sort();
-  const availableDays = Array.from(new Set(groups.flatMap(g => g.days || []))).sort();
-
-  const filteredLessons = lessons.filter((lesson) => {
-    const group = lesson.group_id ? getGroupById(lesson.group_id) : null;
-    const matchesGrade = filterGrade === 'all' || lesson.grade === filterGrade;
-    const matchesGroup = filterGroup === 'all' || lesson.group_id === filterGroup;
-    const matchesDay = filterDay === 'all' || (group?.days || []).includes(filterDay);
-    const matchesTime = filterTime === 'all' || group?.time === filterTime;
-    return matchesGrade && matchesGroup && matchesDay && matchesTime;
-  });
-
   const filteredGroupsByGrade = groups.filter(g => g.grade === lessonGrade);
+
+  // Group lessons by group_id
+  const groupedLessons = useMemo(() => {
+    const filtered = lessons.filter((lesson) => {
+      const matchesGrade = filterGrade === 'all' || lesson.grade === filterGrade;
+      const matchesGroup = filterGroup === 'all' || lesson.group_id === filterGroup;
+      return matchesGrade && matchesGroup;
+    });
+
+    const map = new Map<string, Lesson[]>();
+    for (const lesson of filtered) {
+      const key = lesson.group_id || 'no-group';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(lesson);
+    }
+
+    // Sort lessons within each group by date descending
+    for (const [, arr] of map) {
+      arr.sort((a, b) => b.date.localeCompare(a.date));
+    }
+
+    return map;
+  }, [lessons, filterGrade, filterGroup]);
+
+  const totalLessons = Array.from(groupedLessons.values()).reduce((s, arr) => s + arr.length, 0);
+
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  };
 
   const resetForm = () => {
     setLessonName('');
@@ -142,7 +170,6 @@ export default function Lessons() {
     setIsSubmitting(true);
     try {
       if (selectAllGroups) {
-        // Create lesson for all groups in the selected grade
         const gradeGroups = filteredGroupsByGrade;
         if (gradeGroups.length === 0) {
           toast.error('لا توجد مجموعات لهذه السنة الدراسية');
@@ -185,7 +212,6 @@ export default function Lessons() {
       toast.error('حدث خطأ أثناء إضافة الحصة');
     } finally {
       setIsSubmitting(false);
-      // keep it visible briefly to avoid a flash on fast operations
       setTimeout(() => setBulkProgress({ active: false, done: 0, total: 0 }), 450);
     }
   };
@@ -237,20 +263,15 @@ export default function Lessons() {
   const openGradesDialog = (lesson: Lesson) => {
     setSelectedLesson(lesson);
     
-    // Load existing scores
     const sheets = getLessonSheets(lesson.id);
     const recs = getLessonRecitations(lesson.id);
     
     const sheetMap: Record<string, number> = {};
-    sheets.forEach(s => {
-      sheetMap[s.student_id] = s.score;
-    });
+    sheets.forEach(s => { sheetMap[s.student_id] = s.score; });
     setSheetScores(sheetMap);
 
     const recMap: Record<string, number> = {};
-    recs.forEach(r => {
-      recMap[r.student_id] = r.score;
-    });
+    recs.forEach(r => { recMap[r.student_id] = r.score; });
     setRecitationScores(recMap);
 
     setIsGradesOpen(true);
@@ -294,7 +315,6 @@ export default function Lessons() {
     }
   };
 
-  const lessonGroup = selectedLesson ? getGroupById(selectedLesson.group_id || '') : null;
   const lessonStudents = selectedLesson && selectedLesson.group_id
     ? getStudentsByGroup(selectedLesson.group_id)
     : [];
@@ -379,7 +399,7 @@ export default function Lessons() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">الحصص</h1>
             <p className="text-muted-foreground mt-1">
-              إدارة الحصص والشيتات والتسميع
+              {totalLessons} حصة في {groupedLessons.size} مجموعة
             </p>
           </div>
           <Dialog open={isAddOpen} onOpenChange={(open) => {
@@ -513,7 +533,7 @@ export default function Lessons() {
         {/* Filter */}
         <Card>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
                 <Select value={filterGrade} onValueChange={(v) => {
@@ -552,110 +572,110 @@ export default function Lessons() {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">اليوم</label>
-                <Select value={filterDay} onValueChange={setFilterDay}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="كل الأيام" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">كل الأيام</SelectItem>
-                    {availableDays.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">ميعاد المجموعة</label>
-                <Select value={filterTime} onValueChange={setFilterTime}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="كل المواعيد" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">كل المواعيد</SelectItem>
-                    {availableTimes.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Lessons List */}
-        <div className="grid gap-4">
-          {filteredLessons.length > 0 ? (
-            filteredLessons.map((lesson) => {
-              const sheets = getLessonSheets(lesson.id);
-              const recs = getLessonRecitations(lesson.id);
-              const group = getGroupById(lesson.group_id || '');
+        {/* Lessons grouped by group */}
+        <div className="space-y-4">
+          {groupedLessons.size > 0 ? (
+            Array.from(groupedLessons.entries()).map(([groupId, groupLessons]) => {
+              const group = getGroupById(groupId);
+              const isOpen = openGroups.has(groupId);
               const students = group ? getStudentsByGroup(group.id) : [];
 
               return (
-                <Card key={lesson.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
-                          <BookOpen className="h-7 w-7 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold">{lesson.name}</h3>
-                          <div className="flex items-center gap-3 mt-1 flex-wrap">
-                            <Badge variant="outline">{getGradeLabel(lesson.grade)}</Badge>
-                            <Badge variant="secondary">{group?.name || '-'}</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {new Date(lesson.date).toLocaleDateString('ar-EG')}
-                            </span>
+                <Collapsible key={groupId} open={isOpen} onOpenChange={() => toggleGroup(groupId)}>
+                  <Card className="overflow-hidden">
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors text-right">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                            <Users className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg">{group?.name || 'بدون مجموعة'}</h3>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              <Badge variant="outline" className="text-xs">{getGradeLabel(group?.grade || '')}</Badge>
+                              {group?.days?.length ? (
+                                <span className="text-xs text-muted-foreground">{group.days.join(' · ')} - {group.time}</span>
+                              ) : null}
+                              <Badge variant="secondary" className="text-xs">{groupLessons.length} حصة</Badge>
+                              <Badge variant="outline" className="text-xs">{students.length} طالب</Badge>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                        <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="border-t">
+                        {groupLessons.map((lesson, idx) => {
+                          const sheetsList = getLessonSheets(lesson.id);
+                          const recsList = getLessonRecitations(lesson.id);
 
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex gap-2">
-                          <Badge className="bg-primary/10 text-primary gap-1">
-                            <FileText className="h-3 w-3" />
-                            شيت: {sheets.length}/{students.length}
-                          </Badge>
-                          <Badge className="bg-secondary/10 text-secondary gap-1">
-                            <Mic className="h-3 w-3" />
-                            تسميع: {recs.length}/{students.length}
-                          </Badge>
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => openGradesDialog(lesson)}
-                        >
-                          <Pencil className="h-4 w-4 ml-2" />
-                          إدخال الدرجات
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => openEditDialog(lesson)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteLesson(lesson)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          return (
+                            <div
+                              key={lesson.id}
+                              className={`p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${idx > 0 ? 'border-t' : ''} hover:bg-muted/30 transition-colors`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center shrink-0">
+                                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold">{lesson.name}</p>
+                                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {new Date(lesson.date).toLocaleDateString('ar-EG', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </span>
+                                    <Badge className="bg-primary/10 text-primary text-[10px] gap-0.5 px-1.5 py-0">
+                                      <FileText className="h-2.5 w-2.5" />
+                                      شيت: {sheetsList.length}/{students.length}
+                                    </Badge>
+                                    <Badge className="bg-secondary/10 text-secondary text-[10px] gap-0.5 px-1.5 py-0">
+                                      <Mic className="h-2.5 w-2.5" />
+                                      تسميع: {recsList.length}/{students.length}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openGradesDialog(lesson)}
+                                  className="gap-1 text-xs"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                  الدرجات
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => openEditDialog(lesson)}
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteLesson(lesson)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
               );
             })
           ) : (
