@@ -51,6 +51,8 @@ export default function Students() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [cardStudent, setCardStudent] = useState<Student | null>(null);
+  const [transferStudent, setTransferStudent] = useState<Student | null>(null);
+  const [transferGroupId, setTransferGroupId] = useState<string>('');
 
   const availableTimes = Array.from(
     new Set(groups.map((g) => g.time).filter(Boolean))
