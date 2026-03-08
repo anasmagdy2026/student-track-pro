@@ -50,6 +50,11 @@ export function PrintableStudentCard({ student, group }: PrintableStudentCardPro
           <div className="print-card__info">
             <div className="print-card__name">{student.name}</div>
             <div className="print-card__code">{student.code}</div>
+            <div className="print-card__group-grade">
+              {group?.name && <span>{group.name}</span>}
+              {group?.name && <span> | </span>}
+              <span>{getGradeLabel(student.grade)}</span>
+            </div>
           </div>
         </div>
 
