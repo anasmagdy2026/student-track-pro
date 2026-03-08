@@ -144,12 +144,14 @@ export function NextSessionReminderCard({
 
   const handleSendToWhatsAppGroup = () => {
     const message = buildGroupMessage();
-    const encodedMessage = encodeURIComponent(message);
-    // Copy message to clipboard first
-    navigator.clipboard.writeText(message).catch(() => {});
+    // Copy message to clipboard so user can paste it in the group
+    navigator.clipboard.writeText(message).then(() => {
+      toast.success('تم نسخ الرسالة، الصقها في الجروب وأرسلها');
+    }).catch(() => {
+      toast.error('فشل نسخ الرسالة');
+    });
     // Open the actual WhatsApp group link
     window.open(group.whatsapp_group_link!, '_blank');
-    toast.success('تم نسخ الرسالة، الصق الرسالة في الجروب وأرسلها');
   };
 
   const handleConfirmSend = () => {
