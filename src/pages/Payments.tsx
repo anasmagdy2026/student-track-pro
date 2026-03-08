@@ -16,6 +16,7 @@ import { useGroups } from '@/hooks/useGroups';
 import { usePayments } from '@/hooks/usePayments';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
+import { useSiblingLinks } from '@/hooks/useSiblingLinks';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { MonthlyUnpaidReport } from '@/components/MonthlyUnpaidReport';
 import {
@@ -59,8 +60,9 @@ export default function Payments() {
   const { getTemplateByCode } = useWhatsAppTemplates();
   const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { getSiblingIds, loading: siblingsLoading } = useSiblingLinks();
 
-  const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading;
+  const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading || siblingsLoading;
   const { getSetting } = useAppSettings();
   const { sendNotification } = usePushNotifications();
   const paymentNotifSent = useRef(false);
@@ -152,17 +154,17 @@ export default function Payments() {
       }
       await addPayment(studentId, selectedMonth, amount);
       
-      // Check for siblings (same parent_phone) that haven't paid
-      const student = students.find(s => s.id === studentId);
-      if (student) {
-        const siblings = students.filter(
-          s => s.id !== studentId && s.parent_phone === student.parent_phone
-        ).filter(sibling => !isMonthPaid(sibling.id, selectedMonth) && !isBlocked(sibling.id));
+      // Check for manually linked siblings that haven't paid
+      const siblingIds = getSiblingIds(studentId);
+      if (siblingIds.length > 0) {
+        const unpaidSiblings = siblingIds
+          .map(sid => students.find(s => s.id === sid))
+          .filter((s): s is NonNullable<typeof s> => !!s && !isMonthPaid(s.id, selectedMonth) && !isBlocked(s.id));
         
-        if (siblings.length > 0) {
+        if (unpaidSiblings.length > 0) {
           setConfirmSiblings({
             open: true,
-            siblings: siblings.map(s => ({ id: s.id, name: s.name })),
+            siblings: unpaidSiblings.map(s => ({ id: s.id, name: s.name })),
             month: selectedMonth,
           });
         }
