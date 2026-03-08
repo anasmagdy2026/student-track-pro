@@ -35,6 +35,7 @@ import { useLessons } from '@/hooks/useLessons';
 import { useNextSessionReminders } from '@/hooks/useNextSessionReminders';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
+import { useSiblingLinks } from '@/hooks/useSiblingLinks';
 import { supabase } from '@/integrations/supabase/client';
 import { StudentCard } from '@/components/StudentCard';
 import { MonthlyReport } from '@/components/MonthlyReport';
