@@ -170,7 +170,7 @@ export default function Dashboard() {
                   const studentCount = students.filter(s => s.group_id === group.id).length;
                   const isFriday = new Date().getDay() === 5;
                   return (
-                    <Link key={group.id} to="/groups" className="block">
+                    <Link key={group.id} to={`/groups?highlight=${group.id}`} className="block">
                       <div className={`p-3 rounded-lg border transition-colors hover:bg-muted/50 ${isFriday ? 'border-primary/40 bg-primary/5' : ''}`}>
                         <div className="flex items-center justify-between mb-1">
                           <p className="font-semibold text-sm">{group.name}</p>

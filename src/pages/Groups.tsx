@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatTime12 } from '@/lib/utils';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,7 +28,7 @@ import { DAYS_AR, Group } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Users, Plus, Pencil, Trash2, Clock, Calendar, ClipboardList, Merge, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
 import { MergeGroupsDialog } from '@/components/MergeGroupsDialog';
 import { GroupLessonLogDialog } from '@/components/GroupLessonLogDialog';
@@ -52,6 +52,10 @@ export default function Groups() {
 
   const isLoading = groupsLoading || studentsLoading || gradesLoading || remindersLoading;
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  const highlightRef = useRef<HTMLDivElement>(null);
+
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [reminderGroup, setReminderGroup] = useState<Group | null>(null);
@@ -59,6 +63,17 @@ export default function Groups() {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergeFridayOpen, setMergeFridayOpen] = useState(false);
   const [lessonLogGroup, setLessonLogGroup] = useState<Group | null>(null);
+
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Clear highlight param after scrolling
+      const timeout = setTimeout(() => {
+        setSearchParams({}, { replace: true });
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [highlightId, groups]);
 
   const todayGroups = getTodayGroups();
   
@@ -235,8 +250,9 @@ export default function Groups() {
 
               return (
                 <Card 
-                  key={group.id} 
-                  className={`hover:shadow-md transition-shadow ${isToday ? 'ring-2 ring-primary' : ''}`}
+                  key={group.id}
+                  ref={highlightId === group.id ? highlightRef : undefined}
+                  className={`hover:shadow-md transition-all ${isToday ? 'ring-2 ring-primary' : ''} ${highlightId === group.id ? 'ring-2 ring-primary animate-pulse' : ''}`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
