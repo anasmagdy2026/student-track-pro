@@ -26,6 +26,7 @@ interface MonthlyReportProps {
   lessonScores: { lessonName: string; sheetScore: number | null; recitationScore: number | null; sheetMax: number; recitationMax: number; homeworkDone: boolean | null; homeworkText?: string | null }[];
   examResults: { examName: string; score: number | null; maxScore: number; absent: boolean }[];
   reminderHomeworks?: { date: string; homework: string }[];
+  behaviorNotes?: { type: string; category: string; note: string; date: string }[];
 }
 
 export function MonthlyReport({
