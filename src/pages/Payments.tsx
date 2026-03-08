@@ -60,8 +60,9 @@ export default function Payments() {
   const { getTemplateByCode } = useWhatsAppTemplates();
   const { loading: blocksLoading, isBlocked, getActiveBlock } = useStudentBlocks();
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { getSiblingIds, loading: siblingsLoading } = useSiblingLinks();
 
-  const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading;
+  const isLoading = studentsLoading || groupsLoading || paymentsLoading || blocksLoading || gradesLoading || siblingsLoading;
   const { getSetting } = useAppSettings();
   const { sendNotification } = usePushNotifications();
   const paymentNotifSent = useRef(false);
