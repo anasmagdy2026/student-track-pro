@@ -14,7 +14,8 @@ import {
   XCircle,
   BookOpen,
   CreditCard,
-  Share2
+  Share2,
+  Star
 } from 'lucide-react';
 
 interface MonthlyReportProps {
