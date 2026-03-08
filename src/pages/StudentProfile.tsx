@@ -67,6 +67,9 @@ import {
   Undo2,
   Bell,
   ClipboardCheck,
+  Users,
+  Link,
+  Unlink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
