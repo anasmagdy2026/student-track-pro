@@ -250,8 +250,9 @@ export default function Groups() {
 
               return (
                 <Card 
-                  key={group.id} 
-                  className={`hover:shadow-md transition-shadow ${isToday ? 'ring-2 ring-primary' : ''}`}
+                  key={group.id}
+                  ref={highlightId === group.id ? highlightRef : undefined}
+                  className={`hover:shadow-md transition-all ${isToday ? 'ring-2 ring-primary' : ''} ${highlightId === group.id ? 'ring-2 ring-primary animate-pulse' : ''}`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
