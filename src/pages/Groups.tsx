@@ -28,7 +28,7 @@ import { DAYS_AR, Group } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { Users, Plus, Pencil, Trash2, Clock, Calendar, ClipboardList, Merge, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
 import { MergeGroupsDialog } from '@/components/MergeGroupsDialog';
 import { GroupLessonLogDialog } from '@/components/GroupLessonLogDialog';
