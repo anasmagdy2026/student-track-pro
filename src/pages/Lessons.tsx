@@ -46,6 +46,7 @@ import {
   ClipboardList,
   ChevronDown,
   Calendar,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
