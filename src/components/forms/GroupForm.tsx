@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -11,11 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DAYS_AR, GROUP_DAY_PATTERNS } from '@/types';
+import { DAYS_AR, GROUP_DAY_PATTERNS, Group } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
+import { formatTime12 } from '@/lib/utils';
 
 interface GroupFormProps {
   initialData?: {
+    id?: string;
     name: string;
     grade: string;
     days: string[];
@@ -38,9 +41,10 @@ interface GroupFormProps {
     whatsapp_group_link: string | null;
   }) => void;
   isEdit?: boolean;
+  allGroups?: Group[];
 }
 
-export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormProps) {
+export function GroupForm({ initialData, onSubmit, isEdit = false, allGroups = [] }: GroupFormProps) {
   const { activeGradeLevels } = useGradeLevels();
   const firstGrade = activeGradeLevels[0]?.code ?? 'sec1';
   const [name, setName] = useState(initialData?.name || '');
@@ -72,11 +76,56 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         ? (prev.includes(day) ? prev : [...prev, day])
         : prev.filter((d) => d !== day);
 
-      // Keep a consistent order in UI (based on DAYS_AR)
       const order = new Map(DAYS_AR.map((d, i) => [d, i] as const));
       return [...next].sort((a, b) => (order.get(a) ?? 999) - (order.get(b) ?? 999));
     });
   };
+
+  // Time conflict detection
+  const timeToMinutes = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+
+  const timeConflicts = useMemo(() => {
+    if (!timeFrom || !timeTo) return [];
+    const fromMin = timeToMinutes(timeFrom);
+    const toMin = timeToMinutes(timeTo);
+    if (fromMin >= toMin) return [];
+
+    const conflicts: { group: Group; day: string }[] = [];
+    const otherGroups = allGroups.filter(g => g.id !== initialData?.id);
+
+    for (const g of otherGroups) {
+      const gFrom = g.time_from ? timeToMinutes(g.time_from) : null;
+      const gTo = g.time_to ? timeToMinutes(g.time_to) : null;
+      if (gFrom === null || gTo === null) continue;
+
+      // Check overlapping days
+      const sharedDays = days.filter(d => g.days.includes(d));
+      for (const day of sharedDays) {
+        if (fromMin < gTo && toMin > gFrom) {
+          conflicts.push({ group: g, day });
+        }
+      }
+    }
+    return conflicts;
+  }, [timeFrom, timeTo, days, allGroups, initialData?.id]);
+
+  // Friday time conflict
+  const fridayConflicts = useMemo(() => {
+    if (!hasFridaySession || !fridayTime) return [];
+    const conflicts: Group[] = [];
+    const otherGroups = allGroups.filter(g => g.id !== initialData?.id);
+
+    for (const g of otherGroups) {
+      if (!g.has_friday_session || !g.friday_time) continue;
+      if (g.friday_time === fridayTime) {
+        conflicts.push(g);
+      }
+    }
+    return conflicts;
+  }, [hasFridaySession, fridayTime, allGroups, initialData?.id]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
@@ -228,6 +277,27 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
         يُستخدم وقت النهاية لمنع تسجيل الحضور بعد انتهاء الحصة
       </p>
 
+      {/* Time Conflict Warning */}
+      {timeConflicts.length > 0 && (
+        <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 space-y-2">
+          <div className="flex items-center gap-2 text-warning font-medium text-sm">
+            <AlertTriangle className="h-4 w-4" />
+            ⚠️ تعارض في المواعيد!
+          </div>
+          <div className="space-y-1">
+            {timeConflicts.map((c, i) => (
+              <div key={i} className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                <Badge variant="outline" className="text-[10px]">{c.day}</Badge>
+                <span>
+                  الميعاد مشغول بـ <span className="font-bold text-foreground">{c.group.name}</span>
+                  {' '}({formatTime12(c.group.time_from)} - {formatTime12(c.group.time_to)})
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Friday Session */}
       <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
         <div className="flex items-center justify-between">
@@ -247,6 +317,15 @@ export function GroupForm({ initialData, onSubmit, isEdit = false }: GroupFormPr
               dir="ltr"
               placeholder="مثال: 14:00"
             />
+            {/* Friday Time Conflict */}
+            {fridayConflicts.length > 0 && (
+              <div className="rounded-lg border border-warning/50 bg-warning/10 p-2">
+                <div className="flex items-center gap-2 text-warning font-medium text-xs">
+                  <AlertTriangle className="h-3 w-3" />
+                  ميعاد الجمعة مشغول بـ {fridayConflicts.map(g => g.name).join('، ')}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
