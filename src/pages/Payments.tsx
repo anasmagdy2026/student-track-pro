@@ -164,9 +164,11 @@ export default function Payments() {
           .filter((s): s is NonNullable<typeof s> => !!s && !isMonthPaid(s.id, selectedMonth) && !isBlocked(s.id));
         
         if (unpaidSiblings.length > 0) {
+          setSiblingDiscountType('half');
+          setSiblingCustomDiscount(0);
           setConfirmSiblings({
             open: true,
-            siblings: unpaidSiblings.map(s => ({ id: s.id, name: s.name })),
+            siblings: unpaidSiblings.map(s => ({ id: s.id, name: s.name, monthlyFee: s.monthly_fee })),
             month: selectedMonth,
           });
         }
