@@ -906,7 +906,7 @@ export default function Lessons() {
                       for (const gid of selectedGroupIds) {
                         await addLesson({
                           name: addToGroupsLesson.name,
-                          date: addToGroupsLesson.date,
+                          date: groupDates[gid] || addToGroupsLesson.date,
                           grade: addToGroupsLesson.grade,
                           group_id: gid,
                           sheet_max_score: addToGroupsLesson.sheet_max_score,
