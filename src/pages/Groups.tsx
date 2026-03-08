@@ -45,6 +45,8 @@ export default function Groups() {
     hasReminder,
     fetchReminderLog,
     restoreFromLog,
+    updateLogEntry,
+    deleteLogEntry,
   } = useNextSessionReminders();
 
   const isLoading = groupsLoading || studentsLoading || gradesLoading || remindersLoading;
