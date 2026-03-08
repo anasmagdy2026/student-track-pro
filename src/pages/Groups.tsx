@@ -34,7 +34,7 @@ import { MergeGroupsDialog } from '@/components/MergeGroupsDialog';
 import { GroupLessonLogDialog } from '@/components/GroupLessonLogDialog';
 
 export default function Groups() {
-  const { groups, loading: groupsLoading, addGroup, updateGroup, deleteGroup, getTodayGroups } = useGroups();
+  const { groups, loading: groupsLoading, addGroup, updateGroup, deleteGroup, getTodayGroups, getFridaySessionGroups } = useGroups();
   const { loading: studentsLoading, getStudentsByGroup } = useStudents();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
   const { 
