@@ -277,33 +277,100 @@ export function NextSessionReminderDialog({
                 <div className="space-y-2">
                   {logEntries.map((entry) => (
                     <div key={entry.id} className="border rounded-lg p-3 text-xs space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">
-                          {new Date(entry.created_at).toLocaleDateString('ar-EG', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleRestore(entry)}
-                          className="h-7 gap-1 text-xs"
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                          استعادة
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {entry.homework && <Badge variant="secondary" className="text-xs">واجب: {entry.homework}</Badge>}
-                        {entry.recitation && <Badge variant="secondary" className="text-xs">تسميع: {entry.recitation}</Badge>}
-                        {entry.exam && <Badge variant="secondary" className="text-xs">امتحان: {entry.exam}</Badge>}
-                        {entry.sheet && <Badge variant="secondary" className="text-xs">شيت: {entry.sheet}</Badge>}
-                        {entry.note && <Badge variant="outline" className="text-xs">ملاحظة: {entry.note}</Badge>}
-                      </div>
+                      {editingLogId === entry.id ? (
+                        // Edit mode
+                        <div className="space-y-2">
+                          <Input size={1} placeholder="الواجب" value={editLogData.homework || ''} onChange={e => setEditLogData(d => ({ ...d, homework: e.target.value }))} className="h-7 text-xs" />
+                          <Input size={1} placeholder="التسميع" value={editLogData.recitation || ''} onChange={e => setEditLogData(d => ({ ...d, recitation: e.target.value }))} className="h-7 text-xs" />
+                          <Input size={1} placeholder="الامتحان" value={editLogData.exam || ''} onChange={e => setEditLogData(d => ({ ...d, exam: e.target.value }))} className="h-7 text-xs" />
+                          <Input size={1} placeholder="الشيت" value={editLogData.sheet || ''} onChange={e => setEditLogData(d => ({ ...d, sheet: e.target.value }))} className="h-7 text-xs" />
+                          <Input size={1} placeholder="ملاحظة" value={editLogData.note || ''} onChange={e => setEditLogData(d => ({ ...d, note: e.target.value }))} className="h-7 text-xs" />
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="default" className="h-7 gap-1 text-xs" onClick={async () => {
+                              if (onUpdateLog) {
+                                await onUpdateLog(entry.id, {
+                                  homework: editLogData.homework || null,
+                                  recitation: editLogData.recitation || null,
+                                  exam: editLogData.exam || null,
+                                  sheet: editLogData.sheet || null,
+                                  note: editLogData.note || null,
+                                });
+                                const entries = await onFetchLog(groupId);
+                                setLogEntries(entries);
+                              }
+                              setEditingLogId(null);
+                            }}>
+                              <Check className="h-3 w-3" /> حفظ
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingLogId(null)}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        // View mode
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">
+                              {new Date(entry.created_at).toLocaleDateString('ar-EG', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRestore(entry)}
+                                className="h-7 gap-1 text-xs"
+                              >
+                                <RotateCcw className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingLogId(entry.id);
+                                  setEditLogData({
+                                    homework: entry.homework,
+                                    recitation: entry.recitation,
+                                    exam: entry.exam,
+                                    sheet: entry.sheet,
+                                    note: entry.note,
+                                  });
+                                }}
+                                className="h-7 text-xs"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs text-destructive hover:text-destructive"
+                                onClick={async () => {
+                                  if (onDeleteLog) {
+                                    await onDeleteLog(entry.id);
+                                    const entries = await onFetchLog(groupId);
+                                    setLogEntries(entries);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {entry.homework && <Badge variant="secondary" className="text-xs">واجب: {entry.homework}</Badge>}
+                            {entry.recitation && <Badge variant="secondary" className="text-xs">تسميع: {entry.recitation}</Badge>}
+                            {entry.exam && <Badge variant="secondary" className="text-xs">امتحان: {entry.exam}</Badge>}
+                            {entry.sheet && <Badge variant="secondary" className="text-xs">شيت: {entry.sheet}</Badge>}
+                            {entry.note && <Badge variant="outline" className="text-xs">ملاحظة: {entry.note}</Badge>}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
