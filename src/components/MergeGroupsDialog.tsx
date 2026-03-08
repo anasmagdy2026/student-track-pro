@@ -18,9 +18,10 @@ interface Props {
   groups: Group[];
   getStudentCount: (groupId: string) => number;
   onMerged: () => void;
+  fridayOnly?: boolean;
 }
 
-export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount, onMerged }: Props) {
+export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount, onMerged, fridayOnly }: Props) {
   const [targetGroupId, setTargetGroupId] = useState<string>('');
   const [sourceGroupIds, setSourceGroupIds] = useState<string[]>([]);
   const [merging, setMerging] = useState(false);
