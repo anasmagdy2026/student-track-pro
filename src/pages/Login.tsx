@@ -1,21 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { GraduationCap, Eye, EyeOff, Lock, User } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, Lock, User, Fingerprint } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useWebAuthn } from '@/hooks/useWebAuthn';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 export default function Login() {
-  // NOTE: never prefill credentials in production UI
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { supported, loading: biometricLoading, authenticateWithBiometric } = useWebAuthn();
+
+  // Check if user had previously logged in with biometric on this device
+  const [savedUsername, setSavedUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('biometric_username');
+    if (stored) setSavedUsername(stored);
+  }, []);
 
   const schema = useMemo(
     () =>
@@ -43,6 +52,8 @@ export default function Login() {
         toast.error(error.message || 'فشل تسجيل الدخول: تأكد من اسم المستخدم وكلمة المرور');
         return;
       }
+      // Save username for biometric login
+      localStorage.setItem('biometric_username', username);
       toast.success('تم تسجيل الدخول بنجاح');
       navigate('/dashboard');
     } catch (err) {
@@ -50,6 +61,20 @@ export default function Login() {
       toast.error(msg || 'حدث خطأ غير متوقع أثناء تسجيل الدخول');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    const usernameToUse = savedUsername || username;
+    if (!usernameToUse) {
+      toast.error('أدخل اسم المستخدم أولاً ثم اضغط على البصمة');
+      return;
+    }
+
+    const result = await authenticateWithBiometric(usernameToUse);
+    if (result.success) {
+      localStorage.setItem('biometric_username', usernameToUse);
+      navigate('/dashboard');
     }
   };
 
@@ -83,7 +108,7 @@ export default function Login() {
                     autoComplete="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="أدخل اسم المستخدم"
+                    placeholder={savedUsername ? `آخر دخول: ${savedUsername}` : 'أدخل اسم المستخدم'}
                     className="pr-10 h-12"
                     required
                   />
@@ -127,6 +152,37 @@ export default function Login() {
                 {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
               </Button>
             </form>
+
+            {/* Biometric Login */}
+            {supported && (
+              <div className="mt-4 space-y-3">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">أو</span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 text-base gap-3"
+                  disabled={biometricLoading}
+                  onClick={handleBiometricLogin}
+                >
+                  <Fingerprint className="h-6 w-6" />
+                  {biometricLoading ? 'جاري المصادقة...' : 'الدخول بالبصمة'}
+                </Button>
+
+                {savedUsername && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    سيتم تسجيل الدخول كـ <span className="font-bold">{savedUsername}</span>
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
