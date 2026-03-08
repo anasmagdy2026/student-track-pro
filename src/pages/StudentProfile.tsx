@@ -90,6 +90,7 @@ export default function StudentProfile() {
   const { getTemplateByCode } = useWhatsAppTemplates();
   const { fetchReminderLog } = useNextSessionReminders();
   const { getSiblingIds, addLink, removeLink } = useSiblingLinks();
+  const { getStudentNotesByMonth } = useStudentBehavior();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
