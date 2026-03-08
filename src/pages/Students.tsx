@@ -393,7 +393,7 @@ export default function Students() {
                       .filter(g => g.id !== transferStudent?.group_id)
                       .map(g => (
                         <SelectItem key={g.id} value={g.id}>
-                          {g.name} - {g.time}
+                          {g.name} - {formatTime12(g.time)}
                         </SelectItem>
                       ))}
                   </SelectContent>

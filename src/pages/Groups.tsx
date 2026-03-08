@@ -241,8 +241,8 @@ export default function Groups() {
                         <Clock className="h-4 w-4" />
                         <span>
                           {group.time_from && group.time_to
-                            ? `${group.time_from} - ${group.time_to}`
-                            : group.time}
+                            ? `${formatTime12(group.time_from)} - ${formatTime12(group.time_to)}`
+                            : formatTime12(group.time)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">

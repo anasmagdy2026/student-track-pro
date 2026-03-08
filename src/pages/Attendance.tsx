@@ -941,7 +941,7 @@ export default function Attendance() {
                     <SelectItem value="all">كل المجموعات</SelectItem>
                     {groups.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
-                        {g.name} ({g.time})
+                        {g.name} ({formatTime12(g.time)})
                       </SelectItem>
                     ))}
                   </SelectContent>
