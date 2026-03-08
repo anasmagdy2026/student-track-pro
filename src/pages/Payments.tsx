@@ -104,6 +104,13 @@ export default function Payments() {
     studentName: string;
   }>({ open: false, paymentId: '', studentName: '' });
 
+  // تأكيد دفع الإخوة
+  const [confirmSiblings, setConfirmSiblings] = useState<{
+    open: boolean;
+    siblings: { id: string; name: string }[];
+    month: string;
+  }>({ open: false, siblings: [], month: '' });
+
   const [blockedDialogOpen, setBlockedDialogOpen] = useState(false);
   const [blockedContext, setBlockedContext] = useState<{
     studentName: string;
@@ -145,21 +152,19 @@ export default function Payments() {
       }
       await addPayment(studentId, selectedMonth, amount);
       
-      // Auto-pay siblings (same parent_phone) with amount 0
+      // Check for siblings (same parent_phone) that haven't paid
       const student = students.find(s => s.id === studentId);
       if (student) {
         const siblings = students.filter(
           s => s.id !== studentId && s.parent_phone === student.parent_phone
-        );
-        for (const sibling of siblings) {
-          if (!isMonthPaid(sibling.id, selectedMonth) && !isBlocked(sibling.id)) {
-            try {
-              await addPayment(sibling.id, selectedMonth, 0);
-              toast.success(`✅ تم تسجيل دفع ${sibling.name} تلقائياً (أخ/أخت)`);
-            } catch {
-              // ignore sibling payment errors
-            }
-          }
+        ).filter(sibling => !isMonthPaid(sibling.id, selectedMonth) && !isBlocked(sibling.id));
+        
+        if (siblings.length > 0) {
+          setConfirmSiblings({
+            open: true,
+            siblings: siblings.map(s => ({ id: s.id, name: s.name })),
+            month: selectedMonth,
+          });
         }
       }
       
@@ -632,6 +637,27 @@ export default function Payments() {
           cancelText="إلغاء"
           onConfirm={() => handleRefund(confirmRefund.paymentId)}
           variant="destructive"
+        />
+
+        {/* تأكيد دفع الإخوة */}
+        <ConfirmDialog
+          open={confirmSiblings.open}
+          onOpenChange={(open) => setConfirmSiblings({ ...confirmSiblings, open })}
+          title="تأكيد دفع الإخوة"
+          description={`تم العثور على إخوة لم يدفعوا هذا الشهر:\n${confirmSiblings.siblings.map(s => `• ${s.name}`).join('\n')}\n\nهل تريد تسجيل دفعهم تلقائياً بقيمة صفر؟`}
+          confirmText="نعم، سجّل الدفع"
+          cancelText="لا، شكراً"
+          onConfirm={async () => {
+            for (const sibling of confirmSiblings.siblings) {
+              try {
+                await addPayment(sibling.id, confirmSiblings.month, 0);
+                toast.success(`✅ تم تسجيل دفع ${sibling.name} (أخ/أخت)`);
+              } catch {
+                // ignore
+              }
+            }
+            setConfirmSiblings({ open: false, siblings: [], month: '' });
+          }}
         />
 
         <AlertDialog
