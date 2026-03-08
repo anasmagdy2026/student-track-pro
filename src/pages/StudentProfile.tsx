@@ -715,6 +715,10 @@ export default function StudentProfile() {
           </CardContent>
         </Card>
 
+
+        {/* Behavior Evaluation */}
+        <StudentBehaviorCard studentId={student.id} />
+
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
