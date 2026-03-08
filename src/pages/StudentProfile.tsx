@@ -527,6 +527,7 @@ export default function StudentProfile() {
                       lessonScores={reportData.lessonScores}
                       examResults={reportData.examResults}
                       reminderHomeworks={reminderLogs}
+                      behaviorNotes={getStudentNotesByMonth(student.id, reportMonth)}
                     />
                   )}
                 </div>
