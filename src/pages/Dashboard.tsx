@@ -383,6 +383,8 @@ export default function Dashboard() {
             }}
             onFetchLog={fetchReminderLog}
             onRestoreLog={restoreFromLog}
+            onUpdateLog={updateLogEntry}
+            onDeleteLog={deleteLogEntry}
           />
         )}
         </div>
