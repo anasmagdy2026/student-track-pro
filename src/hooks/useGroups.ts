@@ -116,6 +116,7 @@ export function useGroups() {
     getGroupsByDay,
     getGroupsByGrade,
     getTodayGroups,
+    getFridaySessionGroups,
     refetch: fetchGroups,
   };
 }
