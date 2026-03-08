@@ -152,21 +152,19 @@ export default function Payments() {
       }
       await addPayment(studentId, selectedMonth, amount);
       
-      // Auto-pay siblings (same parent_phone) with amount 0
+      // Check for siblings (same parent_phone) that haven't paid
       const student = students.find(s => s.id === studentId);
       if (student) {
         const siblings = students.filter(
           s => s.id !== studentId && s.parent_phone === student.parent_phone
-        );
-        for (const sibling of siblings) {
-          if (!isMonthPaid(sibling.id, selectedMonth) && !isBlocked(sibling.id)) {
-            try {
-              await addPayment(sibling.id, selectedMonth, 0);
-              toast.success(`✅ تم تسجيل دفع ${sibling.name} تلقائياً (أخ/أخت)`);
-            } catch {
-              // ignore sibling payment errors
-            }
-          }
+        ).filter(sibling => !isMonthPaid(sibling.id, selectedMonth) && !isBlocked(sibling.id));
+        
+        if (siblings.length > 0) {
+          setConfirmSiblings({
+            open: true,
+            siblings: siblings.map(s => ({ id: s.id, name: s.name })),
+            month: selectedMonth,
+          });
         }
       }
       
