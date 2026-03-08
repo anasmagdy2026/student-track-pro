@@ -171,7 +171,7 @@ export default function Groups() {
                 <div>
                   <p className="font-bold text-primary">مجموعات اليوم</p>
                   <p className="text-sm text-muted-foreground">
-                    {todayGroups.map(g => `${g.name} (${g.time})`).join(' - ')}
+                    {todayGroups.map(g => `${g.name} (${formatTime12(g.time)})`).join(' - ')}
                   </p>
                 </div>
               </div>
