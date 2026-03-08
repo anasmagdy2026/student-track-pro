@@ -90,6 +90,7 @@ export default function Lessons() {
   const [activeTab, setActiveTab] = useState('sheet');
   const [filterGrade, setFilterGrade] = useState<string>('all');
   const [filterGroup, setFilterGroup] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
   // Form state
