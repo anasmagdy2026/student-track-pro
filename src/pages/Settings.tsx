@@ -239,6 +239,8 @@ export default function Settings() {
                 </form>
               </CardContent>
             </Card>
+
+            <BiometricSettingsCard />
           </TabsContent>
 
           {isAdmin && (
