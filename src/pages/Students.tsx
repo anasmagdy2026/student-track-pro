@@ -32,7 +32,7 @@ import { StudentForm } from '@/components/forms/StudentForm';
 import { StudentCard } from '@/components/StudentCard';
 import { Student } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
-import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode, ArrowRightLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
@@ -51,6 +51,8 @@ export default function Students() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [cardStudent, setCardStudent] = useState<Student | null>(null);
+  const [transferStudent, setTransferStudent] = useState<Student | null>(null);
+  const [transferGroupId, setTransferGroupId] = useState<string>('');
 
   const availableTimes = Array.from(
     new Set(groups.map((g) => g.time).filter(Boolean))
@@ -114,6 +116,26 @@ export default function Students() {
       } catch (error) {
         toast.error('حدث خطأ أثناء حذف الطالب');
       }
+    }
+  };
+
+  const handleTransferStudent = async () => {
+    if (!transferStudent || !transferGroupId) return;
+    try {
+      const targetGroup = getGroupById(transferGroupId);
+      await updateStudent(transferStudent.id, {
+        name: transferStudent.name,
+        grade: targetGroup?.grade || transferStudent.grade,
+        group_id: transferGroupId,
+        parent_phone: transferStudent.parent_phone,
+        student_phone: transferStudent.student_phone || '',
+        monthly_fee: transferStudent.monthly_fee,
+      });
+      toast.success(`تم نقل ${transferStudent.name} إلى ${targetGroup?.name}`);
+      setTransferStudent(null);
+      setTransferGroupId('');
+    } catch (error) {
+      toast.error('حدث خطأ أثناء نقل الطالب');
     }
   };
 
@@ -308,6 +330,17 @@ export default function Students() {
                               <Button
                                 size="icon"
                                 variant="ghost"
+                                title="نقل لمجموعة أخرى"
+                                onClick={() => {
+                                  setTransferStudent(student);
+                                  setTransferGroupId('');
+                                }}
+                              >
+                                <ArrowRightLeft className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 className="text-destructive hover:text-destructive"
                                 onClick={() => handleDeleteStudent(student)}
                               >
@@ -334,6 +367,49 @@ export default function Students() {
             )}
           </CardContent>
         </Card>
+
+        {/* Transfer Student Dialog */}
+        <Dialog open={!!transferStudent} onOpenChange={(open) => { if (!open) setTransferStudent(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>نقل طالب لمجموعة أخرى</DialogTitle>
+              <DialogDescription>
+                نقل {transferStudent?.name} إلى مجموعة جديدة
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">المجموعة الحالية</p>
+                <p className="font-medium">{transferStudent?.group_id ? getGroupById(transferStudent.group_id)?.name : 'بدون مجموعة'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">المجموعة الجديدة</p>
+                <Select value={transferGroupId} onValueChange={setTransferGroupId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر المجموعة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups
+                      .filter(g => g.id !== transferStudent?.group_id)
+                      .map(g => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.name} - {g.time}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                className="w-full"
+                disabled={!transferGroupId}
+                onClick={handleTransferStudent}
+              >
+                <ArrowRightLeft className="h-4 w-4 ml-2" />
+                نقل الطالب
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         </div>
       )}
     </Layout>
