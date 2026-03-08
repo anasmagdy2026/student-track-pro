@@ -167,39 +167,39 @@ export function NextSessionReminderCard({
 
   const renderSendOptions = () => (
     <div className="mt-3 space-y-2 border-t pt-3">
-      {/* إرسال لطالب محدد */}
-      <div className="flex items-center gap-2">
-        <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-          <SelectTrigger className="flex-1 h-8 text-xs">
-            <SelectValue placeholder="اختر طالب للإرسال الفردي..." />
-          </SelectTrigger>
-          <SelectContent>
-            {students.map(s => (
-              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {hasWhatsAppGroup ? (
         <Button
           size="sm"
-          onClick={() => handleSendIndividual(selectedStudentId)}
-          disabled={!selectedStudentId}
-          className="gap-1 text-xs"
+          variant="default"
+          onClick={handleSendToWhatsAppGroup}
+          className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
         >
-          <User className="h-3 w-3" />
-          إرسال
+          <Send className="h-3 w-3" />
+          إرسال لجروب الواتساب
         </Button>
-      </div>
-
-      {/* إرسال لجروب الواتساب */}
-      <Button
-        size="sm"
-        variant="default"
-        onClick={handleSendToWhatsAppGroup}
-        className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
-      >
-        <Send className="h-3 w-3" />
-        {hasWhatsAppGroup ? 'إرسال لجروب الواتساب' : 'إرسال عبر واتساب (اختر المحادثة)'}
-      </Button>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+            <SelectTrigger className="flex-1 h-8 text-xs">
+              <SelectValue placeholder="اختر طالب للإرسال..." />
+            </SelectTrigger>
+            <SelectContent>
+              {students.map(s => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            onClick={() => handleSendIndividual(selectedStudentId)}
+            disabled={!selectedStudentId}
+            className="gap-1 text-xs"
+          >
+            <User className="h-3 w-3" />
+            إرسال
+          </Button>
+        </div>
+      )}
     </div>
   );
 
