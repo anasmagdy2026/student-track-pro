@@ -85,7 +85,7 @@ export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount,
                 <SelectValue placeholder="اختر المجموعة المستهدفة" />
               </SelectTrigger>
               <SelectContent>
-                {groups.map(g => (
+                {(fridayOnly ? groups.filter(g => g.has_friday_session) : groups).map(g => (
                   <SelectItem key={g.id} value={g.id}>
                     {g.name} ({getStudentCount(g.id)} طالب)
                   </SelectItem>
