@@ -271,7 +271,7 @@ export function NextSessionReminderCard({
             <ClipboardList className="h-5 w-5 text-warning" />
             المطلوب الحصة القادمة - {group.name}
             <Badge variant="outline" className="ml-auto">
-              {group.days.join(' - ')} - {group.time}
+              {group.days.join(' - ')} - {formatTime12(group.time)}
             </Badge>
           </CardTitle>
         </CardHeader>

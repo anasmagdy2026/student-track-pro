@@ -161,7 +161,7 @@ export function StudentCard({ student, group, showDownload = true }: StudentCard
               </Badge>
               {group && (
                 <p className="text-sm text-muted-foreground">
-                  {group.name} - {group.time}
+                  {group.name} - {formatTime12(group.time)}
                 </p>
               )}
 
