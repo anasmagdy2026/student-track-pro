@@ -32,6 +32,8 @@ interface NextSessionReminderDialogProps {
   onArchiveAndNew: () => Promise<void>;
   onFetchLog: (groupId: string) => Promise<ReminderLogEntry[]>;
   onRestoreLog: (groupId: string, entry: ReminderLogEntry) => Promise<void>;
+  onUpdateLog?: (entryId: string, data: any) => Promise<void>;
+  onDeleteLog?: (entryId: string) => Promise<void>;
 }
 
 export function NextSessionReminderDialog({
