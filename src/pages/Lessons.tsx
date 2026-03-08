@@ -681,8 +681,23 @@ export default function Lessons() {
                                   size="icon"
                                   className="h-8 w-8"
                                   onClick={() => openEditDialog(lesson)}
+                                  title="تعديل"
                                 >
                                   <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="إضافة لمجموعات أخرى"
+                                  onClick={() => {
+                                    setAddToGroupsLesson(lesson);
+                                    const gradeGroups = groups.filter(g => g.grade === lesson.grade && g.id !== lesson.group_id);
+                                    setSelectedGroupIds(new Set());
+                                    setIsAddToGroupsOpen(true);
+                                  }}
+                                >
+                                  <Copy className="h-3 w-3" />
                                 </Button>
                                 <Button
                                   variant="ghost"
