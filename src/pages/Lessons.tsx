@@ -740,6 +740,34 @@ export default function Lessons() {
                   dir="ltr"
                 />
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">السنة الدراسية</label>
+                <Select value={editGrade} onValueChange={(v) => { setEditGrade(v); setEditGroupId(''); }}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeGradeLevels.map((g) => (
+                      <SelectItem key={g.code} value={g.code}>{g.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">المجموعة</label>
+                <Select value={editGroupId} onValueChange={setEditGroupId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر المجموعة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {editFilteredGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name} ({group.days.join(' - ')}) - {formatTime12(group.time)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">درجة الشيت النهائية</label>
@@ -760,9 +788,44 @@ export default function Lessons() {
                   />
                 </div>
               </div>
-              <Button onClick={handleEditLesson} className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleEditLesson} className="flex-1" disabled={isSubmitting}>
+                  {isSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    if (!editingLesson) return;
+                    if (!editGroupId || editGroupId === editingLesson.group_id) {
+                      toast.error('اختر مجموعة مختلفة للنسخ إليها');
+                      return;
+                    }
+                    setIsSubmitting(true);
+                    try {
+                      await addLesson({
+                        name: editName,
+                        date: editDate,
+                        grade: editGrade,
+                        group_id: editGroupId,
+                        sheet_max_score: editSheetMax,
+                        recitation_max_score: editRecitationMax,
+                      });
+                      toast.success('تم نسخ الحصة للمجموعة الجديدة');
+                      setIsEditOpen(false);
+                      setEditingLesson(null);
+                    } catch {
+                      toast.error('حدث خطأ أثناء نسخ الحصة');
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  نسخ لمجموعة
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
