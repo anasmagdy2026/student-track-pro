@@ -46,6 +46,7 @@ import {
   ClipboardList,
   ChevronDown,
   Calendar,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
@@ -88,6 +89,9 @@ export default function Lessons() {
   const [editRecitationMax, setEditRecitationMax] = useState(10);
   const [editGroupId, setEditGroupId] = useState('');
   const [editGrade, setEditGrade] = useState('');
+  const [isAddToGroupsOpen, setIsAddToGroupsOpen] = useState(false);
+  const [addToGroupsLesson, setAddToGroupsLesson] = useState<Lesson | null>(null);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isGradesOpen, setIsGradesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sheet');
@@ -677,8 +681,23 @@ export default function Lessons() {
                                   size="icon"
                                   className="h-8 w-8"
                                   onClick={() => openEditDialog(lesson)}
+                                  title="تعديل"
                                 >
                                   <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="إضافة لمجموعات أخرى"
+                                  onClick={() => {
+                                    setAddToGroupsLesson(lesson);
+                                    const gradeGroups = groups.filter(g => g.grade === lesson.grade && g.id !== lesson.group_id);
+                                    setSelectedGroupIds(new Set());
+                                    setIsAddToGroupsOpen(true);
+                                  }}
+                                >
+                                  <Copy className="h-3 w-3" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -788,45 +807,107 @@ export default function Lessons() {
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleEditLesson} className="flex-1" disabled={isSubmitting}>
-                  {isSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
-                </Button>
+              <Button onClick={handleEditLesson} className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add to Groups Dialog */}
+        <Dialog open={isAddToGroupsOpen} onOpenChange={(open) => {
+          setIsAddToGroupsOpen(open);
+          if (!open) { setAddToGroupsLesson(null); setSelectedGroupIds(new Set()); }
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>إضافة الحصة لمجموعات أخرى</DialogTitle>
+            </DialogHeader>
+            {addToGroupsLesson && (
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="font-semibold">{addToGroupsLesson.name}</p>
+                  <p className="text-sm text-muted-foreground">{addToGroupsLesson.date}</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">اختر المجموعات</label>
+                  <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-3">
+                    {groups
+                      .filter(g => g.grade === addToGroupsLesson.grade && g.id !== addToGroupsLesson.group_id)
+                      .map(group => {
+                        const alreadyExists = lessons.some(
+                          l => l.name === addToGroupsLesson.name && l.date === addToGroupsLesson.date && l.group_id === group.id
+                        );
+                        return (
+                          <label
+                            key={group.id}
+                            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors ${alreadyExists ? 'opacity-50' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              disabled={alreadyExists}
+                              checked={selectedGroupIds.has(group.id)}
+                              onChange={(e) => {
+                                setSelectedGroupIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(group.id);
+                                  else next.delete(group.id);
+                                  return next;
+                                });
+                              }}
+                              className="h-4 w-4 rounded border-input"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{group.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {group.days.join(' · ')} - {formatTime12(group.time)}
+                                {alreadyExists && ' (مضافة بالفعل)'}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                  </div>
+                  {selectedGroupIds.size > 0 && (
+                    <p className="text-sm text-muted-foreground">تم اختيار {selectedGroupIds.size} مجموعة</p>
+                  )}
+                </div>
                 <Button
-                  variant="outline"
+                  className="w-full"
+                  disabled={selectedGroupIds.size === 0 || isSubmitting}
                   onClick={async () => {
-                    if (!editingLesson) return;
-                    if (!editGroupId || editGroupId === editingLesson.group_id) {
-                      toast.error('اختر مجموعة مختلفة للنسخ إليها');
-                      return;
-                    }
+                    if (!addToGroupsLesson || selectedGroupIds.size === 0) return;
                     setIsSubmitting(true);
                     try {
-                      await addLesson({
-                        name: editName,
-                        date: editDate,
-                        grade: editGrade,
-                        group_id: editGroupId,
-                        sheet_max_score: editSheetMax,
-                        recitation_max_score: editRecitationMax,
-                      });
-                      toast.success('تم نسخ الحصة للمجموعة الجديدة');
-                      setIsEditOpen(false);
-                      setEditingLesson(null);
+                      for (const gid of selectedGroupIds) {
+                        await addLesson({
+                          name: addToGroupsLesson.name,
+                          date: addToGroupsLesson.date,
+                          grade: addToGroupsLesson.grade,
+                          group_id: gid,
+                          sheet_max_score: addToGroupsLesson.sheet_max_score,
+                          recitation_max_score: addToGroupsLesson.recitation_max_score,
+                        });
+                      }
+                      toast.success(`تم إضافة الحصة لـ ${selectedGroupIds.size} مجموعة`);
+                      setIsAddToGroupsOpen(false);
+                      setAddToGroupsLesson(null);
+                      setSelectedGroupIds(new Set());
                     } catch {
-                      toast.error('حدث خطأ أثناء نسخ الحصة');
+                      toast.error('حدث خطأ أثناء إضافة الحصة');
                     } finally {
                       setIsSubmitting(false);
                     }
                   }}
-                  disabled={isSubmitting}
-                  className="gap-1"
                 >
-                  <Plus className="h-4 w-4" />
-                  نسخ لمجموعة
+                  {isSubmitting ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> جاري الإضافة...</>
+                  ) : (
+                    <>إضافة لـ {selectedGroupIds.size} مجموعة</>
+                  )}
                 </Button>
               </div>
-            </div>
+            )}
           </DialogContent>
         </Dialog>
 
