@@ -134,7 +134,7 @@ export default function Lessons() {
     }
 
     return map;
-  }, [lessons, filterGrade, filterGroup]);
+  }, [lessons, filterGrade, filterGroup, searchQuery]);
 
   const totalLessons = Array.from(groupedLessons.values()).reduce((s, arr) => s + arr.length, 0);
 
