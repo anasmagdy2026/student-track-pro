@@ -612,7 +612,107 @@ export default function StudentProfile() {
           </CardContent>
         </Card>
 
-        {/* Attendance Stats */}
+        {/* Siblings Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                الإخوة المرتبطون
+              </CardTitle>
+              <Dialog open={siblingDialogOpen} onOpenChange={setSiblingDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Link className="h-4 w-4" />
+                    ربط أخ
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>ربط أخ / أخت</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Input
+                      placeholder="ابحث بالاسم أو الكود..."
+                      value={siblingSearch}
+                      onChange={(e) => setSiblingSearch(e.target.value)}
+                    />
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                      {students
+                        .filter(s => s.id !== student.id)
+                        .filter(s => !getSiblingIds(student.id).includes(s.id))
+                        .filter(s => {
+                          if (!siblingSearch) return false;
+                          const q = siblingSearch.toLowerCase();
+                          return s.name.toLowerCase().includes(q) || s.code.includes(q);
+                        })
+                        .slice(0, 20)
+                        .map(s => (
+                          <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                            <div>
+                              <p className="font-bold">{s.name}</p>
+                              <p className="text-sm text-muted-foreground">{s.code} - {getGradeLabel(s.grade)}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={async () => {
+                                await addLink(student.id, s.id);
+                                setSiblingSearch('');
+                                setSiblingDialogOpen(false);
+                              }}
+                            >
+                              ربط
+                            </Button>
+                          </div>
+                        ))}
+                      {siblingSearch && students.filter(s => s.id !== student.id && !getSiblingIds(student.id).includes(s.id)).filter(s => {
+                        const q = siblingSearch.toLowerCase();
+                        return s.name.toLowerCase().includes(q) || s.code.includes(q);
+                      }).length === 0 && (
+                        <p className="text-center text-muted-foreground py-4">لا يوجد نتائج</p>
+                      )}
+                      {!siblingSearch && (
+                        <p className="text-center text-muted-foreground py-4">اكتب للبحث عن طالب</p>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {getSiblingIds(student.id).length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">لا يوجد إخوة مرتبطون</p>
+            ) : (
+              <div className="space-y-2">
+                {getSiblingIds(student.id).map(sibId => {
+                  const sib = getStudentById(sibId);
+                  if (!sib) return null;
+                  return (
+                    <div key={sibId} className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                      <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/students/${sibId}`)}>
+                        <Users className="h-4 w-4 text-primary" />
+                        <div>
+                          <p className="font-bold">{sib.name}</p>
+                          <p className="text-sm text-muted-foreground">{sib.code} - {getGradeLabel(sib.grade)}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => removeLink(student.id, sibId)}
+                      >
+                        <Unlink className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
