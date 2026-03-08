@@ -52,7 +52,7 @@ export function PrintableStudentCard({ student, group }: PrintableStudentCardPro
             <div className="print-card__code">{student.code}</div>
             <div className="print-card__group-grade">
               {group?.name && <span>{group.name}</span>}
-              {group?.name && <span> | </span>}
+              {group?.name && <span style={{ margin: '0 6px' }}>|</span>}
               <span>{getGradeLabel(student.grade)}</span>
             </div>
           </div>
