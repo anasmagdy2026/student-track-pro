@@ -68,7 +68,7 @@ export default function Attendance() {
   const { groups, loading: groupsLoading, getTodayGroups, getGroupById } = useGroups();
   const { loading: paymentsLoading, isMonthPaid } = usePayments();
   const { exams, results, loading: examsLoading } = useExams();
-  const { lessons, sheets, recitations, loading: lessonsLoading, toggleHomework, getHomeworkStatus, addLesson } = useLessons();
+  const { lessons, sheets, recitations, loading: lessonsLoading, toggleHomework, getHomeworkStatus } = useLessons();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
   const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent } = useStudentBlocks();
   const { createEvent } = useAlertEvents();
