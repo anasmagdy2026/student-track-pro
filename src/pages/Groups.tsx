@@ -57,6 +57,7 @@ export default function Groups() {
   const [reminderGroup, setReminderGroup] = useState<Group | null>(null);
   const [filterDay, setFilterDay] = useState<string>('all');
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeFridayOpen, setMergeFridayOpen] = useState(false);
   const [lessonLogGroup, setLessonLogGroup] = useState<Group | null>(null);
 
   const todayGroups = getTodayGroups();
