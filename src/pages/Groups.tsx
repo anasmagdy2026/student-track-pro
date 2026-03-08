@@ -156,7 +156,7 @@ export default function Groups() {
                   <DialogTitle>إضافة مجموعة جديدة</DialogTitle>
                   <DialogDescription>أدخل بيانات المجموعة الجديدة</DialogDescription>
                 </DialogHeader>
-                <GroupForm onSubmit={handleAddGroup} />
+                <GroupForm onSubmit={handleAddGroup} allGroups={groups} />
               </DialogContent>
             </Dialog>
           </div>
