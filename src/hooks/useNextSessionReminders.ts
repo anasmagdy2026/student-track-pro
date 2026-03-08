@@ -192,6 +192,30 @@ export function useNextSessionReminders() {
     });
   };
 
+  // Update a log entry
+  const updateLogEntry = async (entryId: string, data: {
+    homework?: string | null;
+    recitation?: string | null;
+    exam?: string | null;
+    sheet?: string | null;
+    note?: string | null;
+  }) => {
+    const { error } = await supabase
+      .from('next_session_reminder_log')
+      .update(data)
+      .eq('id', entryId);
+    if (error) throw error;
+  };
+
+  // Delete a log entry
+  const deleteLogEntry = async (entryId: string) => {
+    const { error } = await supabase
+      .from('next_session_reminder_log')
+      .delete()
+      .eq('id', entryId);
+    if (error) throw error;
+  };
+
   return {
     reminders,
     loading,
@@ -202,6 +226,8 @@ export function useNextSessionReminders() {
     hasReminder,
     fetchReminderLog,
     restoreFromLog,
+    updateLogEntry,
+    deleteLogEntry,
     refetch: fetchReminders,
   };
 }

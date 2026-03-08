@@ -45,6 +45,7 @@ export default function Dashboard() {
   const { 
     reminders, loading: remindersLoading, hasReminder, getReminderByGroupId,
     upsertReminder, clearReminder, archiveAndClear, fetchReminderLog, restoreFromLog,
+    updateLogEntry, deleteLogEntry,
   } = useNextSessionReminders();
 
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
@@ -382,6 +383,8 @@ export default function Dashboard() {
             }}
             onFetchLog={fetchReminderLog}
             onRestoreLog={restoreFromLog}
+            onUpdateLog={updateLogEntry}
+            onDeleteLog={deleteLogEntry}
           />
         )}
         </div>

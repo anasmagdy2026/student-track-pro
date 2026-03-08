@@ -754,6 +754,44 @@ export type Database = {
           },
         ]
       }
+      student_behavior: {
+        Row: {
+          category: string
+          created_at: string
+          date: string
+          id: string
+          note: string
+          student_id: string
+          type: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          note: string
+          student_id: string
+          type?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string
+          student_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_behavior_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_blocks: {
         Row: {
           block_type: string

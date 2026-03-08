@@ -41,6 +41,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { StudentCard } from '@/components/StudentCard';
 import { MonthlyReport } from '@/components/MonthlyReport';
 import { StudentStatusDialog } from '@/components/StudentStatusDialog';
+import { StudentBehaviorCard } from '@/components/StudentBehaviorCard';
+import { useStudentBehavior } from '@/hooks/useStudentBehavior';
 import { MONTHS_AR } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
@@ -89,6 +91,7 @@ export default function StudentProfile() {
   const { getTemplateByCode } = useWhatsAppTemplates();
   const { fetchReminderLog } = useNextSessionReminders();
   const { getSiblingIds, addLink, removeLink } = useSiblingLinks();
+  const { getStudentNotesByMonth } = useStudentBehavior();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
@@ -524,6 +527,7 @@ export default function StudentProfile() {
                       lessonScores={reportData.lessonScores}
                       examResults={reportData.examResults}
                       reminderHomeworks={reminderLogs}
+                      behaviorNotes={getStudentNotesByMonth(student.id, reportMonth)}
                     />
                   )}
                 </div>
@@ -713,6 +717,10 @@ export default function StudentProfile() {
             )}
           </CardContent>
         </Card>
+
+
+        {/* Behavior Evaluation */}
+        <StudentBehaviorCard studentId={student.id} />
 
         <Card>
           <CardHeader>

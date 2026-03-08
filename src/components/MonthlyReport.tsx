@@ -14,7 +14,8 @@ import {
   XCircle,
   BookOpen,
   CreditCard,
-  Share2
+  Share2,
+  Star
 } from 'lucide-react';
 
 interface MonthlyReportProps {
@@ -26,6 +27,7 @@ interface MonthlyReportProps {
   lessonScores: { lessonName: string; sheetScore: number | null; recitationScore: number | null; sheetMax: number; recitationMax: number; homeworkDone: boolean | null; homeworkText?: string | null }[];
   examResults: { examName: string; score: number | null; maxScore: number; absent: boolean }[];
   reminderHomeworks?: { date: string; homework: string }[];
+  behaviorNotes?: { type: string; category: string; note: string; date: string }[];
 }
 
 export function MonthlyReport({
@@ -37,6 +39,7 @@ export function MonthlyReport({
   lessonScores,
   examResults,
   reminderHomeworks = [],
+  behaviorNotes = [],
 }: MonthlyReportProps) {
   const reportRef = useRef<HTMLDivElement>(null);
   const { getGradeLabel } = useGradeLevels();
@@ -574,6 +577,49 @@ export function MonthlyReport({
             <p className="text-sm text-muted-foreground">لا توجد حصص مسجلة لهذا الشهر.</p>
           )}
         </section>
+
+        {/* Behavior Notes */}
+        {behaviorNotes.length > 0 && (
+          <section className="rounded-xl border bg-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="grid place-items-center h-9 w-9 rounded-lg bg-muted text-foreground">
+                <Star className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-bold text-foreground">تقييم السلوك</h2>
+            </div>
+            <div className="rounded-xl border overflow-hidden">
+              <table className="report-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-right">التاريخ</th>
+                    <th className="text-center">النوع</th>
+                    <th className="text-center">التصنيف</th>
+                    <th className="text-right">الملاحظة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {behaviorNotes.map((b, i) => {
+                    const catLabels: Record<string, string> = { commitment: 'التزام', interaction: 'تفاعل', behavior: 'سلوك', effort: 'اجتهاد', other: 'أخرى' };
+                    return (
+                      <tr key={i} className="bg-card">
+                        <td className="text-right">{new Date(b.date).toLocaleDateString('ar-EG')}</td>
+                        <td className="text-center">
+                          <span className={`print-badge ${b.type === 'positive' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                            {b.type === 'positive' ? '👍 إيجابي' : '👎 سلبي'}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <span className="print-badge bg-muted/60 text-foreground">{catLabels[b.category] || b.category}</span>
+                        </td>
+                        <td className="text-right">{b.note}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         {/* Exam Results */}
         {examResults.length > 0 && (

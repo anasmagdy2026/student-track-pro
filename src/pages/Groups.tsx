@@ -45,6 +45,8 @@ export default function Groups() {
     hasReminder,
     fetchReminderLog,
     restoreFromLog,
+    updateLogEntry,
+    deleteLogEntry,
   } = useNextSessionReminders();
 
   const isLoading = groupsLoading || studentsLoading || gradesLoading || remindersLoading;
@@ -380,6 +382,8 @@ export default function Groups() {
           }}
           onFetchLog={fetchReminderLog}
           onRestoreLog={restoreFromLog}
+          onUpdateLog={updateLogEntry}
+          onDeleteLog={deleteLogEntry}
         />
 
         {/* Merge Groups Dialog */}
