@@ -646,25 +646,107 @@ export default function Payments() {
         />
 
         {/* تأكيد دفع الإخوة */}
-        <ConfirmDialog
-          open={confirmSiblings.open}
-          onOpenChange={(open) => setConfirmSiblings({ ...confirmSiblings, open })}
-          title="تأكيد دفع الإخوة"
-          description={`تم العثور على إخوة لم يدفعوا هذا الشهر:\n${confirmSiblings.siblings.map(s => `• ${s.name}`).join('\n')}\n\nهل تريد تسجيل دفعهم تلقائياً بقيمة صفر؟`}
-          confirmText="نعم، سجّل الدفع"
-          cancelText="لا، شكراً"
-          onConfirm={async () => {
-            for (const sibling of confirmSiblings.siblings) {
-              try {
-                await addPayment(sibling.id, confirmSiblings.month, 0);
-                toast.success(`✅ تم تسجيل دفع ${sibling.name} (أخ/أخت)`);
-              } catch {
-                // ignore
-              }
-            }
-            setConfirmSiblings({ open: false, siblings: [], month: '' });
-          }}
-        />
+        <AlertDialog open={confirmSiblings.open} onOpenChange={(open) => setConfirmSiblings({ ...confirmSiblings, open })}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                دفع الإخوة
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3 text-right">
+                  <p>تم العثور على إخوة لم يدفعوا هذا الشهر:</p>
+                  <div className="space-y-1">
+                    {confirmSiblings.siblings.map(s => (
+                      <div key={s.id} className="flex justify-between items-center text-sm bg-muted/50 rounded px-2 py-1">
+                        <span className="font-medium text-foreground">{s.name}</span>
+                        <span className="text-muted-foreground">{s.monthlyFee} ج.م</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-2 space-y-2">
+                    <p className="font-medium text-foreground">اختر نوع التخفيض:</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        type="button"
+                        variant={siblingDiscountType === 'free' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSiblingDiscountType('free')}
+                        className="text-xs"
+                      >
+                        مجاناً
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={siblingDiscountType === 'half' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSiblingDiscountType('half')}
+                        className="text-xs"
+                      >
+                        نصف الثمن
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={siblingDiscountType === 'custom' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSiblingDiscountType('custom')}
+                        className="text-xs"
+                      >
+                        تخفيض مخصص
+                      </Button>
+                    </div>
+                    {siblingDiscountType === 'custom' && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={siblingCustomDiscount}
+                          onChange={(e) => setSiblingCustomDiscount(Number(e.target.value))}
+                          className="w-24 text-center"
+                        />
+                        <span className="text-sm text-muted-foreground">% تخفيض</span>
+                      </div>
+                    )}
+                    <div className="bg-muted rounded p-2 text-xs space-y-1">
+                      <p className="font-medium text-foreground">المبلغ المطلوب لكل أخ:</p>
+                      {confirmSiblings.siblings.map(s => {
+                        const discountedAmount = siblingDiscountType === 'free' ? 0
+                          : siblingDiscountType === 'half' ? Math.round(s.monthlyFee / 2)
+                          : Math.round(s.monthlyFee * (1 - siblingCustomDiscount / 100));
+                        return (
+                          <div key={s.id} className="flex justify-between">
+                            <span>{s.name}</span>
+                            <span className="font-bold text-primary">{discountedAmount} ج.م</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>لا، شكراً</AlertDialogCancel>
+              <AlertDialogAction onClick={async () => {
+                for (const sibling of confirmSiblings.siblings) {
+                  try {
+                    const amount = siblingDiscountType === 'free' ? 0
+                      : siblingDiscountType === 'half' ? Math.round(sibling.monthlyFee / 2)
+                      : Math.round(sibling.monthlyFee * (1 - siblingCustomDiscount / 100));
+                    await addPayment(sibling.id, confirmSiblings.month, amount);
+                    toast.success(`✅ تم تسجيل دفع ${sibling.name} (${amount} ج.م)`);
+                  } catch {
+                    // ignore
+                  }
+                }
+                setConfirmSiblings({ open: false, siblings: [], month: '' });
+              }}>
+                سجّل الدفع
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AlertDialog
           open={blockedDialogOpen}
