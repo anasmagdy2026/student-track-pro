@@ -163,7 +163,7 @@ export function NextSessionReminderCard({
 
   const renderSendOptions = () => (
     <div className="mt-3 space-y-2 border-t pt-3">
-      {hasWhatsAppGroup ? (
+      {hasWhatsAppGroup && (
         <Button
           size="sm"
           variant="default"
@@ -173,29 +173,28 @@ export function NextSessionReminderCard({
           <Send className="h-3 w-3" />
           إرسال لجروب الواتساب
         </Button>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="اختر طالب للإرسال..." />
-            </SelectTrigger>
-            <SelectContent>
-              {students.map(s => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            size="sm"
-            onClick={() => handleSendIndividual(selectedStudentId)}
-            disabled={!selectedStudentId}
-            className="gap-1 text-xs"
-          >
-            <User className="h-3 w-3" />
-            إرسال
-          </Button>
-        </div>
       )}
+      <div className="flex items-center gap-2">
+        <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+          <SelectTrigger className="flex-1 h-8 text-xs">
+            <SelectValue placeholder="اختر طالب للإرسال..." />
+          </SelectTrigger>
+          <SelectContent>
+            {students.map(s => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          size="sm"
+          onClick={() => handleSendIndividual(selectedStudentId)}
+          disabled={!selectedStudentId}
+          className="gap-1 text-xs"
+        >
+          <User className="h-3 w-3" />
+          إرسال
+        </Button>
+      </div>
     </div>
   );
 
