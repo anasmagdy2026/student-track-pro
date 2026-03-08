@@ -92,7 +92,17 @@ export function useGroups() {
   const getTodayGroups = () => {
     const today = new Date().getDay();
     const todayName = DAYS_AR[today];
-    return groups.filter(group => group.days.includes(todayName));
+    const regularGroups = groups.filter(group => group.days.includes(todayName));
+    // On Friday (day 5), also include groups with friday sessions
+    if (today === 5) {
+      const fridayGroups = groups.filter(g => g.has_friday_session && !regularGroups.some(rg => rg.id === g.id));
+      return [...regularGroups, ...fridayGroups];
+    }
+    return regularGroups;
+  };
+
+  const getFridaySessionGroups = () => {
+    return groups.filter(g => g.has_friday_session);
   };
 
   return {
@@ -106,6 +116,7 @@ export function useGroups() {
     getGroupsByDay,
     getGroupsByGrade,
     getTodayGroups,
+    getFridaySessionGroups,
     refetch: fetchGroups,
   };
 }

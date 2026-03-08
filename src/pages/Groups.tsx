@@ -34,7 +34,7 @@ import { MergeGroupsDialog } from '@/components/MergeGroupsDialog';
 import { GroupLessonLogDialog } from '@/components/GroupLessonLogDialog';
 
 export default function Groups() {
-  const { groups, loading: groupsLoading, addGroup, updateGroup, deleteGroup, getTodayGroups } = useGroups();
+  const { groups, loading: groupsLoading, addGroup, updateGroup, deleteGroup, getTodayGroups, getFridaySessionGroups } = useGroups();
   const { loading: studentsLoading, getStudentsByGroup } = useStudents();
   const { loading: gradesLoading, getGradeLabel } = useGradeLevels();
   const { 
@@ -156,7 +156,7 @@ export default function Groups() {
                   <DialogTitle>إضافة مجموعة جديدة</DialogTitle>
                   <DialogDescription>أدخل بيانات المجموعة الجديدة</DialogDescription>
                 </DialogHeader>
-                <GroupForm onSubmit={handleAddGroup} />
+                <GroupForm onSubmit={handleAddGroup} allGroups={groups} />
               </DialogContent>
             </Dialog>
           </div>
@@ -172,6 +172,23 @@ export default function Groups() {
                   <p className="font-bold text-primary">مجموعات اليوم</p>
                   <p className="text-sm text-muted-foreground">
                     {todayGroups.map(g => `${g.name} (${formatTime12(g.time)})`).join(' - ')}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Friday Sessions Alert */}
+        {new Date().getDay() === 5 && getFridaySessionGroups().length > 0 && (
+          <Card className="bg-warning/10 border-warning/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-6 w-6 text-warning" />
+                <div>
+                  <p className="font-bold text-warning">🕌 حصص يوم الجمعة</p>
+                  <p className="text-sm text-muted-foreground">
+                    {getFridaySessionGroups().map(g => `${g.name} (${formatTime12(g.friday_time || g.time)})`).join(' - ')}
                   </p>
                 </div>
               </div>
@@ -302,6 +319,7 @@ export default function Groups() {
                           {editingGroup && (
                             <GroupForm
                               initialData={{
+                                id: editingGroup.id,
                                 name: editingGroup.name,
                                 grade: editingGroup.grade,
                                 days: editingGroup.days,
@@ -313,6 +331,7 @@ export default function Groups() {
                               }}
                               onSubmit={handleUpdateGroup}
                               isEdit
+                              allGroups={groups}
                             />
                           )}
                         </DialogContent>
