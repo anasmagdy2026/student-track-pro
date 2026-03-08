@@ -32,7 +32,7 @@ import { StudentForm } from '@/components/forms/StudentForm';
 import { StudentCard } from '@/components/StudentCard';
 import { Student } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
-import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode, ArrowRightLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
