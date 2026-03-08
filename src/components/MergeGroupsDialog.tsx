@@ -98,7 +98,7 @@ export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount,
           <div className="space-y-2">
             <label className="text-sm font-medium">المجموعات المراد دمجها (نقل طلابها)</label>
             <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-              {groups.filter(g => g.id !== targetGroupId).map(g => {
+              {(fridayOnly ? groups.filter(g => g.has_friday_session) : groups).filter(g => g.id !== targetGroupId).map(g => {
                 const count = getStudentCount(g.id);
                 return (
                   <label key={g.id} className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-muted/50">
