@@ -227,8 +227,12 @@ export default function Lessons() {
     setEditDate(lesson.date);
     setEditSheetMax(lesson.sheet_max_score);
     setEditRecitationMax(lesson.recitation_max_score);
+    setEditGroupId(lesson.group_id || '');
+    setEditGrade(lesson.grade);
     setIsEditOpen(true);
   };
+
+  const editFilteredGroups = groups.filter(g => g.grade === editGrade);
 
   const handleEditLesson = async () => {
     if (!editingLesson || !editName) {
