@@ -31,6 +31,7 @@ import { z } from 'zod';
 import { WhatsAppTemplatesSettings } from '@/components/WhatsAppTemplatesSettings';
 import { AppSettingsCard } from '@/components/AppSettingsCard';
 import { NotificationSettingsCard } from '@/components/NotificationSettingsCard';
+import { BiometricSettingsCard } from '@/components/BiometricSettingsCard';
 
 export default function Settings() {
   const { user, updatePassword } = useAuth();
