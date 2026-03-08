@@ -143,15 +143,19 @@ export function NextSessionReminderCard({
   };
 
   const handleSendToWhatsAppGroup = () => {
-    if (!group.whatsapp_group_link) {
-      toast.error('لم يتم إضافة رابط جروب الواتساب لهذه المجموعة');
-      return;
-    }
     const message = buildGroupMessage();
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
-    toast.success('سيتم فتح واتساب، اختر الجروب وأرسل الرسالة');
+    if (group.whatsapp_group_link) {
+      // Send directly to the group link
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank');
+      toast.success('سيتم فتح واتساب، اختر الجروب وأرسل الرسالة');
+    } else {
+      // No link — open WhatsApp and let user choose
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank');
+      toast.success('اختر المحادثة أو الجروب وأرسل الرسالة');
+    }
   };
 
   const handleConfirmSend = () => {
@@ -187,21 +191,15 @@ export function NextSessionReminderCard({
       </div>
 
       {/* إرسال لجروب الواتساب */}
-      {hasWhatsAppGroup ? (
-        <Button
-          size="sm"
-          variant="default"
-          onClick={handleSendToWhatsAppGroup}
-          className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
-        >
-          <Send className="h-3 w-3" />
-          إرسال لجروب الواتساب
-        </Button>
-      ) : (
-        <p className="text-xs text-muted-foreground text-center">
-          أضف رابط جروب الواتساب في إعدادات المجموعة لتتمكن من الإرسال المباشر
-        </p>
-      )}
+      <Button
+        size="sm"
+        variant="default"
+        onClick={handleSendToWhatsAppGroup}
+        className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
+      >
+        <Send className="h-3 w-3" />
+        {hasWhatsAppGroup ? 'إرسال لجروب الواتساب' : 'إرسال عبر واتساب (اختر المحادثة)'}
+      </Button>
     </div>
   );
 
