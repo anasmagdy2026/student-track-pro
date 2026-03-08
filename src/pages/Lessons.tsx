@@ -818,7 +818,7 @@ export default function Lessons() {
         {/* Add to Groups Dialog */}
         <Dialog open={isAddToGroupsOpen} onOpenChange={(open) => {
           setIsAddToGroupsOpen(open);
-          if (!open) { setAddToGroupsLesson(null); setSelectedGroupIds(new Set()); }
+          if (!open) { setAddToGroupsLesson(null); setSelectedGroupIds(new Set()); setAddToGroupsSearch(''); }
         }}>
           <DialogContent>
             <DialogHeader>
