@@ -145,17 +145,11 @@ export function NextSessionReminderCard({
   const handleSendToWhatsAppGroup = () => {
     const message = buildGroupMessage();
     const encodedMessage = encodeURIComponent(message);
-    if (group.whatsapp_group_link) {
-      // Send directly to the group link
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
-      toast.success('سيتم فتح واتساب، اختر الجروب وأرسل الرسالة');
-    } else {
-      // No link — open WhatsApp and let user choose
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
-      toast.success('اختر المحادثة أو الجروب وأرسل الرسالة');
-    }
+    // Copy message to clipboard first
+    navigator.clipboard.writeText(message).catch(() => {});
+    // Open the actual WhatsApp group link
+    window.open(group.whatsapp_group_link!, '_blank');
+    toast.success('تم نسخ الرسالة، الصق الرسالة في الجروب وأرسلها');
   };
 
   const handleConfirmSend = () => {
