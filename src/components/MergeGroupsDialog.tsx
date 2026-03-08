@@ -67,10 +67,12 @@ export function MergeGroupsDialog({ open, onOpenChange, groups, getStudentCount,
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Merge className="h-5 w-5 text-primary" />
-            دمج المجموعات
+            {fridayOnly ? 'دمج مجموعات حصص الجمعة' : 'دمج المجموعات'}
           </DialogTitle>
           <DialogDescription>
-            نقل طلاب المجموعات المختارة إلى مجموعة مستهدفة
+            {fridayOnly
+              ? 'نقل طلاب مجموعات الجمعة المختارة إلى مجموعة مستهدفة'
+              : 'نقل طلاب المجموعات المختارة إلى مجموعة مستهدفة'}
           </DialogDescription>
         </DialogHeader>
 
