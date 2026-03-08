@@ -61,6 +61,8 @@ export function NextSessionReminderDialog({
   const [showHistory, setShowHistory] = useState(false);
   const [logEntries, setLogEntries] = useState<ReminderLogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
+  const [editLogData, setEditLogData] = useState<Partial<ReminderLogEntry>>({});
 
   useEffect(() => {
     if (open) {
