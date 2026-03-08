@@ -814,6 +814,103 @@ export default function Lessons() {
           </DialogContent>
         </Dialog>
 
+        {/* Add to Groups Dialog */}
+        <Dialog open={isAddToGroupsOpen} onOpenChange={(open) => {
+          setIsAddToGroupsOpen(open);
+          if (!open) { setAddToGroupsLesson(null); setSelectedGroupIds(new Set()); }
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>إضافة الحصة لمجموعات أخرى</DialogTitle>
+            </DialogHeader>
+            {addToGroupsLesson && (
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="font-semibold">{addToGroupsLesson.name}</p>
+                  <p className="text-sm text-muted-foreground">{addToGroupsLesson.date}</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">اختر المجموعات</label>
+                  <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-3">
+                    {groups
+                      .filter(g => g.grade === addToGroupsLesson.grade && g.id !== addToGroupsLesson.group_id)
+                      .map(group => {
+                        const alreadyExists = lessons.some(
+                          l => l.name === addToGroupsLesson.name && l.date === addToGroupsLesson.date && l.group_id === group.id
+                        );
+                        return (
+                          <label
+                            key={group.id}
+                            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors ${alreadyExists ? 'opacity-50' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              disabled={alreadyExists}
+                              checked={selectedGroupIds.has(group.id)}
+                              onChange={(e) => {
+                                setSelectedGroupIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(group.id);
+                                  else next.delete(group.id);
+                                  return next;
+                                });
+                              }}
+                              className="h-4 w-4 rounded border-input"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{group.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {group.days.join(' · ')} - {formatTime12(group.time)}
+                                {alreadyExists && ' (مضافة بالفعل)'}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                  </div>
+                  {selectedGroupIds.size > 0 && (
+                    <p className="text-sm text-muted-foreground">تم اختيار {selectedGroupIds.size} مجموعة</p>
+                  )}
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={selectedGroupIds.size === 0 || isSubmitting}
+                  onClick={async () => {
+                    if (!addToGroupsLesson || selectedGroupIds.size === 0) return;
+                    setIsSubmitting(true);
+                    try {
+                      for (const gid of selectedGroupIds) {
+                        await addLesson({
+                          name: addToGroupsLesson.name,
+                          date: addToGroupsLesson.date,
+                          grade: addToGroupsLesson.grade,
+                          group_id: gid,
+                          sheet_max_score: addToGroupsLesson.sheet_max_score,
+                          recitation_max_score: addToGroupsLesson.recitation_max_score,
+                        });
+                      }
+                      toast.success(`تم إضافة الحصة لـ ${selectedGroupIds.size} مجموعة`);
+                      setIsAddToGroupsOpen(false);
+                      setAddToGroupsLesson(null);
+                      setSelectedGroupIds(new Set());
+                    } catch {
+                      toast.error('حدث خطأ أثناء إضافة الحصة');
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> جاري الإضافة...</>
+                  ) : (
+                    <>إضافة لـ {selectedGroupIds.size} مجموعة</>
+                  )}
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Grades Dialog */}
         <Dialog open={isGradesOpen} onOpenChange={setIsGradesOpen}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
