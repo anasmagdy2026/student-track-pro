@@ -92,6 +92,7 @@ export default function Lessons() {
   const [isAddToGroupsOpen, setIsAddToGroupsOpen] = useState(false);
   const [addToGroupsLesson, setAddToGroupsLesson] = useState<Lesson | null>(null);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
+  const [addToGroupsSearch, setAddToGroupsSearch] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isGradesOpen, setIsGradesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sheet');
