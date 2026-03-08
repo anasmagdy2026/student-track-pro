@@ -87,6 +87,7 @@ export default function StudentProfile() {
   const { events, createEvent } = useAlertEvents();
   const { getTemplateByCode } = useWhatsAppTemplates();
   const { fetchReminderLog } = useNextSessionReminders();
+  const { getSiblingIds, addLink, removeLink } = useSiblingLinks();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
