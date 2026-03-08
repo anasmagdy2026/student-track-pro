@@ -104,6 +104,13 @@ export default function Payments() {
     studentName: string;
   }>({ open: false, paymentId: '', studentName: '' });
 
+  // تأكيد دفع الإخوة
+  const [confirmSiblings, setConfirmSiblings] = useState<{
+    open: boolean;
+    siblings: { id: string; name: string }[];
+    month: string;
+  }>({ open: false, siblings: [], month: '' });
+
   const [blockedDialogOpen, setBlockedDialogOpen] = useState(false);
   const [blockedContext, setBlockedContext] = useState<{
     studentName: string;
