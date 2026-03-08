@@ -152,6 +152,23 @@ export default function Dashboard() {
           })}
         </div>
 
+        {/* Friday Sessions Alert */}
+        {new Date().getDay() === 5 && getFridaySessionGroups().length > 0 && (
+          <Card className="bg-warning/10 border-warning/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-6 w-6 text-warning" />
+                <div>
+                  <p className="font-bold text-warning">🕌 حصص يوم الجمعة</p>
+                  <p className="text-sm text-muted-foreground">
+                    {getFridaySessionGroups().map(g => `${g.name} (${formatTime12(g.friday_time || g.time)})`).join(' - ')}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Grade Distribution */}
