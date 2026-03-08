@@ -91,6 +91,7 @@ export default function Groups() {
     time_to: string | null;
     has_friday_session: boolean;
     friday_time: string | null;
+    whatsapp_group_link: string | null;
   }) => {
     if (!data.name) {
       toast.error('برجاء إدخال اسم المجموعة');
@@ -114,6 +115,7 @@ export default function Groups() {
     time_to: string | null;
     has_friday_session: boolean;
     friday_time: string | null;
+    whatsapp_group_link: string | null;
   }) => {
     if (!editingGroup) return;
     try {
@@ -344,6 +346,7 @@ export default function Groups() {
                                 time_to: editingGroup.time_to,
                                 has_friday_session: editingGroup.has_friday_session,
                                 friday_time: editingGroup.friday_time,
+                                whatsapp_group_link: editingGroup.whatsapp_group_link,
                               }}
                               onSubmit={handleUpdateGroup}
                               isEdit
