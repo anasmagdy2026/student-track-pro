@@ -109,9 +109,11 @@ export default function Payments() {
   // تأكيد دفع الإخوة
   const [confirmSiblings, setConfirmSiblings] = useState<{
     open: boolean;
-    siblings: { id: string; name: string }[];
+    siblings: { id: string; name: string; monthlyFee: number }[];
     month: string;
   }>({ open: false, siblings: [], month: '' });
+  const [siblingDiscountType, setSiblingDiscountType] = useState<'free' | 'half' | 'custom'>('half');
+  const [siblingCustomDiscount, setSiblingCustomDiscount] = useState<number>(0);
 
   const [blockedDialogOpen, setBlockedDialogOpen] = useState(false);
   const [blockedContext, setBlockedContext] = useState<{
