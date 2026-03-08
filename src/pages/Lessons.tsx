@@ -90,6 +90,7 @@ export default function Lessons() {
   const [activeTab, setActiveTab] = useState('sheet');
   const [filterGrade, setFilterGrade] = useState<string>('all');
   const [filterGroup, setFilterGroup] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
   // Form state
@@ -116,7 +117,8 @@ export default function Lessons() {
     const filtered = lessons.filter((lesson) => {
       const matchesGrade = filterGrade === 'all' || lesson.grade === filterGrade;
       const matchesGroup = filterGroup === 'all' || lesson.group_id === filterGroup;
-      return matchesGrade && matchesGroup;
+      const matchesSearch = !searchQuery.trim() || lesson.name.includes(searchQuery.trim());
+      return matchesGrade && matchesGroup && matchesSearch;
     });
 
     const map = new Map<string, Lesson[]>();
@@ -132,7 +134,7 @@ export default function Lessons() {
     }
 
     return map;
-  }, [lessons, filterGrade, filterGroup]);
+  }, [lessons, filterGrade, filterGroup, searchQuery]);
 
   const totalLessons = Array.from(groupedLessons.values()).reduce((s, arr) => s + arr.length, 0);
 
@@ -532,7 +534,16 @@ export default function Lessons() {
 
         {/* Filter */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 space-y-4">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="بحث باسم الحصة..."
+                className="pr-9"
+              />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
