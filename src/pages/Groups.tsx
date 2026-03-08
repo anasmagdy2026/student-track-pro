@@ -345,6 +345,7 @@ export default function Groups() {
                                 time_to: editingGroup.time_to,
                                 has_friday_session: editingGroup.has_friday_session,
                                 friday_time: editingGroup.friday_time,
+                                whatsapp_group_link: editingGroup.whatsapp_group_link,
                               }}
                               onSubmit={handleUpdateGroup}
                               isEdit
