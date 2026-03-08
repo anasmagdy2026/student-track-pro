@@ -42,6 +42,7 @@ import { StudentCard } from '@/components/StudentCard';
 import { MonthlyReport } from '@/components/MonthlyReport';
 import { StudentStatusDialog } from '@/components/StudentStatusDialog';
 import { StudentBehaviorCard } from '@/components/StudentBehaviorCard';
+import { useStudentBehavior } from '@/hooks/useStudentBehavior';
 import { MONTHS_AR } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
