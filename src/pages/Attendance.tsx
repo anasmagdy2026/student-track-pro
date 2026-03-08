@@ -856,7 +856,7 @@ export default function Attendance() {
                         size="sm"
                         onClick={() => setSelectedGroup(g.id)}
                       >
-                        {g.name} ({g.time})
+                        {g.name} ({formatTime12(g.time)})
                       </Button>
                     ))}
                   </div>
