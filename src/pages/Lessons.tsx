@@ -831,9 +831,19 @@ export default function Lessons() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">اختر المجموعات</label>
+                  <div className="relative mb-2">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={addToGroupsSearch}
+                      onChange={(e) => setAddToGroupsSearch(e.target.value)}
+                      placeholder="بحث باسم المجموعة..."
+                      className="pr-9"
+                    />
+                  </div>
                   <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-3">
                     {groups
                       .filter(g => g.grade === addToGroupsLesson.grade && g.id !== addToGroupsLesson.group_id)
+                      .filter(g => !addToGroupsSearch.trim() || g.name.includes(addToGroupsSearch.trim()))
                       .map(group => {
                         const alreadyExists = lessons.some(
                           l => l.name === addToGroupsLesson.name && l.date === addToGroupsLesson.date && l.group_id === group.id
