@@ -191,21 +191,15 @@ export function NextSessionReminderCard({
       </div>
 
       {/* إرسال لجروب الواتساب */}
-      {hasWhatsAppGroup ? (
-        <Button
-          size="sm"
-          variant="default"
-          onClick={handleSendToWhatsAppGroup}
-          className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
-        >
-          <Send className="h-3 w-3" />
-          إرسال لجروب الواتساب
-        </Button>
-      ) : (
-        <p className="text-xs text-muted-foreground text-center">
-          أضف رابط جروب الواتساب في إعدادات المجموعة لتتمكن من الإرسال المباشر
-        </p>
-      )}
+      <Button
+        size="sm"
+        variant="default"
+        onClick={handleSendToWhatsAppGroup}
+        className="gap-1 text-xs w-full bg-green-600 hover:bg-green-700 text-white"
+      >
+        <Send className="h-3 w-3" />
+        {hasWhatsAppGroup ? 'إرسال لجروب الواتساب' : 'إرسال عبر واتساب (اختر المحادثة)'}
+      </Button>
     </div>
   );
 

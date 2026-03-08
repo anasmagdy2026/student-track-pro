@@ -434,17 +434,6 @@ export default function Groups() {
           }}
         />
 
-        {/* Merge Friday Groups Dialog */}
-        <MergeGroupsDialog
-          open={mergeFridayOpen}
-          onOpenChange={setMergeFridayOpen}
-          groups={groups}
-          getStudentCount={(gId) => getStudentsByGroup(gId).length}
-          onMerged={() => {
-            window.location.reload();
-          }}
-          fridayOnly
-        />
 
         {/* Lesson Log Dialog */}
         {lessonLogGroup && (
