@@ -117,7 +117,8 @@ export default function Lessons() {
     const filtered = lessons.filter((lesson) => {
       const matchesGrade = filterGrade === 'all' || lesson.grade === filterGrade;
       const matchesGroup = filterGroup === 'all' || lesson.group_id === filterGroup;
-      return matchesGrade && matchesGroup;
+      const matchesSearch = !searchQuery.trim() || lesson.name.includes(searchQuery.trim());
+      return matchesGrade && matchesGroup && matchesSearch;
     });
 
     const map = new Map<string, Lesson[]>();
