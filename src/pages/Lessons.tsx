@@ -247,6 +247,8 @@ export default function Lessons() {
         date: editDate,
         sheet_max_score: editSheetMax,
         recitation_max_score: editRecitationMax,
+        group_id: editGroupId || null,
+        grade: editGrade,
       });
       toast.success('تم تعديل الحصة بنجاح');
       setIsEditOpen(false);
