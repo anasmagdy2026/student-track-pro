@@ -145,4 +145,3 @@ function setRTL(ws: XLSX.WorkSheet) {
   if (!ws['!sheetViews']) ws['!sheetViews'] = [{}];
   (ws['!sheetViews'] as any[])[0].rightToLeft = true;
 }
-}
