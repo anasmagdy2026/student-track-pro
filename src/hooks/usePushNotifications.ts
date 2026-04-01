@@ -53,6 +53,27 @@ export function usePushNotifications() {
     }
   }, [user]);
 
+  // Auto-register token on every session if permission already granted
+  useEffect(() => {
+    if (!user || autoRegistered) return;
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    
+    setAutoRegistered(true);
+    
+    (async () => {
+      try {
+        const token = await requestNotificationPermission();
+        if (token) {
+          setFcmToken(token);
+          await registerToken(token);
+          console.log('[Push] Auto-registered FCM token for this device');
+        }
+      } catch (err) {
+        console.error('[Push] Auto-register failed:', err);
+      }
+    })();
+  }, [user, autoRegistered, registerToken]);
+
   const enableNotifications = useCallback(async () => {
     if (!user) {
       toast.error('يجب تسجيل الدخول أولاً');
