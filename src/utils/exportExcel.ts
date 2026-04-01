@@ -104,6 +104,7 @@ export function exportStudentsExcel({
   });
   const ws3 = XLSX.utils.aoa_to_sheet(attData);
   setColWidths(ws3, [5, 12, 25, 20, ...Array(24).fill(10)]);
+  setRTL(ws3);
   XLSX.utils.book_append_sheet(wb, ws3, 'الحضور والغياب');
 
   // === Sheet 4: Exam Results ===
