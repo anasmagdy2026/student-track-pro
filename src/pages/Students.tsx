@@ -29,19 +29,26 @@ import {
 } from '@/components/ui/table';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
+import { usePayments } from '@/hooks/usePayments';
+import { useAttendance } from '@/hooks/useAttendance';
+import { useExams } from '@/hooks/useExams';
 import { StudentForm } from '@/components/forms/StudentForm';
 import { StudentCard } from '@/components/StudentCard';
 import { Student } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
-import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode, ArrowRightLeft } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode, ArrowRightLeft, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
+import { exportStudentsExcel } from '@/utils/exportExcel';
 
 export default function Students() {
   const { students, loading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudents();
   const { groups, loading: groupsLoading, getGroupsByGrade, getGroupById } = useGroups();
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { payments } = usePayments();
+  const { attendance } = useAttendance();
+  const { exams, results: examResults } = useExams();
 
   const isLoading = studentsLoading || groupsLoading || gradesLoading;
 
@@ -154,13 +161,33 @@ export default function Students() {
               إجمالي {students.length} طالب
             </p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-5 w-5" />
-                إضافة طالب جديد
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                exportStudentsExcel({
+                  students: filteredStudents,
+                  payments,
+                  attendance,
+                  exams,
+                  examResults,
+                  groups,
+                  getGradeLabel,
+                });
+                toast.success('تم تصدير الملف بنجاح');
+              }}
+            >
+              <Download className="h-4 w-4" />
+              تصدير Excel
+            </Button>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-5 w-5" />
+                  إضافة طالب جديد
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>إضافة طالب جديد</DialogTitle>
@@ -172,7 +199,8 @@ export default function Students() {
                 onSubmit={handleAddStudent}
               />
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         {/* Filters */}
