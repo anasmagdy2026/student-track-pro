@@ -46,6 +46,9 @@ export default function Students() {
   const { students, loading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudents();
   const { groups, loading: groupsLoading, getGroupsByGrade, getGroupById } = useGroups();
   const { activeGradeLevels, loading: gradesLoading, getGradeLabel } = useGradeLevels();
+  const { payments } = usePayments();
+  const { attendance } = useAttendance();
+  const { exams, results: examResults } = useExams();
 
   const isLoading = studentsLoading || groupsLoading || gradesLoading;
 
