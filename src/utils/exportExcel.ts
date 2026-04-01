@@ -48,6 +48,7 @@ export function exportStudentsExcel({
   });
   const ws1 = XLSX.utils.json_to_sheet(studentRows);
   setColWidths(ws1, [5, 12, 25, 15, 20, 15, 15, 12, 12]);
+  setRTL(ws1);
   XLSX.utils.book_append_sheet(wb, ws1, 'بيانات الطلاب');
 
   // === Sheet 2: Monthly Payments ===
@@ -75,6 +76,7 @@ export function exportStudentsExcel({
   });
   const ws2 = XLSX.utils.aoa_to_sheet(paymentData);
   setColWidths(ws2, [5, 12, 25, 20, 10, ...Array(12).fill(14)]);
+  setRTL(ws2);
   XLSX.utils.book_append_sheet(wb, ws2, 'المدفوعات الشهرية');
 
   // === Sheet 3: Attendance Summary ===
@@ -102,6 +104,7 @@ export function exportStudentsExcel({
   });
   const ws3 = XLSX.utils.aoa_to_sheet(attData);
   setColWidths(ws3, [5, 12, 25, 20, ...Array(24).fill(10)]);
+  setRTL(ws3);
   XLSX.utils.book_append_sheet(wb, ws3, 'الحضور والغياب');
 
   // === Sheet 4: Exam Results ===
@@ -125,7 +128,12 @@ export function exportStudentsExcel({
   });
   const ws4 = XLSX.utils.aoa_to_sheet(examData);
   setColWidths(ws4, [5, 12, 25, 20, ...Array(gradeExams.length).fill(14)]);
+  setRTL(ws4);
   XLSX.utils.book_append_sheet(wb, ws4, 'درجات الامتحانات');
+
+  // Set RTL for all sheets
+  wb.Workbook = wb.Workbook || {};
+  wb.Workbook.Views = [{ RTL: true }];
 
   // Download
   const fileName = `بيانات_الطلاب_${currentYear}.xlsx`;
@@ -134,4 +142,9 @@ export function exportStudentsExcel({
 
 function setColWidths(ws: XLSX.WorkSheet, widths: number[]) {
   ws['!cols'] = widths.map(w => ({ wch: w }));
+}
+
+function setRTL(ws: XLSX.WorkSheet) {
+  if (!ws['!sheetViews']) ws['!sheetViews'] = [{}];
+  (ws['!sheetViews'] as any[])[0].rightToLeft = true;
 }
