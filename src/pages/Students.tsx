@@ -161,13 +161,33 @@ export default function Students() {
               إجمالي {students.length} طالب
             </p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-5 w-5" />
-                إضافة طالب جديد
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                exportStudentsExcel({
+                  students: filteredStudents,
+                  payments,
+                  attendance,
+                  exams,
+                  examResults,
+                  groups,
+                  getGradeLabel,
+                });
+                toast.success('تم تصدير الملف بنجاح');
+              }}
+            >
+              <Download className="h-4 w-4" />
+              تصدير Excel
+            </Button>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-5 w-5" />
+                  إضافة طالب جديد
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>إضافة طالب جديد</DialogTitle>
