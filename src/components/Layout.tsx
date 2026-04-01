@@ -19,9 +19,12 @@ import {
   UserX,
   Printer,
   Bell,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useTheme } from '@/hooks/useTheme';
 import { OfflineStatusIndicator } from '@/components/OfflineStatusIndicator';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
@@ -49,6 +52,7 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { teacherName: settingsTeacherName, systemName } = useAppSettings();
   const displayName = settingsTeacherName || 'مستر محمد مجدي';
   const displaySystem = systemName || 'نظام متابعة الطلاب';
@@ -78,7 +82,12 @@ export function Layout({ children }: LayoutProps) {
           <GraduationCap className="h-6 w-6 text-primary" />
           <span className="font-bold text-lg">{displayName}</span>
         </div>
-        <OfflineStatusIndicator />
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
+          <OfflineStatusIndicator />
+        </div>
       </header>
 
       {/* Sidebar Overlay */}
@@ -169,6 +178,17 @@ export function Layout({ children }: LayoutProps) {
               {!isCollapsed && <span className="font-medium">الإعدادات</span>}
             </Link>
             
+            <Button
+              variant="ghost"
+              className={`w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                isCollapsed ? 'justify-center px-0' : 'justify-start'
+              }`}
+              onClick={toggleTheme}
+              title={isCollapsed ? (theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن') : undefined}
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5 flex-shrink-0" /> : <Moon className="h-5 w-5 flex-shrink-0" />}
+              {!isCollapsed && <span>{theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}</span>}
+            </Button>
             <Button
               variant="ghost"
               className={`w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
