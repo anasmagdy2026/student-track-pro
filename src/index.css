@@ -56,48 +56,48 @@
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 0 0% 98%;
+    --background: 220 15% 10%;
+    --foreground: 220 10% 90%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 15% 13%;
+    --card-foreground: 220 10% 90%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 15% 13%;
+    --popover-foreground: 220 10% 90%;
 
-    --primary: 217 91% 55%;
+    --primary: 215 60% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 38 92% 50%;
+    --secondary: 35 55% 45%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 12% 18%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 220 12% 18%;
+    --accent-foreground: 220 10% 85%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 50% 45%;
+    --destructive-foreground: 0 0% 95%;
 
-    --success: 142 76% 36%;
+    --success: 142 40% 35%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 35 55% 45%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 55%;
+    --border: 220 12% 20%;
+    --input: 220 12% 20%;
+    --ring: 215 60% 55%;
 
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 38 92% 50%;
+    --sidebar-background: 220 15% 8%;
+    --sidebar-foreground: 220 10% 85%;
+    --sidebar-primary: 35 55% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-accent: 220 12% 16%;
+    --sidebar-accent-foreground: 220 10% 85%;
+    --sidebar-border: 220 12% 16%;
+    --sidebar-ring: 35 55% 45%;
     --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
   }
 }
