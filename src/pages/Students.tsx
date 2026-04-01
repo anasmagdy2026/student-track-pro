@@ -199,7 +199,8 @@ export default function Students() {
                 onSubmit={handleAddStudent}
               />
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         {/* Filters */}
