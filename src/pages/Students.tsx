@@ -29,14 +29,18 @@ import {
 } from '@/components/ui/table';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/hooks/useGroups';
+import { usePayments } from '@/hooks/usePayments';
+import { useAttendance } from '@/hooks/useAttendance';
+import { useExams } from '@/hooks/useExams';
 import { StudentForm } from '@/components/forms/StudentForm';
 import { StudentCard } from '@/components/StudentCard';
 import { Student } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
-import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode, ArrowRightLeft } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Users, QrCode, ArrowRightLeft, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { PageLoading } from '@/components/PageLoading';
+import { exportStudentsExcel } from '@/utils/exportExcel';
 
 export default function Students() {
   const { students, loading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudents();
