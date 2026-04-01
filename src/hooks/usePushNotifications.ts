@@ -10,7 +10,6 @@ export function usePushNotifications() {
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
   const [fcmToken, setFcmToken] = useState<string | null>(null);
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [autoRegistered, setAutoRegistered] = useState(false);
 
