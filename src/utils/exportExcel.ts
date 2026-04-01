@@ -140,3 +140,9 @@ export function exportStudentsExcel({
 function setColWidths(ws: XLSX.WorkSheet, widths: number[]) {
   ws['!cols'] = widths.map(w => ({ wch: w }));
 }
+
+function setRTL(ws: XLSX.WorkSheet) {
+  if (!ws['!sheetViews']) ws['!sheetViews'] = [{}];
+  (ws['!sheetViews'] as any[])[0].rightToLeft = true;
+}
+}
