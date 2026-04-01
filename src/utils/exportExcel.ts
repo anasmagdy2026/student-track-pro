@@ -127,6 +127,10 @@ export function exportStudentsExcel({
   setColWidths(ws4, [5, 12, 25, 20, ...Array(gradeExams.length).fill(14)]);
   XLSX.utils.book_append_sheet(wb, ws4, 'درجات الامتحانات');
 
+  // Set RTL for all sheets
+  wb.Workbook = wb.Workbook || {};
+  wb.Workbook.Views = [{ RTL: true }];
+
   // Download
   const fileName = `بيانات_الطلاب_${currentYear}.xlsx`;
   XLSX.writeFile(wb, fileName);
