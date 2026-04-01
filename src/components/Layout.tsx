@@ -52,6 +52,7 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { teacherName: settingsTeacherName, systemName } = useAppSettings();
   const displayName = settingsTeacherName || 'مستر محمد مجدي';
   const displaySystem = systemName || 'نظام متابعة الطلاب';
