@@ -48,6 +48,7 @@ export function exportStudentsExcel({
   });
   const ws1 = XLSX.utils.json_to_sheet(studentRows);
   setColWidths(ws1, [5, 12, 25, 15, 20, 15, 15, 12, 12]);
+  setRTL(ws1);
   XLSX.utils.book_append_sheet(wb, ws1, 'بيانات الطلاب');
 
   // === Sheet 2: Monthly Payments ===
