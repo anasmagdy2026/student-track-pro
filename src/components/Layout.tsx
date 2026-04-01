@@ -183,6 +183,17 @@ export function Layout({ children }: LayoutProps) {
               className={`w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
                 isCollapsed ? 'justify-center px-0' : 'justify-start'
               }`}
+              onClick={toggleTheme}
+              title={isCollapsed ? (theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن') : undefined}
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5 flex-shrink-0" /> : <Moon className="h-5 w-5 flex-shrink-0" />}
+              {!isCollapsed && <span>{theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}</span>}
+            </Button>
+            <Button
+              variant="ghost"
+              className={`w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                isCollapsed ? 'justify-center px-0' : 'justify-start'
+              }`}
               onClick={handleLogout}
               title={isCollapsed ? 'تسجيل الخروج' : undefined}
             >
