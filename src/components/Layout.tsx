@@ -19,9 +19,12 @@ import {
   UserX,
   Printer,
   Bell,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useTheme } from '@/hooks/useTheme';
 import { OfflineStatusIndicator } from '@/components/OfflineStatusIndicator';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
