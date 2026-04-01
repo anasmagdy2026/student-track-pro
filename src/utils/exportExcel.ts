@@ -76,6 +76,7 @@ export function exportStudentsExcel({
   });
   const ws2 = XLSX.utils.aoa_to_sheet(paymentData);
   setColWidths(ws2, [5, 12, 25, 20, 10, ...Array(12).fill(14)]);
+  setRTL(ws2);
   XLSX.utils.book_append_sheet(wb, ws2, 'المدفوعات الشهرية');
 
   // === Sheet 3: Attendance Summary ===
