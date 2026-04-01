@@ -128,6 +128,7 @@ export function exportStudentsExcel({
   });
   const ws4 = XLSX.utils.aoa_to_sheet(examData);
   setColWidths(ws4, [5, 12, 25, 20, ...Array(gradeExams.length).fill(14)]);
+  setRTL(ws4);
   XLSX.utils.book_append_sheet(wb, ws4, 'درجات الامتحانات');
 
   // Set RTL for all sheets
