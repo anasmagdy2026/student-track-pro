@@ -124,7 +124,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'absent_3_month',
       title: 'غياب 3 حصص خلال الشهر',
-      message: `تنبيه: الطالب غائب ${monthAbsences} حصص خلال شهر ${month}. اتخاذ الإجراء (السماح بالدخول أو التجميد).`,
+      message: `تنبيه: الطالب غائب ${monthAbsences} حصص خلال شهر ${month}. اتخاذ الإجراء (السماح بالدخول أو الطرد).`,
       severity: 'critical',
       context: { monthAbsences, month },
     });
