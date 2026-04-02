@@ -112,9 +112,9 @@ export default function Alerts() {
       } catch {
         // ignore
       }
-      toast.success('تم فك التجميد');
+      toast.success('تم إلغاء الطرد');
     } catch {
-      toast.error('تعذر فك التجميد');
+      toast.error('تعذر إلغاء الطرد');
     }
   };
 
