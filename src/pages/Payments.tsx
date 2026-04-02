@@ -186,7 +186,7 @@ export default function Payments() {
       // no refund when student is expelled/frozen
       const payment = payments.find((p) => p.id === paymentId);
       if (payment && isBlocked(payment.student_id)) {
-        showBlockedDialog(payment.student_id, 'استرداد المبلغ', 'غير مسموح بالاسترداد في حالة التجميد.');
+        showBlockedDialog(payment.student_id, 'استرداد المبلغ', 'غير مسموح بالاسترداد في حالة الطرد.');
         return;
       }
       await markAsUnpaid(paymentId);
