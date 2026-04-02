@@ -122,7 +122,7 @@ export function StudentStatusDialog({
                   className="gap-2"
                 >
                   <Undo2 className="h-4 w-4" />
-                  فك التجميد
+                  إلغاء الطرد
                 </Button>
               )}
             </div>
