@@ -94,6 +94,7 @@ export default function StudentProfile() {
   const { fetchReminderLog } = useNextSessionReminders();
   const { getSiblingIds, addLink, removeLink } = useSiblingLinks();
   const { getStudentNotesByMonth } = useStudentBehavior();
+  const { getSetting } = useAppSettings();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
