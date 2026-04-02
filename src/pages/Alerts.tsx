@@ -104,8 +104,8 @@ export default function Alerts() {
         await createEvent({
           studentId,
           ruleCode: 'decision_unfreeze' as any,
-          title: 'قرار: فك التجميد',
-          message: 'تم فك التجميد من شاشة التنبيهات.',
+          title: 'قرار: إلغاء الطرد',
+          message: 'تم إلغاء الطرد من شاشة التنبيهات.',
           severity: 'info',
           context: { source: 'alerts_page' },
         });
