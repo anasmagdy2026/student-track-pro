@@ -221,3 +221,20 @@ ${content}
 
 مع تحيات ${teacherName}`;
 };
+
+// رسالة طرد الطالب
+export const createExpulsionMessage = (
+  studentName: string,
+  reason: string,
+  teacherName = 'مستر/ محمد مجدي',
+) => {
+  return `السلام عليكم ورحمة الله وبركاته
+
+نحيط علم سيادتكم أنه تم اتخاذ قرار بطرد الطالب/ة: ${studentName}
+
+السبب: ${reason}
+
+برجاء التواصل مع الإدارة لمزيد من التفاصيل.
+
+مع تحيات ${teacherName}`;
+};
