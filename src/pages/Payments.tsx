@@ -829,6 +829,80 @@ export default function Payments() {
           open={showUnpaidReport} 
           onOpenChange={setShowUnpaidReport} 
         />
+        {/* Zero-Fee Auto Pay Dialog */}
+        <AlertDialog open={showZeroFeeDialog} onOpenChange={setShowZeroFeeDialog}>
+          <AlertDialogContent className="max-h-[80vh] overflow-y-auto">
+            <AlertDialogHeader>
+              <AlertDialogTitle>تسجيل دفع الطلاب المجانيين</AlertDialogTitle>
+              <AlertDialogDescription>
+                الطلاب التالية أسماؤهم مصاريفهم الشهرية = 0 ج ولم يتم تسجيل دفعهم لشهر {selectedMonth}.
+                <br />
+                اختر الطلاب المراد تسجيل دفعهم تلقائياً.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2 my-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">
+                  تم اختيار {selectedZeroFeeStudents.size} من {zeroFeeUnpaidStudents.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedZeroFeeStudents.size === zeroFeeUnpaidStudents.length) {
+                      setSelectedZeroFeeStudents(new Set());
+                    } else {
+                      setSelectedZeroFeeStudents(new Set(zeroFeeUnpaidStudents.map((s) => s.id)));
+                    }
+                  }}
+                >
+                  {selectedZeroFeeStudents.size === zeroFeeUnpaidStudents.length ? 'إلغاء الكل' : 'تحديد الكل'}
+                </Button>
+              </div>
+              {zeroFeeUnpaidStudents.map((student) => {
+                const group = student.group_id ? getGroupById(student.group_id) : null;
+                const checked = selectedZeroFeeStudents.has(student.id);
+                return (
+                  <label
+                    key={student.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      checked ? 'bg-primary/10 border-primary/30' : 'bg-card border-border hover:bg-muted/50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const next = new Set(selectedZeroFeeStudents);
+                        if (checked) next.delete(student.id);
+                        else next.add(student.id);
+                        setSelectedZeroFeeStudents(next);
+                      }}
+                      className="h-4 w-4 rounded"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{student.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {getGradeLabel(student.grade)} {group ? `— ${group.name}` : ''}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">0 ج</Badge>
+                  </label>
+                );
+              })}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={zeroFeeBusy}>إلغاء</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmZeroFee}
+                disabled={zeroFeeBusy || selectedZeroFeeStudents.size === 0}
+              >
+                {zeroFeeBusy ? 'جاري التسجيل...' : `تسجيل دفع (${selectedZeroFeeStudents.size})`}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         </div>
       )}
     </Layout>
