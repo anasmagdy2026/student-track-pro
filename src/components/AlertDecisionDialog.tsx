@@ -26,7 +26,7 @@ export function AlertDecisionDialog({
   title,
   description,
   allowText = 'السماح بالدخول (مرة واحدة)',
-  freezeText = 'تجميد كامل',
+  freezeText = 'طرد كامل',
   onAllow,
   onFreeze,
 }: Props) {

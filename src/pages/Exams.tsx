@@ -202,7 +202,7 @@ export default function Exams() {
       const blocked = Object.keys(scores).find((studentId) => isBlocked(studentId));
       if (blocked) {
         const b = getActiveBlock(blocked);
-        toast.error(`يوجد طالب مُجمّد داخل الدرجات (مثال: ${b?.student_id}). فك التجميد أو تجاهله.`);
+        toast.error(`يوجد طالب مطرود داخل الدرجات (مثال: ${b?.student_id}). إلغاء الطرد أو تجاهله.`);
         return;
       }
       await saveAllResults(selectedExam.id, scores);

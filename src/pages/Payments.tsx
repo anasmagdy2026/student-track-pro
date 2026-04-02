@@ -761,7 +761,7 @@ export default function Payments() {
                 <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
                   <XCircle className="h-10 w-10 text-destructive" />
                 </div>
-                <AlertDialogTitle className="text-destructive">تحذير: الطالب مُجمّد</AlertDialogTitle>
+                <AlertDialogTitle className="text-destructive"><AlertDialogTitle className="text-destructive">تحذير: الطالب مطرود</AlertDialogTitle></AlertDialogTitle>
               </div>
               <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
                 {blockedContext

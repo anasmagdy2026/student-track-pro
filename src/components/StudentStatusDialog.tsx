@@ -196,7 +196,7 @@ export function StudentStatusDialog({
                         </TableCell>
                         <TableCell>
                           {b.is_active ? (
-                            <Badge variant="destructive">مُجمّد</Badge>
+                            <Badge variant="destructive">مطرود</Badge>
                           ) : (
                             <Badge variant="secondary">مفكوك</Badge>
                           )}

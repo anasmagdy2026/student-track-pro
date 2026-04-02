@@ -153,7 +153,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'performance_below_50',
       title: 'مستوى أقل من 50%',
-      message: 'تنبيه: متوسط مستوى الطالب أقل من 50% خلال الشهر. اتخاذ الإجراء (السماح أو التجميد).',
+      message: 'تنبيه: متوسط مستوى الطالب أقل من 50% خلال الشهر. اتخاذ الإجراء (السماح أو الطرد).',
       severity: 'critical',
     });
   }
