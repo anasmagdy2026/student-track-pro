@@ -52,6 +52,7 @@ import {
   createAbsenceMessage,
   createPaymentReminderMessage,
   createExamResultMessage,
+  createExpulsionMessage,
 } from '@/utils/whatsapp';
 import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import {
