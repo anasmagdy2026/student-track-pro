@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, Snowflake, Undo2, Search } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { PageLoading } from '@/components/PageLoading';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { sendWhatsAppMessage, buildFromTemplate, createExpulsionMessage } from '@/utils/whatsapp';
 
 const severityVariant = (severity: string): 'default' | 'secondary' | 'destructive' => {
   if (severity === 'critical') return 'destructive';
@@ -25,6 +28,8 @@ export default function Alerts() {
   const { events, loading: eventsLoading, resolveEvent, createEvent } = useAlertEvents();
   const { rules, loading: rulesLoading, setRuleActive } = useAlertRules();
   const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
+  const { getTemplateByCode } = useWhatsAppTemplates();
+  const { getSetting } = useAppSettings();
 
   const isLoading = studentsLoading || eventsLoading || rulesLoading || blocksLoading;
 
@@ -72,13 +77,13 @@ export default function Alerts() {
   }, [events, query, showResolved, studentById]);
 
   const handleFreeze = async (studentId: string, ruleCode?: string) => {
+    const reason = 'قرار يدوي من شاشة التنبيهات: طرد كامل';
     try {
       await freezeStudent({
         studentId,
-        reason: 'قرار يدوي من شاشة التنبيهات: طرد كامل',
+        reason,
         triggeredByRuleCode: ruleCode,
       });
-      // سجل قرار بسيط في التنبيهات (اختياري)
       try {
         await createEvent({
           studentId,
@@ -90,6 +95,16 @@ export default function Alerts() {
         });
       } catch {
         // ignore
+      }
+      // Send WhatsApp to parent
+      const st = students.find(s => s.id === studentId);
+      if (st) {
+        const teacherName = getSetting('teacher_name') || 'مستر/ محمد مجدي';
+        const tpl = getTemplateByCode('student_expulsion');
+        const message = tpl
+          ? buildFromTemplate(tpl.template, { studentName: st.name, reason, teacherName })
+          : createExpulsionMessage(st.name, reason, teacherName);
+        sendWhatsAppMessage(st.parent_phone, message);
       }
       toast.success('تم طرد الطالب');
     } catch {

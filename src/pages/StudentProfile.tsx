@@ -44,6 +44,7 @@ import { MonthlyReport } from '@/components/MonthlyReport';
 import { StudentStatusDialog } from '@/components/StudentStatusDialog';
 import { StudentBehaviorCard } from '@/components/StudentBehaviorCard';
 import { useStudentBehavior } from '@/hooks/useStudentBehavior';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { MONTHS_AR } from '@/types';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import {
@@ -52,6 +53,7 @@ import {
   createAbsenceMessage,
   createPaymentReminderMessage,
   createExamResultMessage,
+  createExpulsionMessage,
 } from '@/utils/whatsapp';
 import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import {
@@ -93,6 +95,7 @@ export default function StudentProfile() {
   const { fetchReminderLog } = useNextSessionReminders();
   const { getSiblingIds, addLink, removeLink } = useSiblingLinks();
   const { getStudentNotesByMonth } = useStudentBehavior();
+  const { getSetting } = useAppSettings();
 
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [attendanceMonth, setAttendanceMonth] = useState<string>('all');
@@ -356,6 +359,15 @@ export default function StudentProfile() {
 
   const reportData = getReportData();
 
+  const sendExpulsionWhatsApp = (studentObj: typeof student, reason: string) => {
+    const teacherName = getSetting('teacher_name') || 'مستر/ محمد مجدي';
+    const tpl = getTemplateByCode('student_expulsion');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: studentObj.name, reason, teacherName })
+      : createExpulsionMessage(studentObj.name, reason, teacherName);
+    sendWhatsAppMessage(studentObj.parent_phone, message);
+  };
+
   const handleFreeze = async () => {
     const reason = freezeReason.trim() || 'قرار يدوي: طرد كامل من ملف الطالب';
     try {
@@ -372,6 +384,7 @@ export default function StudentProfile() {
       } catch {
         // ignore
       }
+      sendExpulsionWhatsApp(student, reason);
       toast.success('تم طرد الطالب');
       setFreezeDialogOpen(false);
       setFreezeReason('');
@@ -395,6 +408,7 @@ export default function StudentProfile() {
       } catch {
         // ignore
       }
+      sendExpulsionWhatsApp(student, reason);
       toast.success('تم طرد الطالب');
     } catch {
       toast.error('تعذر طرد الطالب');
