@@ -359,10 +359,18 @@ export default function Payments() {
               متابعة دفع مصاريف الشهر
             </p>
           </div>
-          <Button onClick={() => setShowUnpaidReport(true)} variant="outline" className="gap-2">
-            <FileText className="h-4 w-4" />
-            تقرير المتأخرين
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {zeroFeeUnpaidStudents.length > 0 && (
+              <Button onClick={handleOpenZeroFeeDialog} variant="outline" className="gap-2">
+                <Gift className="h-4 w-4" />
+                تسجيل دفع المجانيين ({zeroFeeUnpaidStudents.length})
+              </Button>
+            )}
+            <Button onClick={() => setShowUnpaidReport(true)} variant="outline" className="gap-2">
+              <FileText className="h-4 w-4" />
+              تقرير المتأخرين
+            </Button>
+          </div>
         </div>
 
         {/* Alert for unpaid previous month */}
