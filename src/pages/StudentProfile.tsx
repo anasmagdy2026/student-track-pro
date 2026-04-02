@@ -387,7 +387,7 @@ export default function StudentProfile() {
         await createEvent({
           studentId: student.id,
           ruleCode: 'decision_freeze',
-          title: 'قرار: تجميد كامل',
+          title: 'قرار: طرد كامل',
           message: reason,
           severity: 'info',
           context: { source: 'student_status_dialog' },
