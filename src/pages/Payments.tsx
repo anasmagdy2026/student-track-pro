@@ -47,6 +47,7 @@ import {
   ScanLine,
   RotateCcw,
   FileText,
+  Gift,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoading } from '@/components/PageLoading';
