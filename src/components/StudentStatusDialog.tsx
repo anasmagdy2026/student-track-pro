@@ -173,9 +173,9 @@ export function StudentStatusDialog({
           </section>
 
           <section className="space-y-3">
-            <h3 className="font-bold text-foreground">سجل التجميد</h3>
+            <h3 className="font-bold text-foreground">سجل الطرد</h3>
             {freezeHistory.length === 0 ? (
-              <p className="text-sm text-muted-foreground">لا يوجد سجل تجميد بعد.</p>
+              <p className="text-sm text-muted-foreground">لا يوجد سجل طرد بعد.</p>
             ) : (
               <div className="rounded-xl border border-border overflow-hidden">
                 <Table>
