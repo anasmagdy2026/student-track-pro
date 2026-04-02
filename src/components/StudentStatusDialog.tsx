@@ -91,7 +91,7 @@ export function StudentStatusDialog({
                   variant="secondary"
                   disabled={busy !== null}
                   onClick={async () => {
-                    const reason = freezeReason.trim() || 'قرار يدوي: تجميد كامل';
+                    const reason = freezeReason.trim() || 'قرار يدوي: طرد كامل';
                     try {
                       setBusy('freeze');
                       await onFreeze(reason);
