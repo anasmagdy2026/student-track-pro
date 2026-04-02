@@ -46,6 +46,7 @@ import {
   createLateMessageForParent,
   createLateMessageForStudent,
   createHomeworkMessage,
+  createExpulsionMessage,
 } from '@/utils/whatsapp';
 import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
 import { Calendar, UserCheck, MessageCircle, Users, Search, ScanLine, XCircle, Clock } from 'lucide-react';
