@@ -468,9 +468,9 @@ export default function StudentProfile() {
                 حالة الطرد
               </Button>
               {isBlocked(student.id) ? (
-                <Badge variant="destructive">مُجمّد</Badge>
+                <Badge variant="destructive">مطرود</Badge>
               ) : (
-                <Badge variant="secondary">غير مُجمّد</Badge>
+                <Badge variant="secondary">غير مطرود</Badge>
               )}
             </div>
 

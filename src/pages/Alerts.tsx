@@ -305,12 +305,12 @@ export default function Alerts() {
                       {blocked ? (
                         <Button variant="outline" onClick={() => handleUnfreeze(e.student_id)}>
                           <Undo2 className="h-4 w-4 ml-2" />
-                          فك التجميد
+                          إلغاء الطرد
                         </Button>
                       ) : (
                         <Button variant="secondary" onClick={() => handleFreeze(e.student_id, e.rule_code)}>
                           <Snowflake className="h-4 w-4 ml-2" />
-                          تجميد كامل
+                          طرد كامل
                         </Button>
                       )}
 

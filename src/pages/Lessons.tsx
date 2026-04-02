@@ -362,7 +362,7 @@ export default function Lessons() {
     if (!selectedLesson) return;
     if (isBlocked(studentId)) {
       const b = getActiveBlock(studentId);
-      toast.error(`لا يمكن تسجيل درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+      toast.error(`لا يمكن تسجيل درجات: الطالب مطرود (${b?.reason || 'مطرود'})`);
       return;
     }
     const score = recitationScores[studentId];
