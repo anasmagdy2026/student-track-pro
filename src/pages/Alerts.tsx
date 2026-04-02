@@ -148,7 +148,7 @@ export default function Alerts() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">التنبيهات</h1>
-            <p className="text-muted-foreground mt-1">عرض التنبيهات المفتوحة وإدارة القرارات (تجميد/فك/حلّ)</p>
+            <p className="text-muted-foreground mt-1">عرض التنبيهات المفتوحة وإدارة القرارات (طرد/إلغاء/حلّ)</p>
           </div>
           <Button
             variant={showResolved ? 'secondary' : 'outline'}
