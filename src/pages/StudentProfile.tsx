@@ -359,6 +359,15 @@ export default function StudentProfile() {
 
   const reportData = getReportData();
 
+  const sendExpulsionWhatsApp = (studentObj: typeof student, reason: string) => {
+    const teacherName = getSetting('teacher_name') || 'مستر/ محمد مجدي';
+    const tpl = getTemplateByCode('student_expulsion');
+    const message = tpl
+      ? buildFromTemplate(tpl.template, { studentName: studentObj.name, reason, teacherName })
+      : createExpulsionMessage(studentObj.name, reason, teacherName);
+    sendWhatsAppMessage(studentObj.parent_phone, message);
+  };
+
   const handleFreeze = async () => {
     const reason = freezeReason.trim() || 'قرار يدوي: طرد كامل من ملف الطالب';
     try {
@@ -375,6 +384,7 @@ export default function StudentProfile() {
       } catch {
         // ignore
       }
+      sendExpulsionWhatsApp(student, reason);
       toast.success('تم طرد الطالب');
       setFreezeDialogOpen(false);
       setFreezeReason('');
@@ -398,6 +408,7 @@ export default function StudentProfile() {
       } catch {
         // ignore
       }
+      sendExpulsionWhatsApp(student, reason);
       toast.success('تم طرد الطالب');
     } catch {
       toast.error('تعذر طرد الطالب');
