@@ -290,7 +290,7 @@ export default function Alerts() {
                           {e.resolved_at ? new Date(e.resolved_at).toLocaleString('ar-EG') : '—'}
                         </div>
                         <div>
-                          <span className="font-medium text-foreground">آخر تحديث للتجميد:</span>{' '}
+                          <span className="font-medium text-foreground">آخر تحديث للطرد:</span>{' '}
                           {block?.updated_at ? new Date(block.updated_at).toLocaleString('ar-EG') : '—'}
                         </div>
                       </div>
