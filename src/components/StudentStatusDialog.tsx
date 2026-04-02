@@ -76,7 +76,7 @@ export function StudentStatusDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>حالة التجميد والسجل — {studentName}</DialogTitle>
+          <DialogTitle>حالة الطرد والسجل — {studentName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
