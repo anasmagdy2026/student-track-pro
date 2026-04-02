@@ -168,7 +168,7 @@ export default function Exams() {
     if (student) {
       if (isBlocked(student.id)) {
         const b = getActiveBlock(student.id);
-        toast.error(`الطالب مُجمّد: ${b?.reason || 'غير مسموح بتسجيل درجات'}`);
+        toast.error(`الطالب مطرود: ${b?.reason || 'غير مسموح بتسجيل درجات'}`);
         return;
       }
       if (student.grade !== selectedExam.grade) {
