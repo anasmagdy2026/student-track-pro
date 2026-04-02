@@ -106,7 +106,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'absent_2_consecutive',
       title: 'غياب حصتين متتاليتين',
-      message: `تنبيه: الطالب غائب ${consecutiveAbsences} حصص متتالية. اتخاذ الإجراء (السماح بالدخول أو التجميد).`,
+      message: `تنبيه: الطالب غائب ${consecutiveAbsences} حصص متتالية. اتخاذ الإجراء (السماح بالدخول أو الطرد).`,
       severity: 'critical',
       context: { consecutiveAbsences },
     });
@@ -124,7 +124,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'absent_3_month',
       title: 'غياب 3 حصص خلال الشهر',
-      message: `تنبيه: الطالب غائب ${monthAbsences} حصص خلال شهر ${month}. اتخاذ الإجراء (السماح بالدخول أو التجميد).`,
+      message: `تنبيه: الطالب غائب ${monthAbsences} حصص خلال شهر ${month}. اتخاذ الإجراء (السماح بالدخول أو الطرد).`,
       severity: 'critical',
       context: { monthAbsences, month },
     });
@@ -134,7 +134,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'payment_1_5',
       title: 'الدفع مقدماً (1–5)',
-      message: 'تنبيه: لم يتم تسجيل دفع الشهر الحالي (خلال الفترة 1–5). اتخاذ الإجراء (السماح أو التجميد).',
+      message: 'تنبيه: لم يتم تسجيل دفع الشهر الحالي (خلال الفترة 1–5). اتخاذ الإجراء (السماح أو الطرد).',
       severity: 'warning',
       context: { month: isoMonth(params.now.toISOString()) },
     });
@@ -144,7 +144,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'homework_required',
       title: 'الواجب غير محلول',
-      message: 'تنبيه: غير مسموح بدخول الحصة بدون حل الواجب. اتخاذ الإجراء (السماح أو التجميد).',
+      message: 'تنبيه: غير مسموح بدخول الحصة بدون حل الواجب. اتخاذ الإجراء (السماح أو الطرد).',
       severity: 'warning',
     });
   }
@@ -153,7 +153,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'performance_below_50',
       title: 'مستوى أقل من 50%',
-      message: 'تنبيه: متوسط مستوى الطالب أقل من 50% خلال الشهر. اتخاذ الإجراء (السماح أو التجميد).',
+      message: 'تنبيه: متوسط مستوى الطالب أقل من 50% خلال الشهر. اتخاذ الإجراء (السماح أو الطرد).',
       severity: 'critical',
     });
   }

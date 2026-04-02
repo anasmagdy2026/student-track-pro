@@ -357,14 +357,14 @@ export default function StudentProfile() {
   const reportData = getReportData();
 
   const handleFreeze = async () => {
-    const reason = freezeReason.trim() || 'قرار يدوي: تجميد كامل من ملف الطالب';
+    const reason = freezeReason.trim() || 'قرار يدوي: طرد كامل من ملف الطالب';
     try {
       await freezeStudent({ studentId: student.id, reason });
       try {
         await createEvent({
           studentId: student.id,
           ruleCode: 'decision_freeze',
-          title: 'قرار: تجميد كامل',
+          title: 'قرار: طرد كامل',
           message: reason,
           severity: 'info',
           context: { source: 'student_profile' },
@@ -372,11 +372,11 @@ export default function StudentProfile() {
       } catch {
         // ignore
       }
-      toast.success('تم تجميد الطالب');
+      toast.success('تم طرد الطالب');
       setFreezeDialogOpen(false);
       setFreezeReason('');
     } catch {
-      toast.error('تعذر تجميد الطالب');
+      toast.error('تعذر طرد الطالب');
     }
   };
 
@@ -387,7 +387,7 @@ export default function StudentProfile() {
         await createEvent({
           studentId: student.id,
           ruleCode: 'decision_freeze',
-          title: 'قرار: تجميد كامل',
+          title: 'قرار: طرد كامل',
           message: reason,
           severity: 'info',
           context: { source: 'student_status_dialog' },
@@ -395,9 +395,9 @@ export default function StudentProfile() {
       } catch {
         // ignore
       }
-      toast.success('تم تجميد الطالب');
+      toast.success('تم طرد الطالب');
     } catch {
-      toast.error('تعذر تجميد الطالب');
+      toast.error('تعذر طرد الطالب');
     }
   };
 
@@ -408,17 +408,17 @@ export default function StudentProfile() {
         await createEvent({
           studentId: student.id,
           ruleCode: 'decision_unfreeze',
-          title: 'قرار: فك التجميد',
-          message: 'تم فك التجميد من ملف الطالب.',
+          title: 'قرار: إلغاء الطرد',
+          message: 'تم إلغاء الطرد من ملف الطالب.',
           severity: 'info',
           context: { source: 'student_profile' },
         });
       } catch {
         // ignore
       }
-      toast.success('تم فك التجميد');
+      toast.success('تم إلغاء الطرد');
     } catch {
-      toast.error('تعذر فك التجميد');
+      toast.error('تعذر إلغاء الطرد');
     }
   };
 
@@ -465,12 +465,12 @@ export default function StudentProfile() {
             <div className="flex items-center gap-2">
               <Button variant="outline" className="gap-2" onClick={() => setStatusDialogOpen(true)}>
                 <Snowflake className="h-4 w-4" />
-                حالة التجميد
+                حالة الطرد
               </Button>
               {isBlocked(student.id) ? (
-                <Badge variant="destructive">مُجمّد</Badge>
+                <Badge variant="destructive">مطرود</Badge>
               ) : (
-                <Badge variant="secondary">غير مُجمّد</Badge>
+                <Badge variant="secondary">غير مطرود</Badge>
               )}
             </div>
 

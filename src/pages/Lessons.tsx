@@ -301,7 +301,7 @@ export default function Lessons() {
         if (score !== undefined && !isNaN(score)) {
           if (isBlocked(studentId)) {
             const b = getActiveBlock(studentId);
-            toast.error(`لا يمكن حفظ درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+            toast.error(`لا يمكن حفظ درجات: الطالب مطرود (${b?.reason || 'مطرود'})`);
             continue;
           }
           await addSheet(selectedLesson.id, studentId, score);
@@ -320,7 +320,7 @@ export default function Lessons() {
         if (score !== undefined && !isNaN(score)) {
           if (isBlocked(studentId)) {
             const b = getActiveBlock(studentId);
-            toast.error(`لا يمكن حفظ درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+            toast.error(`لا يمكن حفظ درجات: الطالب مطرود (${b?.reason || 'مطرود'})`);
             continue;
           }
           await addRecitation(selectedLesson.id, studentId, score);
@@ -345,7 +345,7 @@ export default function Lessons() {
     if (!selectedLesson) return;
     if (isBlocked(studentId)) {
       const b = getActiveBlock(studentId);
-      toast.error(`لا يمكن تسجيل درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+      toast.error(`لا يمكن تسجيل درجات: الطالب مطرود (${b?.reason || 'مطرود'})`);
       return;
     }
     const score = sheetScores[studentId];
@@ -362,7 +362,7 @@ export default function Lessons() {
     if (!selectedLesson) return;
     if (isBlocked(studentId)) {
       const b = getActiveBlock(studentId);
-      toast.error(`لا يمكن تسجيل درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+      toast.error(`لا يمكن تسجيل درجات: الطالب مطرود (${b?.reason || 'مطرود'})`);
       return;
     }
     const score = recitationScores[studentId];

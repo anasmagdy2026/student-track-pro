@@ -280,9 +280,9 @@ export default function Attendance() {
     if (isBlocked(studentId)) {
       const block = getActiveBlock(studentId);
 
-      const reason = block?.reason || 'الطالب محظور من دخول الحصة.';
+const reason = block?.reason || 'الطالب مطرود من دخول الحصة.';
       if (opts?.showBlockedDialog === false) {
-        toast.error(`الطالب مُجمّد: ${reason}`);
+        toast.error(`الطالب مطرود: ${reason}`);
       } else {
         setBlockedContext({ studentName: student.name, reason });
         setBlockedDialogOpen(true);
@@ -532,13 +532,13 @@ export default function Attendance() {
     try {
       await freezeStudent({
         studentId: ctx.studentId,
-        reason: 'قرار: تجميد كامل بعد تنبيه أثناء التحضير',
+        reason: 'قرار: طرد كامل بعد تنبيه أثناء التحضير',
         triggeredByRuleCode: ctx.ruleCodes[0],
       });
       await markAttendance(ctx.studentId, selectedDate, false);
-      toast.error('تم تجميد الطالب واعتباره غائباً');
+toast.error('تم طرد الطالب واعتباره غائباً');
     } catch {
-      toast.error('تعذر تجميد الطالب');
+      toast.error('تعذر طرد الطالب');
     }
   };
 
@@ -1249,7 +1249,7 @@ export default function Attendance() {
                 <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
                   <XCircle className="h-10 w-10 text-destructive" />
                 </div>
-                <AlertDialogTitle className="text-destructive">تحذير: الطالب مُجمّد</AlertDialogTitle>
+                <AlertDialogTitle className="text-destructive"><AlertDialogTitle className="text-destructive">تحذير: الطالب مطرود</AlertDialogTitle></AlertDialogTitle>
               </div>
               <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
                 {blockedContext

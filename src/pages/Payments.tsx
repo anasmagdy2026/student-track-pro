@@ -151,7 +151,7 @@ export default function Payments() {
   const handlePayment = async (studentId: string, amount: number) => {
     try {
       if (isBlocked(studentId)) {
-        showBlockedDialog(studentId, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء التجميد.');
+        showBlockedDialog(studentId, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء الطرد.');
         return;
       }
       await addPayment(studentId, selectedMonth, amount);
@@ -186,7 +186,7 @@ export default function Payments() {
       // no refund when student is expelled/frozen
       const payment = payments.find((p) => p.id === paymentId);
       if (payment && isBlocked(payment.student_id)) {
-        showBlockedDialog(payment.student_id, 'استرداد المبلغ', 'غير مسموح بالاسترداد في حالة التجميد.');
+        showBlockedDialog(payment.student_id, 'استرداد المبلغ', 'غير مسموح بالاسترداد في حالة الطرد.');
         return;
       }
       await markAsUnpaid(paymentId);
@@ -228,7 +228,7 @@ export default function Payments() {
     }
     if (student) {
       if (isBlocked(student.id)) {
-        showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بالدفع/الإجراءات أثناء التجميد.');
+        showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بالدفع/الإجراءات أثناء الطرد.');
         return;
       }
       if (isMonthPaid(student.id, selectedMonth)) {
@@ -556,7 +556,7 @@ export default function Payments() {
                               size="sm"
                               onClick={() => {
                                 if (isBlocked(student.id)) {
-                                  showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء التجميد.');
+                                  showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء الطرد.');
                                   return;
                                 }
                                 openPaymentConfirm(student.id, student.name, student.monthly_fee);
@@ -761,7 +761,7 @@ export default function Payments() {
                 <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
                   <XCircle className="h-10 w-10 text-destructive" />
                 </div>
-                <AlertDialogTitle className="text-destructive">تحذير: الطالب مُجمّد</AlertDialogTitle>
+                <AlertDialogTitle className="text-destructive"><AlertDialogTitle className="text-destructive">تحذير: الطالب مطرود</AlertDialogTitle></AlertDialogTitle>
               </div>
               <AlertDialogDescription className="mt-3 text-center whitespace-pre-line">
                 {blockedContext

@@ -92,7 +92,7 @@ export default function Exams() {
     if (!selectedExam) return;
     if (isBlocked(studentId)) {
       const b = getActiveBlock(studentId);
-      toast.error(`لا يمكن تسجيل درجات: الطالب مُجمّد (${b?.reason || 'مجمّد'})`);
+      toast.error(`لا يمكن تسجيل درجات: الطالب مطرود (${b?.reason || 'مطرود'})`);
       return;
     }
     const score = scores[studentId];
@@ -168,7 +168,7 @@ export default function Exams() {
     if (student) {
       if (isBlocked(student.id)) {
         const b = getActiveBlock(student.id);
-        toast.error(`الطالب مُجمّد: ${b?.reason || 'غير مسموح بتسجيل درجات'}`);
+        toast.error(`الطالب مطرود: ${b?.reason || 'غير مسموح بتسجيل درجات'}`);
         return;
       }
       if (student.grade !== selectedExam.grade) {
@@ -202,7 +202,7 @@ export default function Exams() {
       const blocked = Object.keys(scores).find((studentId) => isBlocked(studentId));
       if (blocked) {
         const b = getActiveBlock(blocked);
-        toast.error(`يوجد طالب مُجمّد داخل الدرجات (مثال: ${b?.student_id}). فك التجميد أو تجاهله.`);
+        toast.error(`يوجد طالب مطرود داخل الدرجات (مثال: ${b?.student_id}). إلغاء الطرد أو تجاهله.`);
         return;
       }
       await saveAllResults(selectedExam.id, scores);

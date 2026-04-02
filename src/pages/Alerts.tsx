@@ -75,7 +75,7 @@ export default function Alerts() {
     try {
       await freezeStudent({
         studentId,
-        reason: 'قرار يدوي من شاشة التنبيهات: تجميد كامل',
+        reason: 'قرار يدوي من شاشة التنبيهات: طرد كامل',
         triggeredByRuleCode: ruleCode,
       });
       // سجل قرار بسيط في التنبيهات (اختياري)
@@ -83,17 +83,17 @@ export default function Alerts() {
         await createEvent({
           studentId,
           ruleCode: 'decision_freeze' as any,
-          title: 'قرار: تجميد كامل',
-          message: 'تم اتخاذ قرار تجميد كامل من شاشة التنبيهات.',
+          title: 'قرار: طرد كامل',
+          message: 'تم اتخاذ قرار طرد كامل من شاشة التنبيهات.',
           severity: 'info',
           context: { source: 'alerts_page' },
         });
       } catch {
         // ignore
       }
-      toast.success('تم تجميد الطالب');
+      toast.success('تم طرد الطالب');
     } catch {
-      toast.error('تعذر تجميد الطالب');
+      toast.error('تعذر طرد الطالب');
     }
   };
 
@@ -104,17 +104,17 @@ export default function Alerts() {
         await createEvent({
           studentId,
           ruleCode: 'decision_unfreeze' as any,
-          title: 'قرار: فك التجميد',
-          message: 'تم فك التجميد من شاشة التنبيهات.',
+          title: 'قرار: إلغاء الطرد',
+          message: 'تم إلغاء الطرد من شاشة التنبيهات.',
           severity: 'info',
           context: { source: 'alerts_page' },
         });
       } catch {
         // ignore
       }
-      toast.success('تم فك التجميد');
+      toast.success('تم إلغاء الطرد');
     } catch {
-      toast.error('تعذر فك التجميد');
+      toast.error('تعذر إلغاء الطرد');
     }
   };
 
@@ -148,7 +148,7 @@ export default function Alerts() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">التنبيهات</h1>
-            <p className="text-muted-foreground mt-1">عرض التنبيهات المفتوحة وإدارة القرارات (تجميد/فك/حلّ)</p>
+            <p className="text-muted-foreground mt-1">عرض التنبيهات المفتوحة وإدارة القرارات (طرد/إلغاء/حلّ)</p>
           </div>
           <Button
             variant={showResolved ? 'secondary' : 'outline'}
@@ -268,7 +268,7 @@ export default function Alerts() {
                         <Badge variant={e.status === 'open' ? 'secondary' : 'default'}>
                           {e.status === 'open' ? 'مفتوح' : 'محلول'}
                         </Badge>
-                        {blocked && <Badge variant="destructive">مُجمّد</Badge>}
+                        {blocked && <Badge variant="destructive">مطرود</Badge>}
                       </div>
                     </div>
                   </CardHeader>
@@ -290,13 +290,13 @@ export default function Alerts() {
                           {e.resolved_at ? new Date(e.resolved_at).toLocaleString('ar-EG') : '—'}
                         </div>
                         <div>
-                          <span className="font-medium text-foreground">آخر تحديث للتجميد:</span>{' '}
+                          <span className="font-medium text-foreground">آخر تحديث للطرد:</span>{' '}
                           {block?.updated_at ? new Date(block.updated_at).toLocaleString('ar-EG') : '—'}
                         </div>
                       </div>
                       {block?.reason && (
                         <div className="mt-2 text-muted-foreground">
-                          <span className="font-medium text-foreground">سبب التجميد:</span> {block.reason}
+                          <span className="font-medium text-foreground">سبب الطرد:</span> {block.reason}
                         </div>
                       )}
                     </div>
@@ -305,12 +305,12 @@ export default function Alerts() {
                       {blocked ? (
                         <Button variant="outline" onClick={() => handleUnfreeze(e.student_id)}>
                           <Undo2 className="h-4 w-4 ml-2" />
-                          فك التجميد
+                          إلغاء الطرد
                         </Button>
                       ) : (
                         <Button variant="secondary" onClick={() => handleFreeze(e.student_id, e.rule_code)}>
                           <Snowflake className="h-4 w-4 ml-2" />
-                          تجميد كامل
+                          طرد كامل
                         </Button>
                       )}
 

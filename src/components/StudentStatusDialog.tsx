@@ -76,13 +76,13 @@ export function StudentStatusDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>حالة التجميد والسجل — {studentName}</DialogTitle>
+          <DialogTitle>حالة الطرد والسجل — {studentName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">
-              إدارة التجميد من نفس النافذة.
+              إدارة الطرد من نفس النافذة.
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +91,7 @@ export function StudentStatusDialog({
                   variant="secondary"
                   disabled={busy !== null}
                   onClick={async () => {
-                    const reason = freezeReason.trim() || 'قرار يدوي: تجميد كامل';
+                    const reason = freezeReason.trim() || 'قرار يدوي: طرد كامل';
                     try {
                       setBusy('freeze');
                       await onFreeze(reason);
@@ -103,7 +103,7 @@ export function StudentStatusDialog({
                   className="gap-2"
                 >
                   <Snowflake className="h-4 w-4" />
-                  تجميد كامل
+                  طرد كامل
                 </Button>
               )}
 
@@ -122,7 +122,7 @@ export function StudentStatusDialog({
                   className="gap-2"
                 >
                   <Undo2 className="h-4 w-4" />
-                  فك التجميد
+                  إلغاء الطرد
                 </Button>
               )}
             </div>
@@ -132,15 +132,15 @@ export function StudentStatusDialog({
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold text-foreground">الحالة الحالية</h3>
               {activeBlock ? (
-                <Badge variant="destructive">مُجمّد</Badge>
+                <Badge variant="destructive">مطرود</Badge>
               ) : (
-                <Badge variant="secondary">غير مُجمّد</Badge>
+                <Badge variant="secondary">غير مطرود</Badge>
               )}
             </div>
 
             {!activeBlock && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-2">
-                <div className="text-sm font-medium text-foreground">سبب التجميد (اختياري)</div>
+                <div className="text-sm font-medium text-foreground">سبب الطرد (اختياري)</div>
                 <Textarea
                   value={freezeReason}
                   onChange={(e) => setFreezeReason(e.target.value)}
@@ -173,9 +173,9 @@ export function StudentStatusDialog({
           </section>
 
           <section className="space-y-3">
-            <h3 className="font-bold text-foreground">سجل التجميد</h3>
+            <h3 className="font-bold text-foreground">سجل الطرد</h3>
             {freezeHistory.length === 0 ? (
-              <p className="text-sm text-muted-foreground">لا يوجد سجل تجميد بعد.</p>
+              <p className="text-sm text-muted-foreground">لا يوجد سجل طرد بعد.</p>
             ) : (
               <div className="rounded-xl border border-border overflow-hidden">
                 <Table>
@@ -196,7 +196,7 @@ export function StudentStatusDialog({
                         </TableCell>
                         <TableCell>
                           {b.is_active ? (
-                            <Badge variant="destructive">مُجمّد</Badge>
+                            <Badge variant="destructive">مطرود</Badge>
                           ) : (
                             <Badge variant="secondary">مفكوك</Badge>
                           )}
@@ -262,8 +262,8 @@ export function StudentStatusDialog({
             if (!open) setDeleteBlockId(null);
           }}
           variant="destructive"
-          title="حذف سجل التجميد"
-          description="سيتم حذف هذا السجل فقط من سجل التجميد. هل أنت متأكد؟"
+          title="حذف سجل الطرد"
+          description="سيتم حذف هذا السجل فقط من سجل الطرد. هل أنت متأكد؟"
           confirmText="حذف"
           cancelText="إلغاء"
           onConfirm={async () => {
