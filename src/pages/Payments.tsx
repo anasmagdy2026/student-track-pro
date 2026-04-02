@@ -306,6 +306,32 @@ export default function Payments() {
   const totalExpected = filteredStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
   const totalReceived = paidStudents.reduce((sum, s) => sum + s.monthly_fee, 0);
 
+  // Zero-fee students who haven't been marked as paid for the selected month
+  const zeroFeeUnpaidStudents = filteredStudents.filter(
+    (s) => s.monthly_fee === 0 && !isMonthPaid(s.id, selectedMonth)
+  );
+
+  const handleOpenZeroFeeDialog = () => {
+    setSelectedZeroFeeStudents(new Set(zeroFeeUnpaidStudents.map((s) => s.id)));
+    setShowZeroFeeDialog(true);
+  };
+
+  const handleConfirmZeroFee = async () => {
+    if (selectedZeroFeeStudents.size === 0) return;
+    setZeroFeeBusy(true);
+    try {
+      for (const studentId of selectedZeroFeeStudents) {
+        await addPayment(studentId, selectedMonth, 0);
+      }
+      toast.success(`تم تسجيل دفع ${selectedZeroFeeStudents.size} طالب بمبلغ 0 ج`);
+      setShowZeroFeeDialog(false);
+    } catch {
+      toast.error('حدث خطأ أثناء تسجيل الدفع');
+    } finally {
+      setZeroFeeBusy(false);
+    }
+  };
+
   // Generate month options centered on current month
   const monthOptions = [];
   for (let i = -6; i <= 6; i++) {
