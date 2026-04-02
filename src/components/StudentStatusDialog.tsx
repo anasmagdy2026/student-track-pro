@@ -140,7 +140,7 @@ export function StudentStatusDialog({
 
             {!activeBlock && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-2">
-                <div className="text-sm font-medium text-foreground">سبب التجميد (اختياري)</div>
+                <div className="text-sm font-medium text-foreground">سبب الطرد (اختياري)</div>
                 <Textarea
                   value={freezeReason}
                   onChange={(e) => setFreezeReason(e.target.value)}
