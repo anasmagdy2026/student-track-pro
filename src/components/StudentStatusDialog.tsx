@@ -132,9 +132,9 @@ export function StudentStatusDialog({
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold text-foreground">الحالة الحالية</h3>
               {activeBlock ? (
-                <Badge variant="destructive">مُجمّد</Badge>
+                <Badge variant="destructive">مطرود</Badge>
               ) : (
-                <Badge variant="secondary">غير مُجمّد</Badge>
+                <Badge variant="secondary">غير مطرود</Badge>
               )}
             </div>
 
