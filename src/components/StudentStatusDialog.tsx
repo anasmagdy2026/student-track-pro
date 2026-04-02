@@ -103,7 +103,7 @@ export function StudentStatusDialog({
                   className="gap-2"
                 >
                   <Snowflake className="h-4 w-4" />
-                  تجميد كامل
+                  طرد كامل
                 </Button>
               )}
 
