@@ -262,8 +262,8 @@ export function StudentStatusDialog({
             if (!open) setDeleteBlockId(null);
           }}
           variant="destructive"
-          title="حذف سجل التجميد"
-          description="سيتم حذف هذا السجل فقط من سجل التجميد. هل أنت متأكد؟"
+          title="حذف سجل الطرد"
+          description="سيتم حذف هذا السجل فقط من سجل الطرد. هل أنت متأكد؟"
           confirmText="حذف"
           cancelText="إلغاء"
           onConfirm={async () => {

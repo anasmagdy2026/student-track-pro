@@ -556,7 +556,7 @@ export default function Payments() {
                               size="sm"
                               onClick={() => {
                                 if (isBlocked(student.id)) {
-                                  showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء التجميد.');
+                                  showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء الطرد.');
                                   return;
                                 }
                                 openPaymentConfirm(student.id, student.name, student.monthly_fee);
