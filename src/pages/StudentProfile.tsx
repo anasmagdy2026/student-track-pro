@@ -465,7 +465,7 @@ export default function StudentProfile() {
             <div className="flex items-center gap-2">
               <Button variant="outline" className="gap-2" onClick={() => setStatusDialogOpen(true)}>
                 <Snowflake className="h-4 w-4" />
-                حالة التجميد
+                حالة الطرد
               </Button>
               {isBlocked(student.id) ? (
                 <Badge variant="destructive">مُجمّد</Badge>
