@@ -357,7 +357,7 @@ export default function StudentProfile() {
   const reportData = getReportData();
 
   const handleFreeze = async () => {
-    const reason = freezeReason.trim() || 'قرار يدوي: تجميد كامل من ملف الطالب';
+    const reason = freezeReason.trim() || 'قرار يدوي: طرد كامل من ملف الطالب';
     try {
       await freezeStudent({ studentId: student.id, reason });
       try {
