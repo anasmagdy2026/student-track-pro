@@ -280,9 +280,9 @@ export default function Attendance() {
     if (isBlocked(studentId)) {
       const block = getActiveBlock(studentId);
 
-      const reason = block?.reason || 'الطالب محظور من دخول الحصة.';
+const reason = block?.reason || 'الطالب مطرود من دخول الحصة.';
       if (opts?.showBlockedDialog === false) {
-        toast.error(`الطالب مُجمّد: ${reason}`);
+        toast.error(`الطالب مطرود: ${reason}`);
       } else {
         setBlockedContext({ studentName: student.name, reason });
         setBlockedDialogOpen(true);
