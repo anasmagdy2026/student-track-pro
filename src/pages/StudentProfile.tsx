@@ -408,8 +408,8 @@ export default function StudentProfile() {
         await createEvent({
           studentId: student.id,
           ruleCode: 'decision_unfreeze',
-          title: 'قرار: فك التجميد',
-          message: 'تم فك التجميد من ملف الطالب.',
+          title: 'قرار: إلغاء الطرد',
+          message: 'تم إلغاء الطرد من ملف الطالب.',
           severity: 'info',
           context: { source: 'student_profile' },
         });
