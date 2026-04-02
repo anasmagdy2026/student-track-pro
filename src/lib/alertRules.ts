@@ -144,7 +144,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'homework_required',
       title: 'الواجب غير محلول',
-      message: 'تنبيه: غير مسموح بدخول الحصة بدون حل الواجب. اتخاذ الإجراء (السماح أو التجميد).',
+      message: 'تنبيه: غير مسموح بدخول الحصة بدون حل الواجب. اتخاذ الإجراء (السماح أو الطرد).',
       severity: 'warning',
     });
   }
