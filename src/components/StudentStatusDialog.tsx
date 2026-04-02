@@ -82,7 +82,7 @@ export function StudentStatusDialog({
         <div className="space-y-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">
-              إدارة التجميد من نفس النافذة.
+              إدارة الطرد من نفس النافذة.
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
