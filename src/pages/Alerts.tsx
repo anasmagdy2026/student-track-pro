@@ -268,7 +268,7 @@ export default function Alerts() {
                         <Badge variant={e.status === 'open' ? 'secondary' : 'default'}>
                           {e.status === 'open' ? 'مفتوح' : 'محلول'}
                         </Badge>
-                        {blocked && <Badge variant="destructive">مُجمّد</Badge>}
+                        {blocked && <Badge variant="destructive">مطرود</Badge>}
                       </div>
                     </div>
                   </CardHeader>
