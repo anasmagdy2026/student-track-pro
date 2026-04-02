@@ -106,7 +106,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'absent_2_consecutive',
       title: 'غياب حصتين متتاليتين',
-      message: `تنبيه: الطالب غائب ${consecutiveAbsences} حصص متتالية. اتخاذ الإجراء (السماح بالدخول أو التجميد).`,
+      message: `تنبيه: الطالب غائب ${consecutiveAbsences} حصص متتالية. اتخاذ الإجراء (السماح بالدخول أو الطرد).`,
       severity: 'critical',
       context: { consecutiveAbsences },
     });
