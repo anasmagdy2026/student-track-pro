@@ -28,6 +28,8 @@ export default function Alerts() {
   const { events, loading: eventsLoading, resolveEvent, createEvent } = useAlertEvents();
   const { rules, loading: rulesLoading, setRuleActive } = useAlertRules();
   const { loading: blocksLoading, isBlocked, getActiveBlock, freezeStudent, unfreezeStudent } = useStudentBlocks();
+  const { getTemplateByCode } = useWhatsAppTemplates();
+  const { getSetting } = useAppSettings();
 
   const isLoading = studentsLoading || eventsLoading || rulesLoading || blocksLoading;
 
