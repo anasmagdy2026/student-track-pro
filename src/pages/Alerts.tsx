@@ -91,9 +91,9 @@ export default function Alerts() {
       } catch {
         // ignore
       }
-      toast.success('تم تجميد الطالب');
+      toast.success('تم طرد الطالب');
     } catch {
-      toast.error('تعذر تجميد الطالب');
+      toast.error('تعذر طرد الطالب');
     }
   };
 
