@@ -89,6 +89,9 @@ export default function Payments() {
   const [studentCode, setStudentCode] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showUnpaidReport, setShowUnpaidReport] = useState(false);
+  const [showZeroFeeDialog, setShowZeroFeeDialog] = useState(false);
+  const [selectedZeroFeeStudents, setSelectedZeroFeeStudents] = useState<Set<string>>(new Set());
+  const [zeroFeeBusy, setZeroFeeBusy] = useState(false);
   
   // تأكيد الدفع
   const [confirmPayment, setConfirmPayment] = useState<{
