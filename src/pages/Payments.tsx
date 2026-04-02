@@ -228,7 +228,7 @@ export default function Payments() {
     }
     if (student) {
       if (isBlocked(student.id)) {
-        showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بالدفع/الإجراءات أثناء التجميد.');
+        showBlockedDialog(student.id, 'تسجيل الدفع', 'غير مسموح بالدفع/الإجراءات أثناء الطرد.');
         return;
       }
       if (isMonthPaid(student.id, selectedMonth)) {
