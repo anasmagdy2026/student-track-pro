@@ -77,13 +77,13 @@ export default function Alerts() {
   }, [events, query, showResolved, studentById]);
 
   const handleFreeze = async (studentId: string, ruleCode?: string) => {
+    const reason = 'قرار يدوي من شاشة التنبيهات: طرد كامل';
     try {
       await freezeStudent({
         studentId,
-        reason: 'قرار يدوي من شاشة التنبيهات: طرد كامل',
+        reason,
         triggeredByRuleCode: ruleCode,
       });
-      // سجل قرار بسيط في التنبيهات (اختياري)
       try {
         await createEvent({
           studentId,
@@ -95,6 +95,16 @@ export default function Alerts() {
         });
       } catch {
         // ignore
+      }
+      // Send WhatsApp to parent
+      const st = students.find(s => s.id === studentId);
+      if (st) {
+        const teacherName = getSetting('teacher_name') || 'مستر/ محمد مجدي';
+        const tpl = getTemplateByCode('student_expulsion');
+        const message = tpl
+          ? buildFromTemplate(tpl.template, { studentName: st.name, reason, teacherName })
+          : createExpulsionMessage(st.name, reason, teacherName);
+        sendWhatsAppMessage(st.parent_phone, message);
       }
       toast.success('تم طرد الطالب');
     } catch {
