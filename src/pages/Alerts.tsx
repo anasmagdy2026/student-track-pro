@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, Snowflake, Undo2, Search } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { PageLoading } from '@/components/PageLoading';
+import { useWhatsAppTemplates } from '@/hooks/useWhatsAppTemplates';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { sendWhatsAppMessage, buildFromTemplate, createExpulsionMessage } from '@/utils/whatsapp';
 
 const severityVariant = (severity: string): 'default' | 'secondary' | 'destructive' => {
   if (severity === 'critical') return 'destructive';
