@@ -134,7 +134,7 @@ export function buildAttendanceAlerts(params: {
     alerts.push({
       ruleCode: 'payment_1_5',
       title: 'الدفع مقدماً (1–5)',
-      message: 'تنبيه: لم يتم تسجيل دفع الشهر الحالي (خلال الفترة 1–5). اتخاذ الإجراء (السماح أو التجميد).',
+      message: 'تنبيه: لم يتم تسجيل دفع الشهر الحالي (خلال الفترة 1–5). اتخاذ الإجراء (السماح أو الطرد).',
       severity: 'warning',
       context: { month: isoMonth(params.now.toISOString()) },
     });
