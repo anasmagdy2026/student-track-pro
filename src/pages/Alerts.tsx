@@ -296,7 +296,7 @@ export default function Alerts() {
                       </div>
                       {block?.reason && (
                         <div className="mt-2 text-muted-foreground">
-                          <span className="font-medium text-foreground">سبب التجميد:</span> {block.reason}
+                          <span className="font-medium text-foreground">سبب الطرد:</span> {block.reason}
                         </div>
                       )}
                     </div>
