@@ -372,11 +372,11 @@ export default function StudentProfile() {
       } catch {
         // ignore
       }
-      toast.success('تم تجميد الطالب');
+      toast.success('تم طرد الطالب');
       setFreezeDialogOpen(false);
       setFreezeReason('');
     } catch {
-      toast.error('تعذر تجميد الطالب');
+      toast.error('تعذر طرد الطالب');
     }
   };
 
