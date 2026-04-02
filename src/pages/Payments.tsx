@@ -151,7 +151,7 @@ export default function Payments() {
   const handlePayment = async (studentId: string, amount: number) => {
     try {
       if (isBlocked(studentId)) {
-        showBlockedDialog(studentId, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء التجميد.');
+        showBlockedDialog(studentId, 'تسجيل الدفع', 'غير مسموح بتسجيل الدفع أثناء الطرد.');
         return;
       }
       await addPayment(studentId, selectedMonth, amount);
