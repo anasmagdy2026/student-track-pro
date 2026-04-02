@@ -75,7 +75,7 @@ export default function Alerts() {
     try {
       await freezeStudent({
         studentId,
-        reason: 'قرار يدوي من شاشة التنبيهات: تجميد كامل',
+        reason: 'قرار يدوي من شاشة التنبيهات: طرد كامل',
         triggeredByRuleCode: ruleCode,
       });
       // سجل قرار بسيط في التنبيهات (اختياري)
