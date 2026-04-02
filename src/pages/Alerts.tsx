@@ -83,8 +83,8 @@ export default function Alerts() {
         await createEvent({
           studentId,
           ruleCode: 'decision_freeze' as any,
-          title: 'قرار: تجميد كامل',
-          message: 'تم اتخاذ قرار تجميد كامل من شاشة التنبيهات.',
+          title: 'قرار: طرد كامل',
+          message: 'تم اتخاذ قرار طرد كامل من شاشة التنبيهات.',
           severity: 'info',
           context: { source: 'alerts_page' },
         });
