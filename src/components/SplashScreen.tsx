@@ -6,25 +6,28 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setPhase(1), 100),
-      setTimeout(() => setPhase(2), 600),
-      setTimeout(() => setPhase(3), 1100),
-      setTimeout(() => setPhase(4), 1600),
-      setTimeout(() => setPhase(5), 2800),
-      setTimeout(() => onFinish(), 3400),
+      setTimeout(() => setPhase(1), 100),   // Logo appears with scale
+      setTimeout(() => setPhase(2), 800),   // Logo pulse animation
+      setTimeout(() => setPhase(3), 1600),  // Transition: logo moves up, text appears
+      setTimeout(() => setPhase(4), 2200),  // Subtitle appears
+      setTimeout(() => setPhase(5), 2700),  // System name + dots
+      setTimeout(() => setPhase(6), 4000),  // Fade out
+      setTimeout(() => onFinish(), 4600),   // Done
     ];
     return () => timers.forEach(clearTimeout);
   }, [onFinish]);
 
+  const isLogoPhase = phase < 3;
+
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity duration-500 ${phase >= 5 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity duration-500 ${phase >= 6 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       style={{
         background: 'linear-gradient(135deg, hsl(217 91% 20%) 0%, hsl(217 91% 35%) 40%, hsl(217 91% 45%) 100%)',
       }}
     >
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Floating particles - only show after logo phase */}
+      <div className={`absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
         {[...Array(12)].map((_, i) => (
           <div
             key={i}
@@ -44,25 +47,32 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
 
       {/* Icon */}
       <div
-        className={`relative mb-6 transition-all duration-700 ease-out ${phase >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+        className="relative transition-all duration-700 ease-out"
+        style={{
+          opacity: phase >= 1 ? 1 : 0,
+          transform: `scale(${phase >= 1 ? (isLogoPhase ? 1.2 : 1) : 0.5}) translateY(${isLogoPhase ? '0px' : '-20px'})`,
+          marginBottom: isLogoPhase ? '0' : '1.5rem',
+        }}
       >
-        <div className="w-24 h-24 rounded-3xl flex items-center justify-center relative"
+        <div
+          className="w-28 h-28 rounded-3xl flex items-center justify-center relative"
           style={{
             background: 'linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 60%))',
             boxShadow: '0 8px 32px hsl(38 92% 50% / 0.4)',
+            animation: phase >= 2 && isLogoPhase ? 'splash-logo-pulse 1.5s ease-in-out infinite' : 'none',
           }}
         >
-          <GraduationCap className="w-12 h-12 text-white" />
-          
-          {/* Orbiting icons */}
+          <GraduationCap className="w-14 h-14 text-white" />
+
+          {/* Orbiting icons - show after transition */}
           <div
-            className={`absolute transition-all duration-700 delay-300 ${phase >= 2 ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute transition-all duration-700 delay-300 ${phase >= 4 ? 'opacity-100' : 'opacity-0'}`}
             style={{ animation: 'splash-orbit 4s linear infinite', transformOrigin: '50% 50%' }}
           >
             <Atom className="w-5 h-5 text-white/60 absolute -top-8 -right-4" />
           </div>
           <div
-            className={`absolute transition-all duration-700 delay-500 ${phase >= 2 ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute transition-all duration-700 delay-500 ${phase >= 4 ? 'opacity-100' : 'opacity-0'}`}
             style={{ animation: 'splash-orbit 5s linear infinite reverse', transformOrigin: '50% 50%' }}
           >
             <FlaskConical className="w-5 h-5 text-white/60 absolute -bottom-8 -left-4" />
@@ -81,7 +91,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
 
       {/* Name */}
       <h1
-        className={`text-3xl font-extrabold text-white mb-2 transition-all duration-700 ease-out ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+        className={`text-3xl font-extrabold text-white mb-2 transition-all duration-700 ease-out ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         style={{ fontFamily: 'Cairo, sans-serif', textShadow: '0 2px 16px hsl(217 91% 10% / 0.5)' }}
       >
         مستر محمد مجدي
@@ -89,7 +99,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
 
       {/* Subtitle */}
       <p
-        className={`text-lg font-semibold mb-1 transition-all duration-700 ease-out delay-200 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        className={`text-lg font-semibold mb-1 transition-all duration-700 ease-out delay-200 ${phase >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         style={{ color: 'hsl(38 92% 65%)', fontFamily: 'Cairo, sans-serif' }}
       >
         أستاذ الكيمياء والعلوم المتكاملة
@@ -97,20 +107,20 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
 
       {/* Divider line */}
       <div
-        className={`h-0.5 rounded-full my-4 transition-all duration-700 ease-out ${phase >= 3 ? 'w-32 opacity-100' : 'w-0 opacity-0'}`}
+        className={`h-0.5 rounded-full my-4 transition-all duration-700 ease-out ${phase >= 4 ? 'w-32 opacity-100' : 'w-0 opacity-0'}`}
         style={{ background: 'linear-gradient(90deg, transparent, hsl(38 92% 50%), transparent)' }}
       />
 
       {/* System name */}
       <p
-        className={`text-sm text-white/60 transition-all duration-700 ease-out ${phase >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        className={`text-sm text-white/60 transition-all duration-700 ease-out ${phase >= 5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         style={{ fontFamily: 'Cairo, sans-serif' }}
       >
         نظام متابعة الطلاب
       </p>
 
       {/* Loading dots */}
-      <div className={`flex gap-1.5 mt-8 transition-opacity duration-500 ${phase >= 4 ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`flex gap-1.5 mt-8 transition-opacity duration-500 ${phase >= 5 ? 'opacity-100' : 'opacity-0'}`}>
         {[0, 1, 2].map((i) => (
           <div
             key={i}
@@ -140,6 +150,10 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         @keyframes splash-bounce {
           0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
           40% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes splash-logo-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 8px 32px hsl(38 92% 50% / 0.4); }
+          50% { transform: scale(1.08); box-shadow: 0 12px 40px hsl(38 92% 50% / 0.6); }
         }
       `}</style>
     </div>
