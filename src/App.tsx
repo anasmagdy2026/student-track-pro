@@ -56,9 +56,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+const isMobileDevice = () => {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent) 
+    || (window.innerWidth <= 768);
+};
+
 const App = () => {
   const [splashDone, setSplashDone] = useState(() => {
-    // Show splash only once per session
+    // Show splash only on mobile devices, once per session
+    if (!isMobileDevice()) return true;
     return sessionStorage.getItem('splash_shown') === '1';
   });
 
