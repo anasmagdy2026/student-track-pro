@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const { supported, loading: biometricLoading, authenticateWithBiometric } = useWebAuthn();
+  const biometricTriggered = useRef(false);
 
   // Check if user had previously logged in with biometric on this device
   const [savedUsername, setSavedUsername] = useState<string | null>(null);
@@ -25,6 +26,18 @@ export default function Login() {
     const stored = localStorage.getItem('biometric_username');
     if (stored) setSavedUsername(stored);
   }, []);
+
+  // Auto-trigger biometric login if saved username exists and device supports it
+  useEffect(() => {
+    if (supported && savedUsername && !biometricTriggered.current) {
+      biometricTriggered.current = true;
+      // Small delay to let the UI render first
+      const timer = setTimeout(() => {
+        handleBiometricLogin(savedUsername);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [supported, savedUsername]);
 
   const schema = useMemo(
     () =>
@@ -64,8 +77,8 @@ export default function Login() {
     }
   };
 
-  const handleBiometricLogin = async () => {
-    const usernameToUse = savedUsername || username;
+  const handleBiometricLogin = async (usernameOverride?: string) => {
+    const usernameToUse = usernameOverride || savedUsername || username;
     if (!usernameToUse) {
       toast.error('أدخل اسم المستخدم أولاً ثم اضغط على البصمة');
       return;
@@ -170,7 +183,7 @@ export default function Login() {
                   variant="outline"
                   className="w-full h-12 text-base gap-3"
                   disabled={biometricLoading}
-                  onClick={handleBiometricLogin}
+                  onClick={() => handleBiometricLogin()}
                 >
                   <Fingerprint className="h-6 w-6" />
                   {biometricLoading ? 'جاري المصادقة...' : 'الدخول بالبصمة'}

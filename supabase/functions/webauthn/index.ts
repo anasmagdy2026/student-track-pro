@@ -14,8 +14,25 @@ const corsHeaders = {
 }
 
 const RP_NAME = 'مستر محمد مجدي'
-const RP_ID_ENV = Deno.env.get('WEBAUTHN_RP_ID') || 'mrmagdy.lovable.app'
-const ORIGIN_ENV = Deno.env.get('WEBAUTHN_ORIGIN') || 'https://mrmagdy.lovable.app'
+
+// Derive RP_ID and origin dynamically from request
+function getRpConfig(req: Request) {
+  const origin = req.headers.get('origin') || req.headers.get('referer') || ''
+  let rpOrigin = origin
+  let rpId = ''
+
+  try {
+    const url = new URL(origin)
+    rpId = url.hostname
+    rpOrigin = url.origin
+  } catch {
+    // Fallback
+    rpId = Deno.env.get('WEBAUTHN_RP_ID') || 'mrmagdy.lovable.app'
+    rpOrigin = Deno.env.get('WEBAUTHN_ORIGIN') || 'https://mrmagdy.lovable.app'
+  }
+
+  return { rpId, rpOrigin }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,6 +44,8 @@ serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
+
+  const { rpId, rpOrigin } = getRpConfig(req)
 
   try {
     const { action, ...body } = await req.json()
@@ -63,7 +82,7 @@ serve(async (req) => {
 
       const options = await generateRegistrationOptions({
         rpName: RP_NAME,
-        rpID: RP_ID_ENV,
+        rpID: rpId,
         userName: profile?.username || user.email || 'user',
         userID: isoBase64URL.toBuffer(user.id),
         attestationType: 'none',
@@ -75,7 +94,7 @@ serve(async (req) => {
         },
       })
 
-      // Store challenge
+      // Store challenge with rpId for verification
       await supabaseAdmin.from('webauthn_challenges').insert({
         user_id: user.id,
         challenge: options.challenge,
@@ -110,15 +129,15 @@ serve(async (req) => {
       const verification = await verifyRegistrationResponse({
         response: body.credential,
         expectedChallenge: challengeRow.challenge,
-        expectedOrigin: ORIGIN_ENV,
-        expectedRPID: RP_ID_ENV,
+        expectedOrigin: rpOrigin,
+        expectedRPID: rpId,
       })
 
       if (!verification.verified || !verification.registrationInfo) {
         return json({ error: 'Verification failed' }, 400)
       }
 
-      const { credential, credentialDeviceType } = verification.registrationInfo
+      const { credential } = verification.registrationInfo
 
       // Store credential
       await supabaseAdmin.from('webauthn_credentials').insert({
@@ -174,7 +193,7 @@ serve(async (req) => {
       }))
 
       const options = await generateAuthenticationOptions({
-        rpID: RP_ID_ENV,
+        rpID: rpId,
         allowCredentials,
         userVerification: 'required',
       })
@@ -221,8 +240,8 @@ serve(async (req) => {
       const verification = await verifyAuthenticationResponse({
         response: credential,
         expectedChallenge: challengeRow.challenge,
-        expectedOrigin: ORIGIN_ENV,
-        expectedRPID: RP_ID_ENV,
+        expectedOrigin: rpOrigin,
+        expectedRPID: rpId,
         credential: {
           id: storedCred.credential_id,
           publicKey: isoBase64URL.toBuffer(storedCred.public_key),
@@ -249,11 +268,10 @@ serve(async (req) => {
         .eq('type', 'authentication')
 
       // Generate a session for this user
-      // Get user's email for sign-in
       const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
       if (!userData?.user?.email) return json({ error: 'User not found' }, 404)
 
-      // Create a custom token / sign-in link
+      // Create a magic link and verify it to get a session
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
         email: userData.user.email,
@@ -263,7 +281,6 @@ serve(async (req) => {
         return json({ error: 'Failed to generate session' }, 500)
       }
 
-      // Extract token from the link and verify it to get a session
       const token_hash = linkData.properties?.hashed_token
       if (!token_hash) return json({ error: 'Failed to generate token' }, 500)
 
