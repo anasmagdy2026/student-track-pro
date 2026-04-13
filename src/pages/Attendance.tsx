@@ -159,45 +159,6 @@ export default function Attendance() {
     }
   }, [todayGroups, searchParams]);
 
-  // USB Barcode/QR Scanner support - detect rapid keystrokes
-  useEffect(() => {
-    let buffer = '';
-    let lastKeyTime = 0;
-    const SCAN_THRESHOLD = 50; // max ms between keystrokes for scanner input
-    const MIN_LENGTH = 3; // minimum code length
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input/textarea
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-      const now = Date.now();
-
-      if (e.key === 'Enter') {
-        if (buffer.length >= MIN_LENGTH && (now - lastKeyTime) < SCAN_THRESHOLD * 3) {
-          e.preventDefault();
-          const scannedCode = buffer.trim();
-          buffer = '';
-          // Process like QR scan
-          handleQRScan(scannedCode);
-        }
-        buffer = '';
-        return;
-      }
-
-      // Only accept printable characters
-      if (e.key.length === 1) {
-        if (now - lastKeyTime > SCAN_THRESHOLD * 3) {
-          buffer = ''; // reset if too slow (manual typing)
-        }
-        buffer += e.key;
-        lastKeyTime = now;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleQRScan]);
 
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
