@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatTime12 } from '@/lib/utils';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
@@ -158,6 +158,7 @@ export default function Attendance() {
       setSelectedGroup(todayGroups[0].id);
     }
   }, [todayGroups, searchParams]);
+
 
   const filteredStudents = students.filter((student) => {
     const matchesGrade = selectedGrade === 'all' || student.grade === selectedGrade;
@@ -595,6 +596,46 @@ const reason = block?.reason || 'الطالب مطرود من دخول الحص�
     setShowQRScanner(false);
     processStudentCode(code);
   };
+
+  // USB Barcode/QR Scanner support - detect rapid keystrokes
+  const handleQRScanRef = useRef(handleQRScan);
+  handleQRScanRef.current = handleQRScan;
+
+  useEffect(() => {
+    let buffer = '';
+    let lastKeyTime = 0;
+    const SCAN_THRESHOLD = 50;
+    const MIN_LENGTH = 3;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      const now = Date.now();
+
+      if (e.key === 'Enter') {
+        if (buffer.length >= MIN_LENGTH && (now - lastKeyTime) < SCAN_THRESHOLD * 3) {
+          e.preventDefault();
+          const scannedCode = buffer.trim();
+          buffer = '';
+          handleQRScanRef.current(scannedCode);
+        }
+        buffer = '';
+        return;
+      }
+
+      if (e.key.length === 1) {
+        if (now - lastKeyTime > SCAN_THRESHOLD * 3) {
+          buffer = '';
+        }
+        buffer += e.key;
+        lastKeyTime = now;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleConfirm = async () => {
     const action = pending;
@@ -1067,7 +1108,9 @@ const reason = block?.reason || 'الطالب مطرود من دخول الحص�
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold">{student.name}</p>
+                            <Link to={`/students/${student.id}`} className="font-bold hover:text-primary hover:underline transition-colors">
+                              {student.name}
+                            </Link>
                             <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
                               {student.code}
                             </span>
