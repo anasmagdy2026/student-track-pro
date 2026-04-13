@@ -99,6 +99,23 @@ export default function Attendance() {
   const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get('group') || 'all'); // group_id
   const [studentCode, setStudentCode] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
+
+  // Beep sound for USB scanner success
+  const playBeep = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 1200;
+      osc.type = 'sine';
+      gain.gain.value = 0.3;
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch {}
+  }, []);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lateDecisionOpen, setLateDecisionOpen] = useState(false);
