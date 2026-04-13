@@ -125,8 +125,30 @@ export function StudentProfileDialog({ student, group, open, onOpenChange }: Stu
             )}
           </div>
 
+          {/* WhatsApp Buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 text-success border-success/30 hover:bg-success/10"
+              onClick={() => sendWhatsAppMessage(student.parent_phone, `السلام عليكم، بخصوص الطالب/ة: ${student.name}`)}
+            >
+              <MessageCircle className="h-4 w-4" />
+              واتساب ولي الأمر
+            </Button>
+            {student.student_phone && (
+              <Button
+                variant="outline"
+                className="gap-2 text-success border-success/30 hover:bg-success/10"
+                onClick={() => sendWhatsAppMessage(student.student_phone!, `السلام عليكم يا ${student.name}`)}
+              >
+                <MessageCircle className="h-4 w-4" />
+                واتساب الطالب
+              </Button>
+            )}
+          </div>
+
           {/* Full Profile Link */}
-          <Link to={`/students/${student.id}`} onClick={() => onOpenChange(false)}>
+          <Link to={`/student/${student.id}`} onClick={() => onOpenChange(false)}>
             <Button variant="outline" className="w-full gap-2">
               <ExternalLink className="h-4 w-4" />
               عرض البروفايل الكامل
