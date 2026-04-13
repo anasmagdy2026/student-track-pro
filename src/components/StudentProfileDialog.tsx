@@ -6,8 +6,9 @@ import { useAttendance } from '@/hooks/useAttendance';
 import { usePayments } from '@/hooks/usePayments';
 import { useGradeLevels } from '@/hooks/useGradeLevels';
 import { useStudentBlocks } from '@/hooks/useStudentBlocks';
-import { User, Phone, Calendar, CheckCircle, XCircle, CreditCard, ExternalLink, ShieldAlert } from 'lucide-react';
+import { User, Phone, Calendar, CheckCircle, XCircle, CreditCard, ExternalLink, ShieldAlert, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { sendWhatsAppMessage } from '@/utils/whatsapp';
 import { useMemo } from 'react';
 
 interface StudentProfileDialogProps {
