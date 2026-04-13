@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { formatTime12 } from '@/lib/utils';
 import { Link, useSearchParams } from 'react-router-dom';
+import { StudentProfileDialog } from '@/components/StudentProfileDialog';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
