@@ -161,12 +161,13 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="account">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-1'}`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-6' : 'grid-cols-1'}`}>
             <TabsTrigger value="account">حسابي</TabsTrigger>
             {isAdmin && <TabsTrigger value="general">إعدادات عامة</TabsTrigger>}
             {isAdmin && <TabsTrigger value="notifications">الإشعارات</TabsTrigger>}
             {isAdmin && <TabsTrigger value="users">إدارة المستخدمين</TabsTrigger>}
             {isAdmin && <TabsTrigger value="whatsapp">رسائل الواتساب</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="account" className="space-y-6 mt-6">
