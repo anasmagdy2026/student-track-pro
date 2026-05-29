@@ -79,12 +79,23 @@ export function BackupCard() {
   const handleBackup = async () => {
     setLoading(true);
     try {
-      const payload: Record<string, any[]> = {};
+      const tables: Record<string, any[]> = {};
+      let tenantId: string | null = null;
       for (const t of BACKUP_TABLES) {
-        payload[t] = await fetchAll(t);
+        const rows = await fetchAll(t);
+        tables[t] = rows;
+        if (!tenantId) {
+          const found = rows.find((r: any) => r?.tenant_id);
+          if (found) tenantId = found.tenant_id;
+        }
       }
       const json = JSON.stringify(
-        { version: 1, exported_at: new Date().toISOString(), data: payload },
+        {
+          version: '1.0',
+          created_at: new Date().toISOString(),
+          tenant_id: tenantId,
+          tables,
+        },
         null,
         2
       );
