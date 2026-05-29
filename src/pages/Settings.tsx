@@ -32,6 +32,7 @@ import { WhatsAppTemplatesSettings } from '@/components/WhatsAppTemplatesSetting
 import { AppSettingsCard } from '@/components/AppSettingsCard';
 import { NotificationSettingsCard } from '@/components/NotificationSettingsCard';
 import { BiometricSettingsCard } from '@/components/BiometricSettingsCard';
+import { BackupCard } from '@/components/BackupCard';
 
 export default function Settings() {
   const { user, updatePassword } = useAuth();
@@ -160,12 +161,13 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="account">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-1'}`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-6' : 'grid-cols-1'}`}>
             <TabsTrigger value="account">حسابي</TabsTrigger>
             {isAdmin && <TabsTrigger value="general">إعدادات عامة</TabsTrigger>}
             {isAdmin && <TabsTrigger value="notifications">الإشعارات</TabsTrigger>}
             {isAdmin && <TabsTrigger value="users">إدارة المستخدمين</TabsTrigger>}
             {isAdmin && <TabsTrigger value="whatsapp">رسائل الواتساب</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="account" className="space-y-6 mt-6">
@@ -335,6 +337,12 @@ export default function Settings() {
           {isAdmin && (
             <TabsContent value="whatsapp" className="space-y-6 mt-6">
               <WhatsAppTemplatesSettings />
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="backup" className="space-y-6 mt-6">
+              <BackupCard />
             </TabsContent>
           )}
         </Tabs>
