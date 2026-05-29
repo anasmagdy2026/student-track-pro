@@ -339,6 +339,12 @@ export default function Settings() {
               <WhatsAppTemplatesSettings />
             </TabsContent>
           )}
+
+          {isAdmin && (
+            <TabsContent value="backup" className="space-y-6 mt-6">
+              <BackupCard />
+            </TabsContent>
+          )}
         </Tabs>
 
         {/* Create User Dialog */}
