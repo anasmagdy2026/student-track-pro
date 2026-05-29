@@ -125,7 +125,7 @@ export function BackupCard() {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
-      const data = parsed.data ?? parsed;
+      const data = parsed.tables ?? parsed.data ?? parsed;
       if (!data || typeof data !== 'object') throw new Error('ملف غير صالح');
 
       let totalInserted = 0;
