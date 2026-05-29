@@ -32,6 +32,7 @@ import { WhatsAppTemplatesSettings } from '@/components/WhatsAppTemplatesSetting
 import { AppSettingsCard } from '@/components/AppSettingsCard';
 import { NotificationSettingsCard } from '@/components/NotificationSettingsCard';
 import { BiometricSettingsCard } from '@/components/BiometricSettingsCard';
+import { BackupCard } from '@/components/BackupCard';
 
 export default function Settings() {
   const { user, updatePassword } = useAuth();
